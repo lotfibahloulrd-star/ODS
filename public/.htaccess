@@ -1,9 +1,15 @@
+# Prioriser index.html
+DirectoryIndex index.html
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /ods/
-  RewriteRule ^index\.html$ - [L]
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteCond %{REQUEST_FILENAME} !-l
+  
+  # Si le fichier ou le dossier existe réellement, on le sert normalement
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+  
+  # Sinon, on renvoie tout sur index.html pour laisser React gérer le routage
   RewriteRule . /ods/index.html [L]
 </IfModule>
