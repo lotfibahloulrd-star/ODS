@@ -83,10 +83,10 @@ function AppContent() {
                                 </button>
                                 <button
                                     onClick={logout}
-                                    title="Déconnexion"
-                                    className="w-10 h-10 flex items-center justify-center hover:bg-white hover:text-red-600 text-slate-400 rounded-xl transition-all"
+                                    className="flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-xl transition-all group"
                                 >
-                                    <LogOut size={18} />
+                                    <LogOut size={18} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-xs font-black uppercase tracking-tight hidden sm:inline">Déconnexion</span>
                                 </button>
                             </div>
                         </div>
