@@ -13,7 +13,7 @@ DirectoryIndex index.html
     # Mettre en cache les fichiers avec hash (JS/CSS) car Vite change leur nom à chaque build
     <FilesMatch "\.(js|css|webp|png|jpg|jpeg|gif|svg|ico)$">
         Header set Cache-Control "max-age=31536000, public"
-    </IfModule>
+    </FilesMatch>
 </IfModule>
 
 <IfModule mod_rewrite.c>
