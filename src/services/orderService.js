@@ -230,12 +230,28 @@ const INITIAL_ORDERS = [
 
 export const orderService = {
     getAllOrders: async () => {
-        const data = localStorage.getItem('ods_data_v2');
-        if (!data) {
-            localStorage.setItem('ods_data_v2', JSON.stringify(INITIAL_ORDERS));
-            return INITIAL_ORDERS;
+        const dataStr = localStorage.getItem('ods_data_v2');
+        let currentOrders = dataStr ? JSON.parse(dataStr) : [];
+
+        // Système de synchronisation intelligente :
+        // On vérifie si certains ordres initiaux manquent (cas d'une mise à jour de ma part)
+        // sans écraser les modifications que vous avez faites localement.
+        let hasChanges = false;
+        INITIAL_ORDERS.forEach(initOrder => {
+            const exists = currentOrders.some(o => o.id === initOrder.id);
+            if (!exists) {
+                currentOrders.push(initOrder);
+                hasChanges = true;
+            }
+        });
+
+        if (hasChanges) {
+            // On trie par date de création décroissante (plus récent en haut)
+            currentOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            localStorage.setItem('ods_data_v2', JSON.stringify(currentOrders));
         }
-        return JSON.parse(data);
+
+        return currentOrders;
     },
 
     getOrderById: async (id) => {

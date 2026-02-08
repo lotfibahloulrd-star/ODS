@@ -1,6 +1,21 @@
 # Prioriser index.html
 DirectoryIndex index.html
 
+# --- GESTION DU CACHE POUR LES MISES À JOUR INSTANTANÉES ---
+<IfModule mod_headers.c>
+    # Ne jamais mettre en cache le fichier index.html (il contient les liens vers les nouveaux fichiers JS/CSS)
+    <FilesMatch "\.(html)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+    </FilesMatch>
+
+    # Mettre en cache les fichiers avec hash (JS/CSS) car Vite change leur nom à chaque build
+    <FilesMatch "\.(js|css|webp|png|jpg|jpeg|gif|svg|ico)$">
+        Header set Cache-Control "max-age=31536000, public"
+    </IfModule>
+</IfModule>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /ods/
