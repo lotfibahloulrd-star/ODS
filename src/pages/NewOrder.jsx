@@ -130,28 +130,36 @@ const NewOrder = ({ onSave }) => {
     };
 
     const handleFileUpload = (file, storageMethod, orderId) => {
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            try {
-                storageMethod(orderId, reader.result, file.name);
-            } catch (e) {
-                console.error("Storage error:", e);
-                throw e; // Propagate to handleSave
-            }
-        };
-        reader.readAsDataURL(file);
+        if (!file) return Promise.resolve();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                try {
+                    await storageMethod(orderId, reader.result, file.name);
+                    resolve();
+                } catch (e) {
+                    console.error("Storage error:", e);
+                    reject(e);
+                }
+            };
+            reader.onerror = () => reject(new Error("Erreur de lecture du fichier"));
+            reader.readAsDataURL(file);
+        });
     };
 
     const handleSave = async () => {
+        setIsLoading(true);
         try {
             const savedOrder = await orderService.createOrder(formData);
 
-            // Save files
-            if (file) handleFileUpload(file, orderService.saveOdsFile, savedOrder.id);
-            if (contractFile) handleFileUpload(contractFile, orderService.saveContractFile, savedOrder.id);
-            if (stopRequestFile) handleFileUpload(stopRequestFile, orderService.saveStopRequestFile, savedOrder.id);
-            if (stopResponseFile) handleFileUpload(stopResponseFile, orderService.saveStopResponseFile, savedOrder.id);
+            // Save files concurrently
+            const uploadPromises = [];
+            if (file) uploadPromises.push(handleFileUpload(file, orderService.saveOdsFile, savedOrder.id));
+            if (contractFile) uploadPromises.push(handleFileUpload(contractFile, orderService.saveContractFile, savedOrder.id));
+            if (stopRequestFile) uploadPromises.push(handleFileUpload(stopRequestFile, orderService.saveStopRequestFile, savedOrder.id));
+            if (stopResponseFile) uploadPromises.push(handleFileUpload(stopResponseFile, orderService.saveStopResponseFile, savedOrder.id));
+
+            await Promise.all(uploadPromises);
 
             alert('ODS enregistré avec succès !');
             setStep(1);
@@ -183,10 +191,12 @@ const NewOrder = ({ onSave }) => {
         } catch (error) {
             console.error(error);
             if (error.name === 'QuotaExceededError' || error.message.includes('quota')) {
-                alert("Erreur : La mémoire du navigateur est pleine. Les fichiers PDF sont trop volumineux pour être stockés localement. L'ODS a été créé mais sans les documents joints.");
+                alert("Erreur de stockage : L'espace est insuffisant. L'ODS a été créé mais certains documents n'ont pas pu être enregistrés.");
             } else {
                 alert("Erreur lors de l'enregistrement : " + error.message);
             }
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -200,7 +210,7 @@ const NewOrder = ({ onSave }) => {
             {step === 1 && (
                 <div className="bg-white rounded-lg shadow p-12 text-center border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors cursor-pointer"
                     onClick={() => document.getElementById('fileInput').click()}>
-                    <input id="fileInput" type="file" hidden accept=".pdf,.jpg,.png" onChange={(e) => processFile(e.target.files[0])} />
+                    <input id="fileInput" type="file" hidden accept=".pdf,.jpg,.png" onClick={e => e.target.value = null} onChange={(e) => processFile(e.target.files[0])} />
                     <div className="text-6xl mb-4">📄</div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">Cliquez pour sélectionner un fichier</h3>
                     <p className="text-gray-600">PDF, JPG ou PNG acceptés</p>
@@ -239,6 +249,7 @@ const NewOrder = ({ onSave }) => {
                                 type="file"
                                 className="text-xs w-full"
                                 accept=".pdf,.jpg,.png"
+                                onClick={e => e.target.value = null}
                                 onChange={e => setFile(e.target.files[0])}
                             />
                             {file && <p className="text-[10px] text-blue-600 mt-1 font-medium italic">Fichier actuel: {file.name}</p>}
@@ -259,6 +270,7 @@ const NewOrder = ({ onSave }) => {
                                 type="file"
                                 className="text-xs w-full"
                                 accept=".pdf,.jpg,.png"
+                                onClick={e => e.target.value = null}
                                 onChange={e => setContractFile(e.target.files[0])}
                             />
                             {contractFile && <p className="text-[10px] text-indigo-600 mt-1 font-medium italic">Fichier actuel: {contractFile.name}</p>}
@@ -380,11 +392,11 @@ const NewOrder = ({ onSave }) => {
                                         </div>
                                         <div className="md:col-span-1">
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Fichier de Demande d'Arrêt</label>
-                                            <input type="file" className="text-xs" accept=".pdf,.jpg,.png" onChange={e => setStopRequestFile(e.target.files[0])} />
+                                            <input type="file" className="text-xs" accept=".pdf,.jpg,.png" onClick={e => e.target.value = null} onChange={e => setStopRequestFile(e.target.files[0])} />
                                         </div>
                                         <div className="md:col-span-1">
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Réponse de l'Organisme</label>
-                                            <input type="file" className="text-xs" accept=".pdf,.jpg,.png" onChange={e => setStopResponseFile(e.target.files[0])} />
+                                            <input type="file" className="text-xs" accept=".pdf,.jpg,.png" onClick={e => e.target.value = null} onChange={e => setStopResponseFile(e.target.files[0])} />
                                         </div>
                                     </>
                                 )}

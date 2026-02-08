@@ -11,24 +11,33 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
     const [importData, setImportData] = useState(order?.importStatus || {});
     const [stockData, setStockData] = useState(order?.stockStatus || {});
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
     const handleDirectUpload = (e, orderId, type) => {
         const file = e.target.files[0];
         if (!file) return;
 
+        setIsUploading(true);
         const reader = new FileReader();
-        reader.onloadend = () => {
+        reader.onloadend = async () => {
             try {
-                if (type === 'ods') orderService.saveOdsFile(orderId, reader.result, file.name);
-                else if (type === 'contract') orderService.saveContractFile(orderId, reader.result, file.name);
-                else if (type === 'stop_request') orderService.saveStopRequestFile(orderId, reader.result, file.name);
-                else if (type === 'stop_response') orderService.saveStopResponseFile(orderId, reader.result, file.name);
+                if (type === 'ods') await orderService.saveOdsFile(orderId, reader.result, file.name);
+                else if (type === 'contract') await orderService.saveContractFile(orderId, reader.result, file.name);
+                else if (type === 'stop_request') await orderService.saveStopRequestFile(orderId, reader.result, file.name);
+                else if (type === 'stop_response') await orderService.saveStopResponseFile(orderId, reader.result, file.name);
 
                 if (onUpdate) onUpdate();
                 alert(`Document ${type.replace('_', ' ').toUpperCase()} attaché avec succès !`);
             } catch (error) {
+                console.error("Upload error:", error);
                 alert("Erreur de stockage : " + error.message);
+            } finally {
+                setIsUploading(false);
             }
+        };
+        reader.onerror = () => {
+            alert("Erreur lors de la lecture du fichier.");
+            setIsUploading(false);
         };
         reader.readAsDataURL(file);
     };
@@ -49,25 +58,10 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
         }
     };
     // Fetch files - Hooks MUST be at the top level
-    const odsFile = useMemo(() => {
-        if (!order?.id) return null;
-        try { return orderService.getOdsFile(order.id); } catch (e) { return null; }
-    }, [order?.id, isOpen]);
-
-    const contractFile = useMemo(() => {
-        if (!order?.id) return null;
-        try { return orderService.getContractFile(order.id); } catch (e) { return null; }
-    }, [order?.id, isOpen]);
-
-    const stopRequestFile = useMemo(() => {
-        if (!order?.id) return null;
-        try { return orderService.getStopRequestFile(order.id); } catch (e) { return null; }
-    }, [order?.id, isOpen]);
-
-    const stopResponseFile = useMemo(() => {
-        if (!order?.id) return null;
-        try { return orderService.getStopResponseFile(order.id); } catch (e) { return null; }
-    }, [order?.id, isOpen]);
+    const hasOds = !!(order?.files?.storage_ods);
+    const hasContract = !!(order?.files?.storage_contracts);
+    const hasStopRequest = !!(order?.files?.storage_stops_req);
+    const hasStopResponse = !!(order?.files?.storage_stops_res);
 
     const remainingInfo = useMemo(() => {
         try {
@@ -229,19 +223,22 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Réf ODS/Convention</label>
                                     <div className="text-lg font-black text-slate-900">{order.refOds || order.ref || "-"}</div>
                                 </div>
-                                {odsFile ? (
+                                {hasOds && (
                                     <button
-                                        onClick={() => openPdf(odsFile)}
+                                        onClick={() => openPdf(order.id, 'storage_ods')}
                                         className="w-full flex items-center justify-center gap-2 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs transition-all shadow-lg shadow-blue-200 hover:scale-[1.02]"
                                     >
                                         <ExternalLink size={16} /> Consulter le PDF ODS
                                     </button>
-                                ) : canCreate ? (
+                                )}
+                                {canCreate && (
                                     <label className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-dashed border-blue-200 hover:border-blue-500 text-blue-600 rounded-2xl font-black text-xs transition-all cursor-pointer">
-                                        <Upload size={16} /> Attacher le PDF ODS
-                                        <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'ods')} />
+                                        {isUploading ? <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div> : <Upload size={16} />}
+                                        {hasOds ? "Mettre à jour le PDF ODS" : "Attacher le PDF ODS"}
+                                        <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'ods')} />
                                     </label>
-                                ) : (
+                                )}
+                                {!hasOds && !canCreate && (
                                     <div className="p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center text-[11px] font-bold text-slate-400">
                                         Aucun document numérisé
                                     </div>
@@ -265,19 +262,22 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Numéro de Contrat</label>
                                     <div className="text-lg font-black text-slate-900">{order.refContract || "-"}</div>
                                 </div>
-                                {contractFile ? (
+                                {hasContract && (
                                     <button
-                                        onClick={() => openPdf(contractFile)}
+                                        onClick={() => openPdf(order.id, 'storage_contracts')}
                                         className="w-full flex items-center justify-center gap-2 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs transition-all shadow-lg shadow-indigo-200 hover:scale-[1.02]"
                                     >
                                         <ExternalLink size={16} /> Consulter le PDF Marché
                                     </button>
-                                ) : canCreate ? (
+                                )}
+                                {canCreate && (
                                     <label className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-dashed border-indigo-200 hover:border-indigo-500 text-indigo-600 rounded-2xl font-black text-xs transition-all cursor-pointer">
-                                        <Plus size={16} /> Attacher le PDF Contrat
-                                        <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'contract')} />
+                                        {isUploading ? <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div> : <Plus size={16} />}
+                                        {hasContract ? "Mettre à jour le PDF Contrat" : "Attacher le PDF Contrat"}
+                                        <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'contract')} />
                                     </label>
-                                ) : (
+                                )}
+                                {!hasContract && !canCreate && (
                                     <div className="p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center text-[11px] font-bold text-slate-400">
                                         Aucun document numérisé
                                     </div>
@@ -487,25 +487,29 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                                     </div>
                                 </div>
                                 <div className="flex gap-4">
-                                    {stopRequestFile ? (
-                                        <button onClick={() => openPdf(stopRequestFile)} className="px-6 py-3 bg-white border border-red-200 text-red-600 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-red-50 transition-colors flex items-center gap-2 shadow-sm">
+                                    {hasStopRequest && (
+                                        <button onClick={() => openPdf(order.id, 'storage_stops_req')} className="px-6 py-3 bg-white border border-red-200 text-red-600 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-red-50 transition-colors flex items-center gap-2 shadow-sm">
                                             <FileText size={16} /> Demande PDF
                                         </button>
-                                    ) : canCreate && (
+                                    )}
+                                    {canCreate && (
                                         <label className="px-6 py-3 bg-white border border-dashed border-red-200 text-red-400 hover:text-red-600 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2">
-                                            <Upload size={14} /> Attacher Demande
-                                            <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'stop_request')} />
+                                            {isUploading ? <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div> : <Upload size={14} />}
+                                            {hasStopRequest ? "Mettre à jour Demande" : "Attacher Demande"}
+                                            <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'stop_request')} />
                                         </label>
                                     )}
 
-                                    {stopResponseFile ? (
-                                        <button onClick={() => openPdf(stopResponseFile)} className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-red-700 transition-colors flex items-center gap-2 shadow-lg shadow-red-200">
+                                    {hasStopResponse && (
+                                        <button onClick={() => openPdf(order.id, 'storage_stops_res')} className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-red-700 transition-colors flex items-center gap-2 shadow-lg shadow-red-200">
                                             <FileCheck size={16} /> Accord PDF
                                         </button>
-                                    ) : canCreate && (
+                                    )}
+                                    {canCreate && (
                                         <label className="px-6 py-3 bg-red-50 border border-dashed border-red-300 text-red-600 hover:bg-red-100 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2">
-                                            <Plus size={14} /> Attacher Accord
-                                            <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'stop_response')} />
+                                            {isUploading ? <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div> : <Plus size={14} />}
+                                            {hasStopResponse ? "Mettre à jour Accord" : "Attacher Accord"}
+                                            <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'stop_response')} />
                                         </label>
                                     )}
                                 </div>

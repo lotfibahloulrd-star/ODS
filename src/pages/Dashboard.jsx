@@ -23,6 +23,8 @@ import {
     Box,
     Anchor,
     Ship,
+    ShieldCheck,
+    RotateCcw,
     Upload,
     Plus
 } from 'lucide-react';
@@ -35,24 +37,34 @@ const Dashboard = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isUploading, setIsUploading] = useState(false);
+    const [syncStatus, setSyncStatus] = useState(""); // Nouveau : statut de migration
 
     const handleDirectUpload = (e, orderId, type) => {
         const file = e.target.files[0];
         if (!file) return;
 
+        setIsUploading(true);
         const reader = new FileReader();
-        reader.onloadend = () => {
+        reader.onloadend = async () => {
             try {
                 if (type === 'ods') {
-                    orderService.saveOdsFile(orderId, reader.result, file.name);
+                    await orderService.saveOdsFile(orderId, reader.result, file.name);
                 } else {
-                    orderService.saveContractFile(orderId, reader.result, file.name);
+                    await orderService.saveContractFile(orderId, reader.result, file.name);
                 }
                 loadOrders(); // Refresh table
                 alert(`Document ${type.toUpperCase()} attaché avec succès !`);
             } catch (error) {
+                console.error("Upload error:", error);
                 alert("Erreur de stockage : " + error.message);
+            } finally {
+                setIsUploading(false);
             }
+        };
+        reader.onerror = () => {
+            alert("Erreur lors de la lecture du fichier.");
+            setIsUploading(false);
         };
         reader.readAsDataURL(file);
     };
@@ -73,6 +85,14 @@ const Dashboard = () => {
         }
     };
 
+    const handleStorageRepair = () => {
+        if (window.confirm("Voulez-vous optimiser le stockage ? Cela supprimera les anciens fichiers temporaires pour libérer de l'espace. Vos données actuelles resteront intactes.")) {
+            orderService._cleanupLegacyStorage();
+            alert("Stockage optimisé ! Veuillez rafraîchir la page si le problème persiste.");
+            loadOrders();
+        }
+    };
+
     const loadNotifications = () => {
         if (!currentUser) return;
         const list = notificationService.getNotifications(currentUser.email);
@@ -86,6 +106,67 @@ const Dashboard = () => {
         const interval = setInterval(loadNotifications, 30000);
         return () => clearInterval(interval);
     }, [currentUser?.email]);
+
+    useEffect(() => {
+        loadOrders();
+        loadNotifications();
+
+        // Timer for polling shared data
+        const timer = setInterval(loadOrders, 30000);
+        return () => clearInterval(timer);
+    }, [currentUser]);
+
+    // Système de secours : Migration automatique des fichiers locaux vers le serveur
+    useEffect(() => {
+        const syncMissingFiles = async () => {
+            if (!orders.length || syncStatus === "Terminé") return;
+
+            const stores = ['storage_ods', 'storage_contracts', 'storage_stops_req', 'storage_stops_res'];
+            let totalMissing = 0;
+            let currentSync = 0;
+
+            // Compter le travail à faire pour la barre de progression (optionnel)
+            const tasks = [];
+            for (const order of orders) {
+                for (const store of stores) {
+                    if (!order.files?.[store]) {
+                        tasks.push({ order, store });
+                    }
+                }
+            }
+
+            if (tasks.length === 0) return;
+
+            setSyncStatus(`Vérification de ${tasks.length} documents...`);
+
+            for (const task of tasks) {
+                try {
+                    const localFile = await orderService._getFile(task.store, task.order.id);
+                    if (localFile && (localFile.fileDataUrl || localFile.blob)) {
+                        currentSync++;
+                        setSyncStatus(`Transfert : ${task.order.client} (${currentSync}/${tasks.length})...`);
+
+                        const success = await orderService._uploadToShared(task.store, task.order.id, localFile.blob || localFile.fileDataUrl, localFile.fileName);
+                        if (success) {
+                            console.log(`Migration réussie pour ${task.order.id} (${task.store})`);
+                        }
+                    }
+                } catch (e) { console.error("Sync error:", e); }
+            }
+
+            if (currentSync > 0) {
+                setSyncStatus("Synchronisation terminée !");
+                setTimeout(() => setSyncStatus(""), 3000);
+                loadOrders(); // Rafraîchir tout à la fin
+            } else {
+                setSyncStatus("");
+            }
+        };
+
+        if (orders.length > 0 && !syncStatus) {
+            syncMissingFiles();
+        }
+    }, [orders]);
 
     const hasUnread = notifications.some(n => !n.readBy.includes(currentUser?.email));
 
@@ -104,15 +185,20 @@ const Dashboard = () => {
         });
     }, [orders, searchTerm, auth]);
 
-    const openPdf = (fileData) => {
-        if (!fileData?.fileDataUrl) return;
+    const openPdf = (orderId, storageKey) => {
+        // En mode partagé, on pointe vers l'API qui sert le fichier
+        const fileUrl = `./api.php?action=get_file&orderId=${orderId}&storageKey=${storageKey}`;
+
         const newWindow = window.open();
         if (newWindow) {
             newWindow.document.write(`
                 <html>
-                    <head><title>${fileData.fileName || 'Document'}</title></head>
-                    <body style="margin:0">
-                        <embed src="${fileData.fileDataUrl}" width="100%" height="100%" type="application/pdf" />
+                    <head><title>Visualisation Document</title></head>
+                    <body style="margin:0; background: #e2e8f0; display:flex; justify-content:center; align-items:center;">
+                        <embed src="${fileUrl}" width="100%" height="100%" type="application/pdf" />
+                        <div style="position:fixed; bottom:20px; right:20px;">
+                            <a href="${fileUrl}" download style="background:#2563eb; color:white; padding:10px 20px; border-radius:10px; text-decoration:none; font-family:sans-serif; font-weight:bold; box-shadow:0 10px 15px -3px rgba(37, 99, 235, 0.4);">Télécharger</a>
+                        </div>
                     </body>
                 </html>
             `);
@@ -198,10 +284,18 @@ const Dashboard = () => {
             <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                     <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-1">Tableau de Bord</h2>
-                    <p className="text-slate-500 font-bold flex items-center gap-2">
-                        <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
-                        Suivi en temps réel des engagements <span className="text-[10px] opacity-30 font-black ml-2">V2.9-ROLES</span>
-                    </p>
+                    <div className="flex flex-col gap-1">
+                        <p className="text-slate-500 font-bold flex items-center gap-2">
+                            <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
+                            Suivi en temps réel des engagements <span className="text-[10px] opacity-30 font-black ml-2">V2.9-ROLES</span>
+                        </p>
+                        {syncStatus && (
+                            <div className="flex items-center gap-2 mt-1">
+                                <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                <span className="text-blue-600 text-xs font-black uppercase tracking-widest animate-pulse">{syncStatus}</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -293,17 +387,27 @@ const Dashboard = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    {currentUser && (
-                        <div className="flex items-center gap-3 bg-white p-2.5 pr-5 rounded-2xl border border-slate-200 shadow-sm">
-                            <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-100">
-                                {currentUser.firstName ? currentUser.firstName[0] : 'U'}
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleStorageRepair}
+                            title="Réparer/Optimiser le stockage"
+                            className="w-11 h-11 flex items-center justify-center bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
+                        >
+                            <ShieldCheck size={20} />
+                        </button>
+
+                        {currentUser && (
+                            <div className="flex items-center gap-3 bg-white p-2.5 pr-5 rounded-2xl border border-slate-200 shadow-sm">
+                                <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-100">
+                                    {currentUser.firstName ? currentUser.firstName[0] : 'U'}
+                                </div>
+                                <div className="hidden sm:block">
+                                    <div className="text-xs font-black text-slate-900 leading-tight uppercase tracking-widest">{currentUser.lastName || currentUser.email}</div>
+                                    <div className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">{currentUser.role}</div>
+                                </div>
                             </div>
-                            <div className="hidden sm:block">
-                                <div className="text-xs font-black text-slate-900 leading-tight uppercase tracking-widest">{currentUser.lastName || currentUser.email}</div>
-                                <div className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">{currentUser.role}</div>
-                            </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -393,8 +497,8 @@ const Dashboard = () => {
                                     const daysLeft = getRemainingDays(order);
                                     const isOverdue = daysLeft !== null && daysLeft < 0;
                                     const isStopping = order.hasStopRequest === 'Oui';
-                                    const odsFile = order.id ? orderService.getOdsFile(order.id) : null;
-                                    const contractFile = order.id ? orderService.getContractFile(order.id) : null;
+                                    const hasOds = !!(order.files?.storage_ods);
+                                    const hasContract = !!(order.files?.storage_contracts);
 
                                     const isImportLaunched = order.importStatus?.importLaunched;
                                     const isImportCleared = !!order.importStatus?.clearedAt;
@@ -446,35 +550,39 @@ const Dashboard = () => {
                                                 <div className="text-[11px] font-black text-blue-600 tracking-tight">{order.refOds || order.ref || "-"}</div>
                                             </td>
                                             <td className="px-6 py-7 text-center">
-                                                {odsFile ? (
-                                                    <button onClick={e => { e.stopPropagation(); openPdf(odsFile); }} title="Voir ODS" className="w-9 h-9 flex items-center justify-center transition-all hover:bg-blue-600 hover:text-white text-blue-600 rounded-xl bg-blue-50 border border-blue-100">
-                                                        <FileText size={16} />
-                                                    </button>
-                                                ) : canCreate ? (
-                                                    <div className="relative inline-block" onClick={e => e.stopPropagation()}>
-                                                        <label className="w-9 h-9 flex items-center justify-center cursor-pointer transition-all hover:bg-blue-600 hover:text-white text-blue-400 rounded-xl bg-slate-50 border border-dashed border-slate-300">
-                                                            <Upload size={14} />
-                                                            <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'ods')} />
+                                                <div className="flex items-center justify-center gap-1.5" onClick={e => e.stopPropagation()}>
+                                                    {hasOds && (
+                                                        <button onClick={e => { e.stopPropagation(); openPdf(order.id, 'storage_ods'); }} title="Voir ODS" className="w-8 h-8 flex items-center justify-center transition-all hover:bg-blue-600 hover:text-white text-blue-600 rounded-lg bg-blue-50 border border-blue-100">
+                                                            <FileText size={14} />
+                                                        </button>
+                                                    )}
+                                                    {canCreate && (
+                                                        <label className="w-8 h-8 flex items-center justify-center cursor-pointer transition-all hover:bg-blue-600 hover:text-white text-blue-400 rounded-lg bg-slate-50 border border-dashed border-slate-300">
+                                                            {isUploading ? <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div> : <Upload size={12} />}
+                                                            <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'ods')} />
                                                         </label>
-                                                    </div>
-                                                ) : <span className="text-slate-200">-</span>}
+                                                    )}
+                                                    {!hasOds && !canCreate && <span className="text-slate-200">-</span>}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-7">
                                                 <div className="text-[11px] font-bold text-indigo-600 tracking-tight">{order.refContract || "-"}</div>
                                             </td>
                                             <td className="px-6 py-7 text-center">
-                                                {contractFile ? (
-                                                    <button onClick={e => { e.stopPropagation(); openPdf(contractFile); }} title="Voir Contrat" className="w-9 h-9 flex items-center justify-center transition-all hover:bg-indigo-600 hover:text-white text-indigo-600 rounded-xl bg-indigo-50 border border-indigo-100">
-                                                        <FileCheck size={16} />
-                                                    </button>
-                                                ) : canCreate ? (
-                                                    <div className="relative inline-block" onClick={e => e.stopPropagation()}>
-                                                        <label className="w-9 h-9 flex items-center justify-center cursor-pointer transition-all hover:bg-indigo-600 hover:text-white text-indigo-400 rounded-xl bg-slate-50 border border-dashed border-slate-300">
-                                                            <Plus size={14} />
-                                                            <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'contract')} />
+                                                <div className="flex items-center justify-center gap-1.5" onClick={e => e.stopPropagation()}>
+                                                    {hasContract && (
+                                                        <button onClick={e => { e.stopPropagation(); openPdf(order.id, 'storage_contracts'); }} title="Voir Contrat" className="w-8 h-8 flex items-center justify-center transition-all hover:bg-indigo-600 hover:text-white text-indigo-600 rounded-lg bg-indigo-50 border border-indigo-100">
+                                                            <FileCheck size={14} />
+                                                        </button>
+                                                    )}
+                                                    {canCreate && (
+                                                        <label className="w-8 h-8 flex items-center justify-center cursor-pointer transition-all hover:bg-indigo-600 hover:text-white text-indigo-400 rounded-lg bg-slate-50 border border-dashed border-slate-300">
+                                                            {isUploading ? <div className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div> : <Plus size={12} />}
+                                                            <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'contract')} />
                                                         </label>
-                                                    </div>
-                                                ) : <span className="text-slate-200">-</span>}
+                                                    )}
+                                                    {!hasContract && !canCreate && <span className="text-slate-200">-</span>}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-7">
                                                 <div className="flex items-center gap-1.5">

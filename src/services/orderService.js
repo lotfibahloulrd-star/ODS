@@ -14,7 +14,8 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2025-04-15T10:00:00.000Z'
+        createdAt: '2025-04-15T10:00:00.000Z',
+        files: {}
     },
     {
         id: 'init-2',
@@ -29,7 +30,8 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2025-05-15T10:00:00.000Z'
+        createdAt: '2025-05-15T10:00:00.000Z',
+        files: {}
     },
     {
         id: 'init-3',
@@ -44,7 +46,8 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2025-07-17T10:00:00.000Z'
+        createdAt: '2025-07-17T10:00:00.000Z',
+        files: {}
     },
     {
         id: 'init-4',
@@ -59,7 +62,8 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2025-11-02T10:00:00.000Z'
+        createdAt: '2025-11-02T10:00:00.000Z',
+        files: {}
     },
     {
         id: 'init-5',
@@ -74,7 +78,8 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2025-11-12T10:00:00.000Z'
+        createdAt: '2025-11-12T10:00:00.000Z',
+        files: {}
     },
     {
         id: 'init-6',
@@ -89,7 +94,8 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2025-11-20T10:00:00.000Z'
+        createdAt: '2025-11-20T10:00:00.000Z',
+        files: {}
     },
     {
         id: 'init-7',
@@ -104,7 +110,8 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2025-11-27T10:00:00.000Z'
+        createdAt: '2025-11-27T10:00:00.000Z',
+        files: {}
     },
     {
         id: 'init-8',
@@ -119,7 +126,8 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2025-12-01T10:00:00.000Z'
+        createdAt: '2025-12-01T10:00:00.000Z',
+        files: {}
     },
     {
         id: 'init-9',
@@ -134,7 +142,8 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2025-12-03T10:00:00.000Z'
+        createdAt: '2025-12-03T10:00:00.000Z',
+        files: {}
     },
     {
         id: 'init-10',
@@ -149,7 +158,8 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2025-12-11T10:00:00.000Z'
+        createdAt: '2025-12-11T10:00:00.000Z',
+        files: {}
     },
     {
         id: 'init-11',
@@ -164,7 +174,8 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2025-12-15T10:00:00.000Z'
+        createdAt: '2025-12-15T10:00:00.000Z',
+        files: {}
     },
     {
         id: 'init-12',
@@ -179,7 +190,8 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2025-12-24T10:00:00.000Z'
+        createdAt: '2025-12-24T10:00:00.000Z',
+        files: {}
     },
     {
         id: 'init-13',
@@ -194,7 +206,8 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2025-12-30T10:00:00.000Z'
+        createdAt: '2025-12-30T10:00:00.000Z',
+        files: {}
     },
     {
         id: 'init-14',
@@ -209,7 +222,8 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2026-01-08T10:00:00.000Z'
+        createdAt: '2026-01-08T10:00:00.000Z',
+        files: {}
     },
     {
         id: 'init-15',
@@ -224,39 +238,64 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2026-01-28T10:00:00.000Z'
+        createdAt: '2026-01-28T10:00:00.000Z',
+        files: {}
     }
 ];
 
+const API_URL = './api.php';
+
 export const orderService = {
-    getAllOrders: async () => {
-        const dataStr = localStorage.getItem('ods_data_v2');
-        let currentOrders = dataStr ? JSON.parse(dataStr) : [];
-
-        // Système de synchronisation intelligente :
-        // On vérifie si certains ordres initiaux manquent (cas d'une mise à jour de ma part)
-        // sans écraser les modifications que vous avez faites localement.
-        let hasChanges = false;
-        INITIAL_ORDERS.forEach(initOrder => {
-            const exists = currentOrders.some(o => o.id === initOrder.id);
-            if (!exists) {
-                currentOrders.push(initOrder);
-                hasChanges = true;
-            }
-        });
-
-        if (hasChanges) {
-            // On trie par date de création décroissante (plus récent en haut)
-            currentOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            localStorage.setItem('ods_data_v2', JSON.stringify(currentOrders));
-        }
-
-        return currentOrders;
+    _cleanupLegacyStorage: () => {
+        const suspiciousKeys = ['ods_files', 'ods_contracts', 'ods_documents', 'ods_pdfs', 'files', 'pdf'];
+        suspiciousKeys.forEach(key => localStorage.removeItem(key));
     },
 
-    getOrderById: async (id) => {
-        const orders = await orderService.getAllOrders();
-        return orders.find(o => o.id === id);
+    getAllOrders: async () => {
+        try {
+            const response = await fetch(`${API_URL}?action=get_orders`);
+            if (!response.ok) throw new Error("API Unavailable");
+            let sharedOrders = await response.json();
+
+            // Si le serveur contient moins d'ODS que notre liste initiale, on injecte tout
+            if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length) {
+                console.log("Injection des 15 ODS initiaux sur le serveur...");
+
+                // Fusion pour ne pas perdre les ordres créés manuellement entre temps
+                const mergedMap = new Map();
+                // 1. Charger les 15 initiaux
+                INITIAL_ORDERS.forEach(o => mergedMap.set(o.id, o));
+                // 2. Charger ce qu'il y a sur le serveur (éventuels nouveaux ordres)
+                if (Array.isArray(sharedOrders)) sharedOrders.forEach(o => mergedMap.set(o.id, o));
+                // 3. Charger le local backup au cas où
+                const localDataStr = localStorage.getItem('ods_data_v2');
+                if (localDataStr) JSON.parse(localDataStr).forEach(o => mergedMap.set(o.id, o));
+
+                const finalOrders = Array.from(mergedMap.values())
+                    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                await orderService._saveAllToShared(finalOrders);
+                return finalOrders;
+            }
+
+            return sharedOrders;
+        } catch (e) {
+            const localData = localStorage.getItem('ods_data_v2');
+            return localData ? JSON.parse(localData) : INITIAL_ORDERS;
+        }
+    },
+
+    _saveAllToShared: async (orders) => {
+        try {
+            await fetch(`${API_URL}?action=save_orders`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orders)
+            });
+            localStorage.setItem('ods_data_v2', JSON.stringify(orders));
+        } catch (e) {
+            localStorage.setItem('ods_data_v2', JSON.stringify(orders));
+        }
     },
 
     createOrder: async (orderData) => {
@@ -266,126 +305,105 @@ export const orderService = {
             id: Date.now().toString(),
             status: 'En cours',
             createdAt: new Date().toISOString(),
-            // Initialize workflow fields
-            importStatus: {
-                authImport: null,
-                importLaunched: false,
-                estCustomsDate: '',
-                domiciliationDate: '',
-                clearedAt: '',
-            },
-            stockStatus: {
-                reception: 'Aucune',
-                receivedAt: '',
-            },
-            isReadyForDelivery: false
+            importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+            stockStatus: { reception: 'Aucune', receivedAt: '' },
+            isReadyForDelivery: false,
+            files: {}
         };
-
         orders.unshift(newOrder);
-        localStorage.setItem('ods_data_v2', JSON.stringify(orders));
-
-        // Notification: Insertion d'un nouveau document
-        notificationService.addNotification(
-            `Nouveau document inséré : ODS ${newOrder.refOds} (${newOrder.client}) - Division: ${newOrder.division}`,
-            'info',
-            ['all'],
-            newOrder.id
-        );
-
+        await orderService._saveAllToShared(orders);
         return newOrder;
     },
 
-    updateOrder: async (id, updates, userName) => {
+    updateOrder: async (id, updates) => {
         const orders = await orderService.getAllOrders();
         const index = orders.findIndex(o => o.id === id);
         if (index === -1) return null;
-
-        const oldOrder = orders[index];
-        const newOrder = { ...oldOrder, ...updates };
-        orders[index] = newOrder;
-        localStorage.setItem('ods_data_v2', JSON.stringify(orders));
-
-        // Check for specific workflow notifications
-
-        // 1. Authorization Confirmée
-        if (oldOrder.importStatus?.authImport !== 'Confirmée' && newOrder.importStatus?.authImport === 'Confirmée') {
-            notificationService.addNotification(
-                `Autorisation confirmée pour l'ODS ${newOrder.refOds} (${newOrder.client}).`,
-                'success',
-                ['all'],
-                newOrder.id
-            );
-        }
-
-        // 2. Lancement Importation
-        if (!oldOrder.importStatus?.importLaunched && newOrder.importStatus?.importLaunched) {
-            notificationService.addNotification(
-                `Importation lancée pour l'ODS ${newOrder.refOds} (${newOrder.client}). Délai de dédouanement estimé : ${newOrder.importStatus?.estCustomsDate ? new Intl.DateTimeFormat('fr-FR').format(new Date(newOrder.importStatus.estCustomsDate)) : 'Non défini'}.`,
-                'info',
-                ['all'],
-                newOrder.id
-            );
-        }
-
-        // 3. Import Cleared
-        if (!oldOrder.importStatus?.clearedAt && newOrder.importStatus?.clearedAt) {
-            notificationService.addNotification(
-                `Dédouanement terminé pour l'ODS ${newOrder.refOds} (${newOrder.client}).`,
-                'success',
-                ['all'],
-                newOrder.id
-            );
-        }
-
-        // 4. Stock Received -> Ready for delivery
-        if (oldOrder.stockStatus?.reception !== 'Totale' && newOrder.stockStatus?.reception === 'Totale') {
-            newOrder.isReadyForDelivery = true;
-            orders[index] = newOrder;
-            localStorage.setItem('ods_data_v2', JSON.stringify(orders));
-
-            notificationService.addNotification(
-                `Notification : ODS ${newOrder.refOds} (${newOrder.client}) est PRÊT À ÊTRE LIVRÉ !`,
-                'success',
-                ['all'],
-                newOrder.id
-            );
-        }
-
-        return newOrder;
+        orders[index] = { ...orders[index], ...updates };
+        await orderService._saveAllToShared(orders);
+        return orders[index];
     },
 
-    // Utility to save any type of file
-    _saveFile: (storageKey, orderId, fileDataUrl, fileName) => {
-        const fileData = {
-            orderId,
-            fileDataUrl,
-            fileName,
-            uploadedAt: new Date().toISOString()
-        };
-        const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
-        const filtered = existing.filter(f => f.orderId !== orderId);
-        filtered.push(fileData);
-        localStorage.setItem(storageKey, JSON.stringify(filtered));
+    _uploadToShared: async (storageKey, orderId, fileDataOrBlob, fileName) => {
+        try {
+            let blob = fileDataOrBlob;
+
+            // Conversion si c'est un DataURL (Base64)
+            if (typeof fileDataOrBlob === 'string' && fileDataOrBlob.startsWith('data:')) {
+                const res = await fetch(fileDataOrBlob);
+                blob = await res.blob();
+            }
+
+            const formData = new FormData();
+            formData.append('file', blob);
+            formData.append('orderId', orderId);
+            formData.append('storageKey', storageKey);
+            formData.append('fileName', fileName);
+
+            const response = await fetch(`${API_URL}?action=upload_file`, {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                // On met à jour l'ordre localement avant de sauvegarder pour éviter les conflits
+                const orders = await orderService.getAllOrders();
+                const idx = orders.findIndex(o => o.id === orderId);
+                if (idx !== -1) {
+                    if (!orders[idx].files) orders[idx].files = {};
+                    orders[idx].files[storageKey] = {
+                        exists: true,
+                        name: fileName,
+                        at: new Date().toISOString()
+                    };
+                    await orderService._saveAllToShared(orders);
+                }
+                return true;
+            } else {
+                console.error("Upload server error:", result.message);
+                return false;
+            }
+        } catch (e) {
+            console.error("Shared Upload Failed:", e);
+            return false;
+        }
     },
 
-    _getFile: (storageKey, orderId) => {
-        const files = JSON.parse(localStorage.getItem(storageKey) || '[]');
-        return files.find(file => file.orderId === orderId);
+    saveOdsFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_ods', orderId, fileData, fileName),
+    saveContractFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_contracts', orderId, fileData, fileName),
+    saveStopRequestFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_stops_req', orderId, fileData, fileName),
+    saveStopResponseFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_stops_res', orderId, fileData, fileName),
+
+    // Utility to get file from local storage (migration support)
+    _getFile: async (storageKey, orderId) => {
+        try {
+            // Mapping des clés actuelles vers les anciennes clés pour ratisser large
+            const keyMap = {
+                'storage_ods': ['storage_ods', 'ods_files'],
+                'storage_contracts': ['storage_contracts', 'ods_contracts'],
+                'storage_stops_req': ['storage_stops_req', 'ods_stop_requests', 'storage_stops_req'],
+                'storage_stops_res': ['storage_stops_res', 'ods_stop_responses', 'storage_stops_res']
+            };
+
+            const keysToSearch = keyMap[storageKey] || [storageKey];
+
+            for (const key of keysToSearch) {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    const files = JSON.parse(data);
+                    const file = files.find(f => f.orderId === orderId);
+                    if (file) return file;
+                }
+            }
+            return null;
+        } catch (e) {
+            return null;
+        }
     },
 
-    // ODS file
-    saveOdsFile: (orderId, fileDataUrl, fileName) => orderService._saveFile('ods_files', orderId, fileDataUrl, fileName),
-    getOdsFile: (orderId) => orderService._getFile('ods_files', orderId),
-
-    // Contract file
-    saveContractFile: (orderId, fileDataUrl, fileName) => orderService._saveFile('ods_contracts', orderId, fileDataUrl, fileName),
-    getContractFile: (orderId) => orderService._getFile('ods_contracts', orderId),
-
-    // Stop Request file
-    saveStopRequestFile: (orderId, fileDataUrl, fileName) => orderService._saveFile('ods_stop_requests', orderId, fileDataUrl, fileName),
-    getStopRequestFile: (orderId) => orderService._getFile('ods_stop_requests', orderId),
-
-    // Stop Response file
-    saveStopResponseFile: (orderId, fileDataUrl, fileName) => orderService._saveFile('ods_stop_responses', orderId, fileDataUrl, fileName),
-    getStopResponseFile: (orderId) => orderService._getFile('ods_stop_responses', orderId)
+    getOdsFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_ods`,
+    getContractFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_contracts`,
+    getStopRequestFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_stops_req`,
+    getStopResponseFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_stops_res`
 };
