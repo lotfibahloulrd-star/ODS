@@ -8,7 +8,7 @@ import { LayoutDashboard, PlusCircle, Users, LogOut, Key, User } from 'lucide-re
 import './index.css';
 
 function AppContent() {
-    const { currentUser, logout, changePassword, isAdmin } = useAuth();
+    const { currentUser, logout, changePassword, isAdmin, isSuperAdmin } = useAuth();
     const [activeTab, setActiveTab] = useState('dashboard');
 
     if (!currentUser) {
