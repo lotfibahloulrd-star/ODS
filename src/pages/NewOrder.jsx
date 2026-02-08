@@ -4,7 +4,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { orderService } from '../services/orderService';
 
 // Config Worker PDF Local
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+pdfjsLib.GlobalWorkerOptions.workerSrc = `${import.meta.env.BASE_URL}pdf.worker.min.js`;
 
 const NewOrder = ({ onSave }) => {
     const [step, setStep] = useState(1);
@@ -133,47 +133,61 @@ const NewOrder = ({ onSave }) => {
         if (!file) return;
         const reader = new FileReader();
         reader.onloadend = () => {
-            storageMethod(orderId, reader.result, file.name);
+            try {
+                storageMethod(orderId, reader.result, file.name);
+            } catch (e) {
+                console.error("Storage error:", e);
+                throw e; // Propagate to handleSave
+            }
         };
         reader.readAsDataURL(file);
     };
 
     const handleSave = async () => {
-        const savedOrder = await orderService.createOrder(formData);
+        try {
+            const savedOrder = await orderService.createOrder(formData);
 
-        // Save files
-        if (file) handleFileUpload(file, orderService.saveOdsFile, savedOrder.id);
-        if (contractFile) handleFileUpload(contractFile, orderService.saveContractFile, savedOrder.id);
-        if (stopRequestFile) handleFileUpload(stopRequestFile, orderService.saveStopRequestFile, savedOrder.id);
-        if (stopResponseFile) handleFileUpload(stopResponseFile, orderService.saveStopResponseFile, savedOrder.id);
+            // Save files
+            if (file) handleFileUpload(file, orderService.saveOdsFile, savedOrder.id);
+            if (contractFile) handleFileUpload(contractFile, orderService.saveContractFile, savedOrder.id);
+            if (stopRequestFile) handleFileUpload(stopRequestFile, orderService.saveStopRequestFile, savedOrder.id);
+            if (stopResponseFile) handleFileUpload(stopResponseFile, orderService.saveStopResponseFile, savedOrder.id);
 
-        alert('ODS enregistré avec succès !');
-        setStep(1);
-        setFile(null);
-        setContractFile(null);
-        setStopRequestFile(null);
-        setStopResponseFile(null);
-        setFormData({
-            client: '',
-            refOds: '',
-            refContract: '',
-            division: 'Division Laboratoire',
-            object: '',
-            dateOds: '',
-            startDate: '',
-            endDate: '',
-            delay: '',
-            amount: '',
-            authorization: 'Non',
-            deliveryStatus: 'Non livrée',
-            equipmentDetails: '',
-            reagentDetails: '',
-            consumableDetails: '',
-            hasStopRequest: 'Non',
-            stopDate: '',
-            resumeDate: ''
-        });
-        if (onSave) onSave();
+            alert('ODS enregistré avec succès !');
+            setStep(1);
+            setFile(null);
+            setContractFile(null);
+            setStopRequestFile(null);
+            setStopResponseFile(null);
+            setFormData({
+                client: '',
+                refOds: '',
+                refContract: '',
+                division: 'Division Laboratoire',
+                object: '',
+                dateOds: '',
+                startDate: '',
+                endDate: '',
+                delay: '',
+                amount: '',
+                authorization: 'Non',
+                deliveryStatus: 'Non livrée',
+                equipmentDetails: '',
+                reagentDetails: '',
+                consumableDetails: '',
+                hasStopRequest: 'Non',
+                stopDate: '',
+                resumeDate: ''
+            });
+            if (onSave) onSave();
+        } catch (error) {
+            console.error(error);
+            if (error.name === 'QuotaExceededError' || error.message.includes('quota')) {
+                alert("Erreur : La mémoire du navigateur est pleine. Les fichiers PDF sont trop volumineux pour être stockés localement. L'ODS a été créé mais sans les documents joints.");
+            } else {
+                alert("Erreur lors de l'enregistrement : " + error.message);
+            }
+        }
     };
 
     return (
@@ -266,7 +280,8 @@ const NewOrder = ({ onSave }) => {
                                 rows={2}
                                 value={formData.object}
                                 onChange={e => setFormData({ ...formData, object: e.target.value })}
-                            />
+                                className="w-full p-2 border border-gray-300 rounded-lg"
+                            ></textarea>
                         </div>
                         <div className="md:col-span-2">
                             <label className="block text-sm font-bold text-slate-700 mb-1 italic">Classification Contrat / Division</label>
@@ -284,6 +299,7 @@ const NewOrder = ({ onSave }) => {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Date ODS</label>
                             <input
                                 type="date"
+                                className="w-full p-2 border border-gray-300 rounded-lg"
                                 value={formData.dateOds}
                                 onChange={e => {
                                     const val = e.target.value;
@@ -300,6 +316,7 @@ const NewOrder = ({ onSave }) => {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Délai (Jours)</label>
                             <input
                                 type="number"
+                                className="w-full p-2 border border-gray-300 rounded-lg"
                                 value={formData.delay}
                                 onChange={e => {
                                     const val = e.target.value;
@@ -333,6 +350,7 @@ const NewOrder = ({ onSave }) => {
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Date d'Arrêt</label>
                                             <input
                                                 type="date"
+                                                className="w-full p-2 border border-gray-300 rounded-lg"
                                                 value={formData.stopDate}
                                                 onChange={e => {
                                                     const val = e.target.value;
@@ -348,6 +366,7 @@ const NewOrder = ({ onSave }) => {
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Date de Reprise</label>
                                             <input
                                                 type="date"
+                                                className="w-full p-2 border border-gray-300 rounded-lg"
                                                 value={formData.resumeDate}
                                                 onChange={e => {
                                                     const val = e.target.value;
@@ -376,6 +395,7 @@ const NewOrder = ({ onSave }) => {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
                             <input
                                 type="date"
+                                className="w-full p-2 border border-gray-300 rounded-lg"
                                 value={formData.startDate}
                                 onChange={e => {
                                     const val = e.target.value;
@@ -393,7 +413,7 @@ const NewOrder = ({ onSave }) => {
                                 type="date"
                                 value={formData.endDate}
                                 readOnly
-                                className="bg-gray-100 font-bold"
+                                className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 font-bold"
                             />
                         </div>
 
@@ -402,7 +422,7 @@ const NewOrder = ({ onSave }) => {
                             <select
                                 value={formData.authorization}
                                 onChange={e => setFormData({ ...formData, authorization: e.target.value })}
-                                className="w-full p-2 border border-gray-300 rounded"
+                                className="w-full p-2 border border-gray-300 rounded-lg"
                             >
                                 <option value="Non">Non</option>
                                 <option value="Oui">Oui</option>
@@ -413,7 +433,7 @@ const NewOrder = ({ onSave }) => {
                             <select
                                 value={formData.deliveryStatus}
                                 onChange={e => setFormData({ ...formData, deliveryStatus: e.target.value })}
-                                className="w-full p-2 border border-gray-300 rounded"
+                                className="w-full p-2 border border-gray-300 rounded-lg"
                             >
                                 <option value="Non livrée">Non livrée</option>
                                 <option value="Partielle">Partielle</option>
@@ -431,6 +451,7 @@ const NewOrder = ({ onSave }) => {
                                         placeholder="Liste des équipements..."
                                         value={formData.equipmentDetails}
                                         onChange={e => setFormData({ ...formData, equipmentDetails: e.target.value })}
+                                        className="w-full p-2 border border-gray-300 rounded-lg"
                                     ></textarea>
                                 </div>
                                 <div>
@@ -440,6 +461,7 @@ const NewOrder = ({ onSave }) => {
                                         placeholder="Liste des réactifs..."
                                         value={formData.reagentDetails}
                                         onChange={e => setFormData({ ...formData, reagentDetails: e.target.value })}
+                                        className="w-full p-2 border border-gray-300 rounded-lg"
                                     ></textarea>
                                 </div>
                                 <div>
@@ -449,6 +471,7 @@ const NewOrder = ({ onSave }) => {
                                         placeholder="Liste des consommables..."
                                         value={formData.consumableDetails}
                                         onChange={e => setFormData({ ...formData, consumableDetails: e.target.value })}
+                                        className="w-full p-2 border border-gray-300 rounded-lg"
                                     ></textarea>
                                 </div>
                             </div>
@@ -458,6 +481,7 @@ const NewOrder = ({ onSave }) => {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Montant Total (DA)</label>
                             <input
                                 type="text"
+                                className="w-full p-2 border border-gray-300 rounded-lg"
                                 value={formData.amount}
                                 onChange={e => setFormData({ ...formData, amount: e.target.value })}
                             />
