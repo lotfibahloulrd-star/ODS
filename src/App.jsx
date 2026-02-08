@@ -56,7 +56,7 @@ function AppContent() {
                                 <PlusCircle size={18} />
                                 <span className="hidden sm:inline">Nouvel ODS</span>
                             </button>
-                            {isAdmin() && (
+                            {isSuperAdmin() && (
                                 <button
                                     onClick={() => setActiveTab('users')}
                                     className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-black transition-all whitespace-nowrap ${activeTab === 'users' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
@@ -101,7 +101,8 @@ function AppContent() {
                         try {
                             if (activeTab === 'dashboard') return <Dashboard />;
                             if (activeTab === 'new') return <NewOrder onSave={() => setActiveTab('dashboard')} />;
-                            if (activeTab === 'users') return <UsersPage />;
+                            if (activeTab === 'users' && isSuperAdmin()) return <UsersPage />;
+                            if (activeTab === 'users' && !isSuperAdmin()) return <div className="text-center py-20 text-slate-400">Accès restreint</div>;
                             return <div className="text-center py-20 text-slate-400">Sélectionnez un onglet</div>;
                         } catch (error) {
                             console.error("App: Rendering error:", error);
