@@ -172,13 +172,23 @@ export const AuthProvider = ({ children }) => {
         return isSuperAdmin() || authorizedEmails.includes(currentUser?.email);
     };
 
+    const canEditAmount = () => {
+        const authorizedEmails = [
+            'l.bahloul@esclab-algerie.com',
+            'w.boukacem@esclab-algerie.com',
+            's.boukacem@esclab-algerie.com',
+            'brikh.hamza@esclab-algerie.com'
+        ];
+        return isSuperAdmin() || authorizedEmails.includes(currentUser?.email);
+    };
+
     const canViewOrder = (order) => {
         if (hasFullAccess()) return true;
         return order.division === currentUser?.division;
     };
 
     return (
-        <AuthContext.Provider value={{ currentUser, login, logout, isAdmin, isSuperAdmin, hasFullAccess, canViewOrder, canCreateOds, changePassword, resetUserPassword, isJuridique, isImport, isStock }}>
+        <AuthContext.Provider value={{ currentUser, login, logout, isAdmin, isSuperAdmin, hasFullAccess, canViewOrder, canCreateOds, canEditAmount, changePassword, resetUserPassword, isJuridique, isImport, isStock }}>
             {children}
         </AuthContext.Provider>
     );

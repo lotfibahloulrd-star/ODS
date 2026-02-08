@@ -4,14 +4,17 @@ import { orderService } from '../services/orderService';
 import { useAuth } from '../context/AuthContext';
 
 const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
-    const { currentUser, isImport, isStock, canCreateOds } = useAuth();
+    const { currentUser, isImport, isStock, canCreateOds, canEditAmount } = useAuth();
     const canCreate = canCreateOds();
+    const canEditPrice = canEditAmount();
 
     // Local state for operational updates
     const [importData, setImportData] = useState(order?.importStatus || {});
     const [stockData, setStockData] = useState(order?.stockStatus || {});
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [isEditingAmount, setIsEditingAmount] = useState(false);
+    const [tempAmount, setTempAmount] = useState(order?.amount || "");
 
     const handleDirectUpload = (e, orderId, type) => {
         const file = e.target.files[0];
@@ -53,6 +56,22 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
             alert("Suivi opérationnel mis à jour !");
         } catch (e) {
             alert("Erreur lors de la mise à jour.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleSaveAmount = async () => {
+        setIsSaving(true);
+        try {
+            await orderService.updateOrder(order.id, {
+                amount: tempAmount
+            }, currentUser.firstName);
+            setIsEditingAmount(false);
+            if (onUpdate) onUpdate();
+            alert("Montant mis à jour !");
+        } catch (e) {
+            alert("Erreur lors de la mise à jour du montant.");
         } finally {
             setIsSaving(false);
         }
@@ -180,12 +199,53 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                             <div className="text-xl font-black text-slate-900 uppercase truncate" title={order.client}>{order.client}</div>
                         </div>
 
-                        <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 flex flex-col justify-between">
-                            <div className="flex items-center gap-3 text-blue-400 mb-4">
-                                <DollarSign size={18} />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Montant Total TTC</span>
+                        <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 flex flex-col justify-between relative group/amount">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3 text-blue-400">
+                                    <DollarSign size={18} />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Montant Total TTC</span>
+                                </div>
+                                {canEditPrice && !isEditingAmount && (
+                                    <button
+                                        onClick={() => {
+                                            setTempAmount(order.amount);
+                                            setIsEditingAmount(true);
+                                        }}
+                                        className="p-1.5 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors opacity-0 group-hover/amount:opacity-100"
+                                        title="Modifier le montant"
+                                    >
+                                        <Layers size={14} /> {/* Using Layers as an edit icon since I don't see 'Edit' in the imports, or I'll just use a generic icon */}
+                                    </button>
+                                )}
                             </div>
-                            <div className="text-2xl font-black text-blue-800">{formatAmount(order.amount)}</div>
+
+                            {isEditingAmount ? (
+                                <div className="space-y-3">
+                                    <input
+                                        type="text"
+                                        value={tempAmount}
+                                        onChange={e => setTempAmount(e.target.value)}
+                                        className="w-full p-2 bg-white border-2 border-blue-300 rounded-xl font-black text-blue-900 outline-none"
+                                        autoFocus
+                                    />
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleSaveAmount}
+                                            className="flex-1 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest"
+                                        >
+                                            Valider
+                                        </button>
+                                        <button
+                                            onClick={() => setIsEditingAmount(false)}
+                                            className="flex-1 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                                        >
+                                            Annuler
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-2xl font-black text-blue-800">{formatAmount(order.amount)}</div>
+                            )}
                         </div>
 
                         <div className="bg-slate-900 p-6 rounded-3xl flex flex-col justify-between relative overflow-hidden group">
