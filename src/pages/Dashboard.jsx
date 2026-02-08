@@ -22,16 +22,40 @@ import {
     Plane,
     Box,
     Anchor,
-    Ship
+    Ship,
+    Upload,
+    Plus
 } from 'lucide-react';
 
 const Dashboard = () => {
     const auth = useAuth();
+    const canCreate = auth?.canCreateOds();
     const currentUser = auth?.currentUser;
     const [orders, setOrders] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    const handleDirectUpload = (e, orderId, type) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            try {
+                if (type === 'ods') {
+                    orderService.saveOdsFile(orderId, reader.result, file.name);
+                } else {
+                    orderService.saveContractFile(orderId, reader.result, file.name);
+                }
+                loadOrders(); // Refresh table
+                alert(`Document ${type.toUpperCase()} attaché avec succès !`);
+            } catch (error) {
+                alert("Erreur de stockage : " + error.message);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
 
     // Notifications state
     const [notifications, setNotifications] = useState([]);
@@ -423,9 +447,16 @@ const Dashboard = () => {
                                             </td>
                                             <td className="px-6 py-7 text-center">
                                                 {odsFile ? (
-                                                    <button onClick={e => { e.stopPropagation(); openPdf(odsFile); }} className="w-9 h-9 flex items-center justify-center transition-all hover:bg-blue-600 hover:text-white text-blue-600 rounded-xl bg-blue-50 border border-blue-100">
+                                                    <button onClick={e => { e.stopPropagation(); openPdf(odsFile); }} title="Voir ODS" className="w-9 h-9 flex items-center justify-center transition-all hover:bg-blue-600 hover:text-white text-blue-600 rounded-xl bg-blue-50 border border-blue-100">
                                                         <FileText size={16} />
                                                     </button>
+                                                ) : canCreate ? (
+                                                    <div className="relative inline-block" onClick={e => e.stopPropagation()}>
+                                                        <label className="w-9 h-9 flex items-center justify-center cursor-pointer transition-all hover:bg-blue-600 hover:text-white text-blue-400 rounded-xl bg-slate-50 border border-dashed border-slate-300">
+                                                            <Upload size={14} />
+                                                            <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'ods')} />
+                                                        </label>
+                                                    </div>
                                                 ) : <span className="text-slate-200">-</span>}
                                             </td>
                                             <td className="px-6 py-7">
@@ -433,9 +464,16 @@ const Dashboard = () => {
                                             </td>
                                             <td className="px-6 py-7 text-center">
                                                 {contractFile ? (
-                                                    <button onClick={e => { e.stopPropagation(); openPdf(contractFile); }} className="w-9 h-9 flex items-center justify-center transition-all hover:bg-indigo-600 hover:text-white text-indigo-600 rounded-xl bg-indigo-50 border border-indigo-100">
+                                                    <button onClick={e => { e.stopPropagation(); openPdf(contractFile); }} title="Voir Contrat" className="w-9 h-9 flex items-center justify-center transition-all hover:bg-indigo-600 hover:text-white text-indigo-600 rounded-xl bg-indigo-50 border border-indigo-100">
                                                         <FileCheck size={16} />
                                                     </button>
+                                                ) : canCreate ? (
+                                                    <div className="relative inline-block" onClick={e => e.stopPropagation()}>
+                                                        <label className="w-9 h-9 flex items-center justify-center cursor-pointer transition-all hover:bg-indigo-600 hover:text-white text-indigo-400 rounded-xl bg-slate-50 border border-dashed border-slate-300">
+                                                            <Plus size={14} />
+                                                            <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'contract')} />
+                                                        </label>
+                                                    </div>
                                                 ) : <span className="text-slate-200">-</span>}
                                             </td>
                                             <td className="px-6 py-7">
