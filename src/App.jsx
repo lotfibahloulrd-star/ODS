@@ -8,7 +8,7 @@ import { LayoutDashboard, PlusCircle, Users, LogOut, Key, User } from 'lucide-re
 import './index.css';
 
 function AppContent() {
-    const { currentUser, logout, changePassword, isAdmin, isSuperAdmin } = useAuth();
+    const { currentUser, logout, changePassword, isAdmin, isSuperAdmin, canCreateOds } = useAuth();
     const [activeTab, setActiveTab] = useState('dashboard');
 
     if (!currentUser) {
@@ -49,13 +49,15 @@ function AppContent() {
                                 <LayoutDashboard size={18} />
                                 <span className="hidden sm:inline">Tableau de Bord</span>
                             </button>
-                            <button
-                                onClick={() => setActiveTab('new')}
-                                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-black transition-all whitespace-nowrap ${activeTab === 'new' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
-                            >
-                                <PlusCircle size={18} />
-                                <span className="hidden sm:inline">Nouvel ODS</span>
-                            </button>
+                            {canCreateOds() && (
+                                <button
+                                    onClick={() => setActiveTab('new')}
+                                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-black transition-all whitespace-nowrap ${activeTab === 'new' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                                >
+                                    <PlusCircle size={18} />
+                                    <span className="hidden sm:inline">Nouvel ODS</span>
+                                </button>
+                            )}
                             {isSuperAdmin() && (
                                 <button
                                     onClick={() => setActiveTab('users')}
@@ -100,7 +102,8 @@ function AppContent() {
                     {(() => {
                         try {
                             if (activeTab === 'dashboard') return <Dashboard />;
-                            if (activeTab === 'new') return <NewOrder onSave={() => setActiveTab('dashboard')} />;
+                            if (activeTab === 'new' && canCreateOds()) return <NewOrder onSave={() => setActiveTab('dashboard')} />;
+                            if (activeTab === 'new' && !canCreateOds()) return <div className="text-center py-20 text-slate-400">Accès restreint à la création</div>;
                             if (activeTab === 'users' && isSuperAdmin()) return <UsersPage />;
                             if (activeTab === 'users' && !isSuperAdmin()) return <div className="text-center py-20 text-slate-400">Accès restreint</div>;
                             return <div className="text-center py-20 text-slate-400">Sélectionnez un onglet</div>;
