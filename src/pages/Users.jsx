@@ -180,60 +180,87 @@ const UsersPage = () => {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {users.map(user => (
-                    <div key={user.id} className="bg-white rounded-lg p-5 border border-gray-200 shadow-sm hover:shadow-md transition-shadow relative group">
-                        <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-700 font-bold text-lg">
-                                    {user.firstName[0]}{user.lastName[0]}
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-gray-900">{user.firstName} {user.lastName}</h4>
-                                    <p className="text-xs text-gray-500">{user.division}</p>
-                                </div>
-                            </div>
-                            <button onClick={() => deleteUser(user.id)} className="text-gray-300 hover:text-red-500 transition-colors p-1">
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
-
-                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border mb-3 ${getRoleBadgeColor(user.role)}`}>
-                            {getRoleIcon(user.role)}
-                            {user.role}
-                        </div>
-
-                        <div className="space-y-2 text-sm text-gray-600">
-                            <div className="flex items-center gap-2">
-                                <Mail size={14} className="text-gray-400" />
-                                <span className="truncate">{user.email}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Phone size={14} className="text-gray-400" />
-                                {user.phone || 'Non renseigné'}
-                            </div>
-                        </div>
-
-                        {isSuperAdmin() && (
-                            <button
-                                onClick={() => {
-                                    const newPass = prompt(`Nouveau mot de passe pour ${user.firstName} ${user.lastName} :`);
-                                    if (newPass && newPass.length >= 4) {
-                                        if (resetUserPassword(user.email, newPass)) {
-                                            alert("Mot de passe réinitialisé !");
-                                            // Refresh local list to be safe
-                                            setUsers(JSON.parse(localStorage.getItem('ods_users_v6')));
-                                        }
-                                    }
-                                }}
-                                className="mt-4 w-full flex items-center justify-center gap-2 py-2 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all"
-                            >
-                                <Key size={14} />
-                                Réinitialiser le mot de passe
-                            </button>
-                        )}
-                    </div>
-                ))}
+            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50 border-b border-slate-100">
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Collaborateur</th>
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Division / Service</th>
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Rôle d'Accès</th>
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Contact</th>
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-right text-slate-400">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {users.map(user => (
+                                <tr key={user.id} className="group hover:bg-slate-50/80 transition-all">
+                                    <td className="px-6 py-5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-700 font-black text-sm shadow-sm ring-2 ring-white">
+                                                {user.firstName[0]}{user.lastName[0]}
+                                            </div>
+                                            <div>
+                                                <div className="font-black text-slate-900 text-sm tracking-tight">{user.firstName} {user.lastName}</div>
+                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{user.email}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-5 text-sm font-bold text-slate-600">
+                                        {user.division}
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border transition-colors ${getRoleBadgeColor(user.role)}`}>
+                                            {getRoleIcon(user.role)}
+                                            {user.role}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <div className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                                                <Mail size={12} className="text-slate-300" />
+                                                {user.email}
+                                            </div>
+                                            {user.phone && (
+                                                <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                                                    <Phone size={12} className="text-slate-300" />
+                                                    {user.phone}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-5 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            {isSuperAdmin() && (
+                                                <button
+                                                    onClick={() => {
+                                                        const newPass = prompt(`Nouveau mot de passe pour ${user.firstName} ${user.lastName} :`);
+                                                        if (newPass && newPass.length >= 4) {
+                                                            if (resetUserPassword(user.email, newPass)) {
+                                                                alert("Mot de passe réinitialisé !");
+                                                                setUsers(JSON.parse(localStorage.getItem('ods_users_v6')) || users);
+                                                            }
+                                                        }
+                                                    }}
+                                                    title="Réinitialiser le mot de passe"
+                                                    className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                >
+                                                    <Key size={16} />
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => deleteUser(user.id)}
+                                                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">

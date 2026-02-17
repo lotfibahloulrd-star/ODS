@@ -154,7 +154,7 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
             onClick={onClose}
         >
             <div
-                className="bg-white w-full max-w-6xl rounded-[3rem] shadow-2xl max-h-[95vh] flex flex-col overflow-hidden ring-1 ring-white/20 animate-in fade-in zoom-in-95 duration-300"
+                className="bg-white w-full max-w-[1500px] rounded-[3rem] shadow-2xl max-h-[95vh] flex flex-col overflow-hidden ring-1 ring-white/20 animate-in fade-in zoom-in-95 duration-300"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header Section */}
