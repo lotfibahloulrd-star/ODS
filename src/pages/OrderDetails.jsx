@@ -304,7 +304,7 @@ const OrderDetails = () => {
                                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${order.files?.storage_ods ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-300'}`}>
                                                     <FileText size={16} />
                                                 </div>
-                                                <span className="text-xs font-black text-slate-700 uppercase">ODS Officiel</span>
+                                                <span className="text-xs font-black text-slate-700 uppercase">ODS Officiel (PDF)</span>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6 text-right">
@@ -329,7 +329,7 @@ const OrderDetails = () => {
                                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${order.files?.storage_contracts ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-300'}`}>
                                                     <FileCheck size={16} />
                                                 </div>
-                                                <span className="text-xs font-black text-slate-700 uppercase">Contrat / Marché</span>
+                                                <span className="text-xs font-black text-slate-700 uppercase">Contrat / Marché (PDF)</span>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6 text-right">
@@ -344,6 +344,56 @@ const OrderDetails = () => {
                                                         <Plus size={16} />
                                                     </div>
                                                     <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'contract')} />
+                                                </label>
+                                            )}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${order.files?.storage_stops_req ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-300'}`}>
+                                                    <AlertCircle size={16} />
+                                                </div>
+                                                <span className="text-xs font-black text-slate-700 uppercase">Demande d'Arrêt (PDF)</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6 text-right">
+                                            {order.files?.storage_stops_req ? (
+                                                <button onClick={() => openPdf(order.id, 'storage_stops_req')} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 ml-auto shadow-lg shadow-red-100 hover:bg-red-700 transition-all">
+                                                    <ExternalLink size={14} /> Voir Demande
+                                                </button>
+                                            ) : (
+                                                <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-red-500 transition-colors">Attacher</span>
+                                                    <div className="w-10 h-10 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-red-500 group-hover:text-red-500 transition-all">
+                                                        <Plus size={16} />
+                                                    </div>
+                                                    <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'stop_request')} />
+                                                </label>
+                                            )}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${order.files?.storage_stops_res ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-300'}`}>
+                                                    <CheckCircle2 size={16} />
+                                                </div>
+                                                <span className="text-xs font-black text-slate-700 uppercase">Reprise / Arrêt Officiel (PDF)</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6 text-right">
+                                            {order.files?.storage_stops_res ? (
+                                                <button onClick={() => openPdf(order.id, 'storage_stops_res')} className="px-4 py-2 bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 ml-auto shadow-lg shadow-amber-100 hover:bg-amber-700 transition-all">
+                                                    <ExternalLink size={14} /> Voir Officiel
+                                                </button>
+                                            ) : (
+                                                <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-amber-500 transition-colors">Attacher</span>
+                                                    <div className="w-10 h-10 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-amber-500 group-hover:text-amber-500 transition-all">
+                                                        <Plus size={16} />
+                                                    </div>
+                                                    <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'stop_response')} />
                                                 </label>
                                             )}
                                         </td>

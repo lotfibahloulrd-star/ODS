@@ -467,30 +467,27 @@ const Dashboard = () => {
                     <table className="w-full text-left border-collapse min-w-[1200px]">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-100">
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Status</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">1. Réf ODS</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-slate-400">2. ODS</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">3. Réf Contrat</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-slate-400">4. Contrat</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Logistique</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Client / Maître d'Ouvrage</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Objet</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Valeur</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-slate-400">Échéance</th>
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-slate-400">Valeur</th>
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Réf. ODS</th>
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">Réf. Contrat</th>
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-red-500">ODS d'Arrêt</th>
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-slate-400">Logistique</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-right text-slate-400">Détails</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="11" className="px-6 py-20 text-center">
+                                    <td colSpan="8" className="px-6 py-20 text-center">
                                         <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
                                         <p className="text-slate-500 font-bold tracking-tight">Analyse des données en cours...</p>
                                     </td>
                                 </tr>
                             ) : filteredOrders.length === 0 ? (
                                 <tr>
-                                    <td colSpan="11" className="px-6 py-20 text-center">
+                                    <td colSpan="8" className="px-6 py-20 text-center">
                                         <Package className="mx-auto text-slate-300 mb-6" size={64} />
                                         <p className="text-slate-500 font-black text-lg">Aucun engagement trouvé</p>
                                         <p className="text-slate-400 text-sm mt-1">Ajustez vos filtres ou créez un nouvel ODS</p>
@@ -498,8 +495,6 @@ const Dashboard = () => {
                                 </tr>
                             ) : (
                                 filteredOrders.map(order => {
-                                    const daysLeft = getRemainingDays(order);
-                                    const isOverdue = daysLeft !== null && daysLeft < 0;
                                     const isStopping = order.hasStopRequest === 'Oui';
                                     const hasOds = !!(order.files?.storage_ods);
                                     const hasContract = !!(order.files?.storage_contracts);
@@ -508,99 +503,12 @@ const Dashboard = () => {
                                     const isImportCleared = !!order.importStatus?.clearedAt;
                                     const isStockReceived = order.stockStatus?.reception === 'Totale';
 
-                                    // Displayed end date fallback
-                                    let displayEndDate = order.endDate;
-                                    if (!displayEndDate && (order.startDate || order.dateOds) && order.delay) {
-                                        try {
-                                            const d = new Date(order.startDate || order.dateOds);
-                                            const add = parseInt(order.delay);
-                                            if (!isNaN(d.getTime()) && !isNaN(add)) {
-                                                d.setDate(d.getDate() + add);
-                                                if (!isNaN(d.getTime())) {
-                                                    displayEndDate = d.toISOString().split('T')[0];
-                                                }
-                                            }
-                                        } catch (e) {
-                                            displayEndDate = null;
-                                        }
-                                    }
-
                                     return (
                                         <tr
                                             key={order.id || Math.random()}
                                             onClick={() => navigate(`/order/${order.id}`)}
                                             className="group hover:bg-blue-50/50 transition-all cursor-pointer border-b border-slate-50 last:border-0"
                                         >
-                                            <td className="px-6 py-7">
-                                                <div className="flex flex-col gap-1.5">
-                                                    <div className="flex items-center gap-2">
-                                                        <div
-                                                            className={`w-7 h-7 rounded-xl flex items-center justify-center shadow-sm ${order.authorization === 'Oui' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}
-                                                            title={order.authorization === 'Oui' ? 'Autorisé' : 'En attente'}
-                                                        >
-                                                            {order.authorization === 'Oui' ? <CheckCircle2 size={14} /> : <Clock size={14} />}
-                                                        </div>
-                                                        {order.isReadyForDelivery ? (
-                                                            <span className="text-[9px] font-black px-2 py-0.5 rounded-lg bg-emerald-600 text-white animate-pulse">PRÊT À LIVRER</span>
-                                                        ) : (
-                                                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg tracking-wider ${order.deliveryStatus === 'Totale' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}>
-                                                                {order.deliveryStatus === 'Totale' ? 'LIVRÉ' : 'EN COURS'}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-7">
-                                                <div className="text-[11px] font-black text-blue-600 tracking-tight">{order.refOds || order.ref || "-"}</div>
-                                            </td>
-                                            <td className="px-6 py-7 text-center">
-                                                <div className="flex items-center justify-center gap-1.5" onClick={e => e.stopPropagation()}>
-                                                    {hasOds && (
-                                                        <button onClick={e => { e.stopPropagation(); openPdf(order.id, 'storage_ods'); }} title="Voir ODS" className="w-8 h-8 flex items-center justify-center transition-all hover:bg-blue-600 hover:text-white text-blue-600 rounded-lg bg-blue-50 border border-blue-100">
-                                                            <FileText size={14} />
-                                                        </button>
-                                                    )}
-                                                    {canCreate && (
-                                                        <label className="w-8 h-8 flex items-center justify-center cursor-pointer transition-all hover:bg-blue-600 hover:text-white text-blue-400 rounded-lg bg-slate-50 border border-dashed border-slate-300">
-                                                            {isUploading ? <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div> : <Upload size={12} />}
-                                                            <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'ods')} />
-                                                        </label>
-                                                    )}
-                                                    {!hasOds && !canCreate && <span className="text-slate-200">-</span>}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-7">
-                                                <div className="text-[11px] font-bold text-indigo-600 tracking-tight">{order.refContract || "-"}</div>
-                                            </td>
-                                            <td className="px-6 py-7 text-center">
-                                                <div className="flex items-center justify-center gap-1.5" onClick={e => e.stopPropagation()}>
-                                                    {hasContract && (
-                                                        <button onClick={e => { e.stopPropagation(); openPdf(order.id, 'storage_contracts'); }} title="Voir Contrat" className="w-8 h-8 flex items-center justify-center transition-all hover:bg-indigo-600 hover:text-white text-indigo-600 rounded-lg bg-indigo-50 border border-indigo-100">
-                                                            <FileCheck size={14} />
-                                                        </button>
-                                                    )}
-                                                    {canCreate && (
-                                                        <label className="w-8 h-8 flex items-center justify-center cursor-pointer transition-all hover:bg-indigo-600 hover:text-white text-indigo-400 rounded-lg bg-slate-50 border border-dashed border-slate-300">
-                                                            {isUploading ? <div className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div> : <Plus size={12} />}
-                                                            <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'contract')} />
-                                                        </label>
-                                                    )}
-                                                    {!hasContract && !canCreate && <span className="text-slate-200">-</span>}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-7">
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isImportLaunched ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-300'}`} title="Import Lancé">
-                                                        <Plane size={14} />
-                                                    </div>
-                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isImportCleared ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-300'}`} title="Dédouané">
-                                                        <Anchor size={14} />
-                                                    </div>
-                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isStockReceived ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-300'}`} title="Réceptionné">
-                                                        <Box size={14} />
-                                                    </div>
-                                                </div>
-                                            </td>
                                             <td className="px-6 py-7">
                                                 <div className="font-black text-slate-900 uppercase text-[11px] truncate max-w-[180px] tracking-tight" title={order.client}>
                                                     {order.client || "-"}
@@ -611,19 +519,59 @@ const Dashboard = () => {
                                                     {order.object || "-"}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-7 shrink-0">
-                                                <span className="text-xs font-black text-slate-900 whitespace-nowrap bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">{formatAmount(order.amount)}</span>
+                                            <td className="px-6 py-7 text-center">
+                                                <span className="text-xs font-black text-slate-900 whitespace-nowrap bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 italic">{formatAmount(order.amount)}</span>
                                             </td>
                                             <td className="px-6 py-7">
-                                                <div className={`p-2 rounded-xl border flex flex-col items-center min-w-[110px] transition-all shadow-sm ${isOverdue ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
-                                                    <span className={`text-[10px] font-black ${isOverdue ? 'text-red-700' : 'text-blue-700'}`}>
-                                                        {formatDate(displayEndDate)}
-                                                    </span>
-                                                    {daysLeft !== null && (
-                                                        <span className={`text-[8px] font-black uppercase mt-1 ${isOverdue ? 'text-red-500' : 'text-blue-500'}`}>
-                                                            {isOverdue ? `${Math.abs(daysLeft)} j retard` : `${daysLeft} j restants`}
-                                                        </span>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="text-[11px] font-black text-blue-600 tracking-tight">{order.refOds || order.ref || "-"}</div>
+                                                    {hasOds && (
+                                                        <button onClick={e => { e.stopPropagation(); openPdf(order.id, 'storage_ods'); }} className="w-6 h-6 flex items-center justify-center text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all">
+                                                            <FileText size={12} />
+                                                        </button>
                                                     )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-7">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="text-[11px] font-bold text-indigo-600 tracking-tight">{order.refContract || "-"}</div>
+                                                    {hasContract && (
+                                                        <button onClick={e => { e.stopPropagation(); openPdf(order.id, 'storage_contracts'); }} className="w-6 h-6 flex items-center justify-center text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-600 hover:text-white transition-all">
+                                                            <FileCheck size={12} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-7 text-center">
+                                                {isStopping ? (
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="px-2.5 py-1 bg-red-100 text-red-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-red-200">
+                                                                ARRÊTÉ
+                                                            </div>
+                                                            {order.files?.storage_stops_res && (
+                                                                <button onClick={e => { e.stopPropagation(); openPdf(order.id, 'storage_stops_res'); }} className="w-6 h-6 flex items-center justify-center text-red-600 bg-red-50 rounded-lg hover:bg-red-600 hover:text-white transition-all">
+                                                                    <FileText size={12} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-[8px] font-bold text-red-400">{formatDate(order.stopDate)}</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-slate-200 text-[10px] font-black uppercase tracking-widest">RAS</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-7">
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isImportLaunched ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-300'}`} title="Import Lancé">
+                                                        <Plane size={14} />
+                                                    </div>
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isImportCleared ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-300'}`} title="Dédouané">
+                                                        <Anchor size={14} />
+                                                    </div>
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isStockReceived ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-300'}`} title="Réceptionné">
+                                                        <Box size={14} />
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-7 text-right">
