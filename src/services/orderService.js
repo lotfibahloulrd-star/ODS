@@ -345,25 +345,7 @@ export const orderService = {
                 body: formData
             });
             const result = await response.json();
-
-            if (result.success) {
-                // On met à jour l'ordre localement avant de sauvegarder pour éviter les conflits
-                const orders = await orderService.getAllOrders();
-                const idx = orders.findIndex(o => o.id === orderId);
-                if (idx !== -1) {
-                    if (!orders[idx].files) orders[idx].files = {};
-                    orders[idx].files[storageKey] = {
-                        exists: true,
-                        name: fileName,
-                        at: new Date().toISOString()
-                    };
-                    await orderService._saveAllToShared(orders);
-                }
-                return true;
-            } else {
-                console.error("Upload server error:", result.message);
-                return false;
-            }
+            return result.success;
         } catch (e) {
             console.error("Shared Upload Failed:", e);
             return false;

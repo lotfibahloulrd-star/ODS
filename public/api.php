@@ -64,13 +64,9 @@ if ($action === 'upload_file' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $fileName = $_POST['fileName'] ?? '';
     
     if (isset($_FILES['file']) && $orderId && $storageKey) {
-        // Nettoyage de la clé pour le nom de fichier
-        $cleanKey = str_replace(['storage_', 'ods_'], '', $storageKey);
-        
         $ext = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
-        if (!$ext || $ext === 'json') $ext = 'pdf'; // Fallback technique
+        if (!$ext || $ext === 'json') $ext = 'pdf';
         
-        // On accepte PDF, JPG, PNG
         $allowed = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
         if (!in_array($ext, $allowed)) $ext = 'pdf';
 
@@ -79,6 +75,40 @@ if ($action === 'upload_file' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if (move_uploaded_file($_FILES['file']['tmp_name'], $targetPath)) {
             @chmod($targetPath, 0644);
+            
+            // --- Mise à jour atomique du JSON ---
+            // On verrouille le fichier pour éviter les écritures simultanées
+            $fp = fopen($DATA_FILE, 'r+');
+            if ($fp) {
+                if (flock($fp, LOCK_EX)) {
+                    $content = stream_get_contents($fp);
+                    $orders = json_decode($content, true) ?: [];
+                    
+                    $updated = false;
+                    foreach ($orders as &$order) {
+                        if ($order['id'] == $orderId) {
+                            if (!isset($order['files'])) $order['files'] = [];
+                            $order['files'][$storageKey] = [
+                                'exists' => true,
+                                'name' => $fileName,
+                                'at' => date('c'),
+                                'ext' => $ext
+                            ];
+                            $updated = true;
+                            break;
+                        }
+                    }
+                    
+                    if ($updated) {
+                        ftruncate($fp, 0);
+                        rewind($fp);
+                        fwrite($fp, json_encode($orders, JSON_PRETTY_PRINT));
+                    }
+                    flock($fp, LOCK_UN);
+                }
+                fclose($fp);
+            }
+            
             echo json_encode([
                 'success' => true, 
                 'url' => $targetPath,
@@ -86,16 +116,10 @@ if ($action === 'upload_file' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 'path' => $finalName
             ]);
         } else {
-            $error = error_get_last();
-            echo json_encode([
-                'success' => false, 
-                'message' => 'Erreur de déplacement',
-                'debug' => $error,
-                'target' => $targetPath
-            ]);
+            echo json_encode(['success' => false, 'message' => 'Upload failed']);
         }
     } else {
-        echo json_encode(['success' => false, 'message' => 'Données manquantes', 'post' => $_POST, 'files' => $_FILES]);
+        echo json_encode(['success' => false, 'message' => 'Missing data']);
     }
     exit;
 }

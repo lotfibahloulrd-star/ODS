@@ -38,7 +38,32 @@ const OrderDetails = () => {
 
     useEffect(() => {
         loadOrder();
-    }, [id]);
+
+        // Système de secours : Migration automatique des fichiers locaux vers le serveur pour cet ordre précis
+        const syncThisOrder = async () => {
+            if (!id) return;
+            const stores = ['storage_ods', 'storage_contracts', 'storage_stops_req', 'storage_stops_res'];
+            let hasSynced = false;
+
+            for (const store of stores) {
+                // Si le document n'est pas marqué comme existant sur le serveur
+                if (order && !order.files?.[store]) {
+                    try {
+                        const localFile = await orderService._getFile(store, id);
+                        if (localFile && (localFile.fileDataUrl || localFile.blob)) {
+                            const success = await orderService._uploadToShared(store, id, localFile.blob || localFile.fileDataUrl, localFile.fileName);
+                            if (success) hasSynced = true;
+                        }
+                    } catch (e) {
+                        console.error("Single order sync error:", e);
+                    }
+                }
+            }
+            if (hasSynced) loadOrder();
+        };
+
+        if (order) syncThisOrder();
+    }, [id, !!order]);
 
     const handleDirectUpload = (e, orderId, type) => {
         const file = e.target.files[0];
@@ -267,26 +292,32 @@ const OrderDetails = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                         {/* Documents Section */}
                         <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
+                            <div className="bg-slate-50 px-8 py-5 border-b border-slate-100 flex justify-between items-center">
+                                <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Documents Contractuels</h4>
+                                {isUploading && <div className="text-[9px] font-black text-blue-500 animate-pulse">CHARGEMENT...</div>}
+                            </div>
                             <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-slate-50 border-b border-slate-100">
-                                        <th colSpan="2" className="px-8 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Documents Contractuels</th>
-                                    </tr>
-                                </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     <tr>
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center"><FileText size={16} /></div>
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${order.files?.storage_ods ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-300'}`}>
+                                                    <FileText size={16} />
+                                                </div>
                                                 <span className="text-xs font-black text-slate-700 uppercase">ODS Officiel</span>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6 text-right">
                                             {order.files?.storage_ods ? (
-                                                <button onClick={() => openPdf(order.id, 'storage_ods')} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 ml-auto shadow-lg shadow-blue-100"><ExternalLink size={14} /> Voir</button>
+                                                <button onClick={() => openPdf(order.id, 'storage_ods')} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 ml-auto shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all">
+                                                    <ExternalLink size={14} /> Voir l'ODS
+                                                </button>
                                             ) : (
-                                                <label className="px-4 py-2 border-2 border-dashed border-slate-200 text-slate-400 rounded-xl text-[10px] font-black uppercase cursor-pointer hover:border-blue-400 hover:text-blue-500 transition-all inline-block">
-                                                    Attacher
+                                                <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-blue-500 transition-colors">Attacher</span>
+                                                    <div className="w-10 h-10 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-blue-500 group-hover:text-blue-500 transition-all">
+                                                        <Plus size={16} />
+                                                    </div>
                                                     <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'ods')} />
                                                 </label>
                                             )}
@@ -295,16 +326,23 @@ const OrderDetails = () => {
                                     <tr>
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center"><FileCheck size={16} /></div>
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${order.files?.storage_contracts ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-300'}`}>
+                                                    <FileCheck size={16} />
+                                                </div>
                                                 <span className="text-xs font-black text-slate-700 uppercase">Contrat / Marché</span>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6 text-right">
                                             {order.files?.storage_contracts ? (
-                                                <button onClick={() => openPdf(order.id, 'storage_contracts')} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 ml-auto shadow-lg shadow-indigo-100"><ExternalLink size={14} /> Voir</button>
+                                                <button onClick={() => openPdf(order.id, 'storage_contracts')} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 ml-auto shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
+                                                    <ExternalLink size={14} /> Voir le Contrat
+                                                </button>
                                             ) : (
-                                                <label className="px-4 py-2 border-2 border-dashed border-slate-200 text-slate-400 rounded-xl text-[10px] font-black uppercase cursor-pointer hover:border-indigo-400 hover:text-indigo-500 transition-all inline-block">
-                                                    Attacher
+                                                <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-indigo-500 transition-colors">Attacher</span>
+                                                    <div className="w-10 h-10 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-indigo-500 group-hover:text-indigo-500 transition-all">
+                                                        <Plus size={16} />
+                                                    </div>
                                                     <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'contract')} />
                                                 </label>
                                             )}
