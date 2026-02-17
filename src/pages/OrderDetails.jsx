@@ -13,6 +13,7 @@ const OrderDetails = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [importData, setImportData] = useState({});
     const [stockData, setStockData] = useState({});
+    const [localArticles, setLocalArticles] = useState([]);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [isEditingAmount, setIsEditingAmount] = useState(false);
@@ -27,6 +28,7 @@ const OrderDetails = () => {
                 setOrder(found);
                 setImportData(found.importStatus || {});
                 setStockData(found.stockStatus || {});
+                setLocalArticles(found.articles || []);
                 setTempAmount(found.amount || "");
             }
         } catch (error) {
@@ -95,10 +97,11 @@ const OrderDetails = () => {
         try {
             await orderService.updateOrder(order.id, {
                 importStatus: importData,
-                stockStatus: stockData
+                stockStatus: stockData,
+                articles: localArticles
             }, currentUser.firstName);
             loadOrder();
-            alert("Suivi opérationnel mis à jour !");
+            alert("Suivi opérationnel et confirmation des articles mis à jour !");
         } catch (e) {
             alert("Erreur lors de la mise à jour.");
         } finally {
@@ -442,11 +445,12 @@ const OrderDetails = () => {
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">PU HT</th>
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Montant HT</th>
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Marque</th>
+                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-emerald-600 text-center">Commande</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
-                                        {order.articles.map((art, idx) => (
-                                            <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                                        {localArticles.map((art, idx) => (
+                                            <tr key={idx} className={`hover:bg-slate-50/50 transition-colors ${art.ordered ? 'bg-emerald-50/30' : ''}`}>
                                                 <td className="px-6 py-4 text-[11px] font-black text-slate-400">{art.no}</td>
                                                 <td className="px-6 py-4 text-[11px] font-bold text-blue-600">{art.ref}</td>
                                                 <td className="px-6 py-4 text-[11px] font-medium text-slate-600 leading-relaxed max-w-md">{art.designation}</td>
@@ -455,6 +459,19 @@ const OrderDetails = () => {
                                                 <td className="px-6 py-4 text-[11px] font-black text-slate-900 text-right">{formatAmount(art.total)}</td>
                                                 <td className="px-6 py-4">
                                                     <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[9px] font-black uppercase italic">{art.marque}</span>
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        disabled={!isImport()}
+                                                        checked={art.ordered || false}
+                                                        onChange={e => {
+                                                            const newArticles = [...localArticles];
+                                                            newArticles[idx] = { ...art, ordered: e.target.checked };
+                                                            setLocalArticles(newArticles);
+                                                        }}
+                                                        className="w-5 h-5 rounded text-emerald-600 border-2 border-slate-200 cursor-pointer"
+                                                    />
                                                 </td>
                                             </tr>
                                         ))}
@@ -474,7 +491,7 @@ const OrderDetails = () => {
                                             <tr className="bg-indigo-50/50">
                                                 <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-indigo-600 tracking-[0.2em]">Total TTC</td>
                                                 <td className="px-6 py-4 text-right text-sm font-black text-indigo-600">{formatAmount(order.totals.ttc)}</td>
-                                                <td></td>
+                                                <td className="bg-white"></td>
                                             </tr>
                                         </tfoot>
                                     )}
@@ -495,7 +512,7 @@ const OrderDetails = () => {
                                 {importData.importLaunched && <span className="text-[9px] font-black bg-white/20 px-2 py-0.5 rounded-lg border border-white/20">LANCÉ</span>}
                             </div>
                             <div className="p-8 space-y-6">
-                                <div className="grid grid-cols-2 gap-8">
+                                <div className="grid grid-cols-1 gap-8">
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">Autorisation</label>
                                         <select disabled={!isImport()} value={importData.authImport || ''} onChange={e => setImportData({ ...importData, authImport: e.target.value })} className="w-full text-xs font-black uppercase border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all">
@@ -503,20 +520,6 @@ const OrderDetails = () => {
                                             <option value="Confirmée">Confirmée</option>
                                             <option value="Non disponible">Non disponible</option>
                                         </select>
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">Lancement Import</label>
-                                        <div className="flex items-center gap-3 h-[42px]">
-                                            <input type="checkbox" disabled={!isImport()} checked={importData.importLaunched || false} onChange={e => setImportData({ ...importData, importLaunched: e.target.checked })} className="w-5 h-5 rounded text-blue-600 border-2 border-slate-200" />
-                                            <span className="text-xs font-bold text-slate-600">{importData.importLaunched ? "Dossier Ouvert" : "À lancer"}</span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">Passation Commande</label>
-                                        <div className="flex items-center gap-3 h-[42px]">
-                                            <input type="checkbox" disabled={!isImport()} checked={importData.orderPlaced || false} onChange={e => setImportData({ ...importData, orderPlaced: e.target.checked })} className="w-5 h-5 rounded text-emerald-600 border-2 border-slate-200" />
-                                            <span className="text-xs font-bold text-emerald-600">{importData.orderPlaced ? "Confirmée" : "En attente"}</span>
-                                        </div>
                                     </div>
                                 </div>
                                 <div>
@@ -590,30 +593,32 @@ const OrderDetails = () => {
 
                     {/* Suspension Section if active */}
                     {order.hasStopRequest === 'Oui' && (
-                        <div className="bg-red-50 border border-red-100 rounded-[3rem] p-10 relative overflow-hidden">
-                            <div className="flex items-center justify-between mb-10 relative z-10">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-red-200 animate-pulse">
-                                        <AlertCircle size={24} />
+                        <div className="space-y-10">
+                            <div className="bg-red-50 border border-red-100 rounded-[3rem] p-10 relative overflow-hidden">
+                                <div className="flex items-center justify-between mb-10 relative z-10">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-red-200 animate-pulse">
+                                            <AlertCircle size={24} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-black text-red-900 uppercase">Suspension de Délai</h3>
+                                            <p className="text-xs font-bold text-red-700">Calcul du délai neutralisé</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h3 className="text-xl font-black text-red-900 uppercase">Suspension de Délai</h3>
-                                        <p className="text-xs font-bold text-red-700">Calcul du délai neutralisé</p>
+                                    <div className="flex gap-4">
+                                        {order.files?.storage_stops_req && <button onClick={() => openPdf(order.id, 'storage_stops_req')} className="px-6 py-3 bg-white border border-red-100 text-red-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-100 transition-all flex items-center gap-2">Demande PDF</button>}
+                                        {order.files?.storage_stops_res && <button onClick={() => openPdf(order.id, 'storage_stops_res')} className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-100 flex items-center gap-2">Accord PDF</button>}
                                     </div>
                                 </div>
-                                <div className="flex gap-4">
-                                    {order.files?.storage_stops_req && <button onClick={() => openPdf(order.id, 'storage_stops_req')} className="px-6 py-3 bg-white border border-red-100 text-red-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-100 transition-all flex items-center gap-2">Demande PDF</button>}
-                                    {order.files?.storage_stops_res && <button onClick={() => openPdf(order.id, 'storage_stops_res')} className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-100 flex items-center gap-2">Accord PDF</button>}
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-8 relative z-10">
-                                <div className="bg-white p-8 rounded-[2rem] border border-red-50 shadow-sm">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">Début Suspension</span>
-                                    <span className="text-2xl font-black text-slate-900">{formatDate(order.stopDate)}</span>
-                                </div>
-                                <div className="bg-white p-8 rounded-[2rem] border border-red-50 shadow-sm">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">Reprise d'activité</span>
-                                    <span className="text-2xl font-black text-slate-900">{formatDate(order.resumeDate) || "EN COURS"}</span>
+                                <div className="grid grid-cols-2 gap-8 relative z-10">
+                                    <div className="bg-white p-8 rounded-[2rem] border border-red-50 shadow-sm">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">Début Suspension</span>
+                                        <span className="text-2xl font-black text-slate-900">{formatDate(order.stopDate)}</span>
+                                    </div>
+                                    <div className="bg-white p-8 rounded-[2rem] border border-red-50 shadow-sm">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">Reprise d'activité</span>
+                                        <span className="text-2xl font-black text-slate-900">{formatDate(order.resumeDate) || "EN COURS"}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

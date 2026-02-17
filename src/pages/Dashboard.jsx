@@ -507,7 +507,7 @@ const Dashboard = () => {
                                         <tr
                                             key={order.id || Math.random()}
                                             onClick={() => navigate(`/order/${order.id}`)}
-                                            className={`group transition-all cursor-pointer border-b border-slate-50 last:border-0 ${order.importStatus?.orderPlaced
+                                            className={`group transition-all cursor-pointer border-b border-slate-50 last:border-0 ${(order.importStatus?.orderPlaced || order.articles?.some(a => a.ordered))
                                                     ? 'bg-emerald-50/80 hover:bg-emerald-100/80'
                                                     : 'hover:bg-blue-50/50'
                                                 }`}
