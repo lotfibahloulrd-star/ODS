@@ -187,424 +187,341 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                     </div>
                 </div>
 
-                {/* Body Content */}
-                <div className="flex-1 overflow-y-auto p-10 space-y-16 scrollbar-hide">
-                    {/* Key Metrics Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                        <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col justify-between">
-                            <div className="flex items-center gap-3 text-slate-400 mb-4">
-                                <User size={18} />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Client Engagement</span>
-                            </div>
-                            <div className="text-xl font-black text-slate-900 uppercase truncate" title={order.client}>{order.client}</div>
-                        </div>
-
-                        <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 flex flex-col justify-between relative group/amount">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-3 text-blue-400">
-                                    <DollarSign size={18} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Montant Total TTC</span>
-                                </div>
-                                {canEditPrice && !isEditingAmount && (
-                                    <button
-                                        onClick={() => {
-                                            setTempAmount(order.amount);
-                                            setIsEditingAmount(true);
-                                        }}
-                                        className="p-1.5 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors opacity-0 group-hover/amount:opacity-100"
-                                        title="Modifier le montant"
-                                    >
-                                        <Layers size={14} /> {/* Using Layers as an edit icon since I don't see 'Edit' in the imports, or I'll just use a generic icon */}
-                                    </button>
-                                )}
-                            </div>
-
-                            {isEditingAmount ? (
-                                <div className="space-y-3">
-                                    <input
-                                        type="text"
-                                        value={tempAmount}
-                                        onChange={e => setTempAmount(e.target.value)}
-                                        className="w-full p-2 bg-white border-2 border-blue-300 rounded-xl font-black text-blue-900 outline-none"
-                                        autoFocus
-                                    />
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={handleSaveAmount}
-                                            className="flex-1 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest"
-                                        >
-                                            Valider
-                                        </button>
-                                        <button
-                                            onClick={() => setIsEditingAmount(false)}
-                                            className="flex-1 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest"
-                                        >
-                                            Annuler
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="text-2xl font-black text-blue-800">{formatAmount(order.amount)}</div>
-                            )}
-                        </div>
-
-                        <div className="bg-slate-900 p-6 rounded-3xl flex flex-col justify-between relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-4 opacity-20">
-                                <Clock size={60} className="text-blue-500" />
-                            </div>
-                            <div className="flex items-center gap-3 text-slate-500 mb-4">
-                                <Calendar size={18} />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Échéance Contractuelle</span>
-                            </div>
-                            <div className={`text-xl font-black ${remainingInfo?.isOverdue ? 'text-red-400' : 'text-emerald-400'}`}>
-                                {remainingInfo?.formattedDate}
-                                <span className="block text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-tighter">
-                                    {remainingInfo?.isOverdue ? `${Math.abs(remainingInfo.days)} jours de retard` : `${remainingInfo?.days} jours restants`}
-                                </span>
-                            </div>
-                        </div>
+                {/* Body Content - Fluid Table Layout */}
+                <div className="flex-1 overflow-y-auto p-10 space-y-12 scrollbar-hide">
+                    {/* General Information Table */}
+                    <div className="bg-white rounded-[2rem] border border-slate-200 overflow-hidden shadow-sm">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-slate-100">
+                                    <th colSpan="2" className="px-8 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Informations Générales</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                <tr>
+                                    <td className="px-8 py-5 w-1/3 text-[11px] font-black text-slate-400 uppercase tracking-widest">Client Engagement</td>
+                                    <td className="px-8 py-5 text-sm font-black text-slate-900 uppercase">{order.client}</td>
+                                </tr>
+                                <tr>
+                                    <td className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-blue-500">Montant Total TTC</td>
+                                    <td className="px-8 py-5">
+                                        <div className="flex items-center gap-4">
+                                            {isEditingAmount ? (
+                                                <div className="flex gap-2 w-full max-w-sm">
+                                                    <input
+                                                        type="text"
+                                                        value={tempAmount}
+                                                        onChange={e => setTempAmount(e.target.value)}
+                                                        className="flex-1 p-2 bg-blue-50 border-2 border-blue-200 rounded-xl font-black text-blue-900 outline-none"
+                                                        autoFocus
+                                                    />
+                                                    <button onClick={handleSaveAmount} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase">Valider</button>
+                                                    <button onClick={() => setIsEditingAmount(false)} className="px-4 py-2 bg-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase">Annuler</button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-xl font-black text-blue-700">{formatAmount(order.amount)}</span>
+                                                    {canEditPrice && (
+                                                        <button onClick={() => { setTempAmount(order.amount); setIsEditingAmount(true); }} className="p-2 hover:bg-blue-50 text-blue-400 rounded-lg transition-colors">
+                                                            <Layers size={14} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Échéance Contractuelle</td>
+                                    <td className="px-8 py-5">
+                                        <div className="flex items-center gap-4">
+                                            <span className={`text-lg font-black ${remainingInfo?.isOverdue ? 'text-red-500' : 'text-emerald-500'}`}>
+                                                {remainingInfo?.formattedDate}
+                                            </span>
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${remainingInfo?.isOverdue ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                                {remainingInfo?.isOverdue ? `${Math.abs(remainingInfo.days)} jours de retard` : `${remainingInfo?.days} jours restants`}
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
 
-                    {/* Reference & Documents Grid */}
+                    {/* Documents Table */}
+                    <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-slate-100">
+                                    <th className="px-8 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Type Document</th>
+                                    <th className="px-8 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Référence</th>
+                                    <th className="px-8 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-right text-slate-400">Action Client / Consultation</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                <tr>
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center"><FileText size={16} /></div>
+                                            <span className="text-xs font-black text-slate-700 uppercase">Ordre de Service</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6 text-sm font-black text-slate-900">{order.refOds || order.ref || "-"}</td>
+                                    <td className="px-8 py-6">
+                                        <div className="flex justify-end gap-3">
+                                            {hasOds && (
+                                                <button onClick={() => openPdf(order.id, 'storage_ods')} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-blue-700 transition-all flex items-center gap-2">
+                                                    <ExternalLink size={14} /> Consulter
+                                                </button>
+                                            )}
+                                            {canCreate && (
+                                                <label className="px-4 py-2 border-2 border-dashed border-blue-200 text-blue-600 rounded-xl text-[10px] font-black uppercase cursor-pointer hover:border-blue-500 transition-all flex items-center gap-2">
+                                                    {isUploading ? <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div> : <Upload size={14} />}
+                                                    {hasOds ? "Actualiser" : "Attacher"}
+                                                    <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'ods')} />
+                                                </label>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center"><FileCheck size={16} /></div>
+                                            <span className="text-xs font-black text-slate-700 uppercase">Marché / Contrat</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6 text-sm font-black text-slate-900">{order.refContract || "-"}</td>
+                                    <td className="px-8 py-6">
+                                        <div className="flex justify-end gap-3">
+                                            {hasContract && (
+                                                <button onClick={() => openPdf(order.id, 'storage_contracts')} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-indigo-700 transition-all flex items-center gap-2">
+                                                    <ExternalLink size={14} /> Consulter
+                                                </button>
+                                            )}
+                                            {canCreate && (
+                                                <label className="px-4 py-2 border-2 border-dashed border-indigo-200 text-indigo-600 rounded-xl text-[10px] font-black uppercase cursor-pointer hover:border-indigo-500 transition-all flex items-center gap-2">
+                                                    {isUploading ? <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div> : <Plus size={14} />}
+                                                    {hasContract ? "Actualiser" : "Attacher"}
+                                                    <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'contract')} />
+                                                </label>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Prestations Table */}
+                    <div className="bg-white rounded-[2rem] border border-slate-200 overflow-hidden shadow-sm">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-slate-100">
+                                    <th className="px-8 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 w-1/3">Lot Prestation</th>
+                                    <th className="px-8 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Détails de Consistance</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                <tr>
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center gap-3 text-blue-600 font-black text-xs uppercase tracking-widest"><FlaskConical size={16} /> Équipements</div>
+                                    </td>
+                                    <td className="px-8 py-6 text-sm font-bold text-slate-600 leading-relaxed">{order.equipmentDetails || "Aucun détail saisi"}</td>
+                                </tr>
+                                <tr>
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center gap-3 text-indigo-600 font-black text-xs uppercase tracking-widest"><Info size={16} /> Réactifs</div>
+                                    </td>
+                                    <td className="px-8 py-6 text-sm font-bold text-slate-600 leading-relaxed">{order.reagentDetails || "Aucun détail saisi"}</td>
+                                </tr>
+                                <tr>
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center gap-3 text-emerald-600 font-black text-xs uppercase tracking-widest"><Package size={16} /> Consommables</div>
+                                    </td>
+                                    <td className="px-8 py-6 text-sm font-bold text-slate-600 leading-relaxed">{order.consumableDetails || "Aucun détail saisi"}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Operational Table */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                        {/* ODS Section */}
-                        <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm space-y-6">
-                            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-                                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
-                                    <FileText size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-black text-slate-900 uppercase">Ordre de Service</h3>
-                                    <p className="text-[10px] text-slate-500 font-bold tracking-tight">Référence et document officiel</p>
-                                </div>
-                            </div>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Réf ODS/Convention</label>
-                                    <div className="text-lg font-black text-slate-900">{order.refOds || order.ref || "-"}</div>
-                                </div>
-                                {hasOds && (
-                                    <button
-                                        onClick={() => openPdf(order.id, 'storage_ods')}
-                                        className="w-full flex items-center justify-center gap-2 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs transition-all shadow-lg shadow-blue-200 hover:scale-[1.02]"
-                                    >
-                                        <ExternalLink size={16} /> Consulter le PDF ODS
-                                    </button>
-                                )}
-                                {canCreate && (
-                                    <label className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-dashed border-blue-200 hover:border-blue-500 text-blue-600 rounded-2xl font-black text-xs transition-all cursor-pointer">
-                                        {isUploading ? <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div> : <Upload size={16} />}
-                                        {hasOds ? "Mettre à jour le PDF ODS" : "Attacher le PDF ODS"}
-                                        <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'ods')} />
-                                    </label>
-                                )}
-                                {!hasOds && !canCreate && (
-                                    <div className="p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center text-[11px] font-bold text-slate-400">
-                                        Aucun document numérisé
-                                    </div>
-                                )}
-                            </div>
+                        <div className="bg-white rounded-[2rem] border border-blue-100 overflow-hidden shadow-sm">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-blue-50 border-b border-blue-100">
+                                        <th colSpan="2" className="px-8 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Suivi Importation</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    <tr>
+                                        <td className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase">Autorisation</td>
+                                        <td className="px-8 py-4">
+                                            <select disabled={!isImport()} value={importData.authImport || ''} onChange={e => setImportData({ ...importData, authImport: e.target.value })} className="w-full text-xs font-black uppercase border-0 bg-transparent focus:ring-0">
+                                                <option value="">En attente...</option>
+                                                <option value="Confirmée">Confirmée</option>
+                                                <option value="Non disponible">Non disponible</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase">Lancement</td>
+                                        <td className="px-8 py-4">
+                                            <input type="checkbox" disabled={!isImport()} checked={importData.importLaunched || false} onChange={e => setImportData({ ...importData, importLaunched: e.target.checked })} className="w-5 h-5 rounded text-blue-600" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase">Dédouanement</td>
+                                        <td className="px-8 py-4">
+                                            <input type="date" disabled={!isImport()} value={importData.clearedAt || ''} onChange={e => setImportData({ ...importData, clearedAt: e.target.value })} className="w-full text-xs font-black border-0 bg-transparent focus:ring-0" />
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
 
-                        {/* Contract Section */}
-                        <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm space-y-6">
-                            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-                                <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
-                                    <FileCheck size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-black text-slate-900 uppercase">Marché / Contrat</h3>
-                                    <p className="text-[10px] text-slate-500 font-bold tracking-tight">Données contractuelles</p>
-                                </div>
-                            </div>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Numéro de Contrat</label>
-                                    <div className="text-lg font-black text-slate-900">{order.refContract || "-"}</div>
-                                </div>
-                                {hasContract && (
-                                    <button
-                                        onClick={() => openPdf(order.id, 'storage_contracts')}
-                                        className="w-full flex items-center justify-center gap-2 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs transition-all shadow-lg shadow-indigo-200 hover:scale-[1.02]"
-                                    >
-                                        <ExternalLink size={16} /> Consulter le PDF Marché
-                                    </button>
-                                )}
-                                {canCreate && (
-                                    <label className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-dashed border-indigo-200 hover:border-indigo-500 text-indigo-600 rounded-2xl font-black text-xs transition-all cursor-pointer">
-                                        {isUploading ? <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div> : <Plus size={16} />}
-                                        {hasContract ? "Mettre à jour le PDF Contrat" : "Attacher le PDF Contrat"}
-                                        <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'contract')} />
-                                    </label>
-                                )}
-                                {!hasContract && !canCreate && (
-                                    <div className="p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center text-[11px] font-bold text-slate-400">
-                                        Aucun document numérisé
-                                    </div>
-                                )}
-                            </div>
+                        <div className="bg-white rounded-[2rem] border border-emerald-100 overflow-hidden shadow-sm">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-emerald-50 border-b border-emerald-100">
+                                        <th colSpan="2" className="px-8 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-emerald-600">Suivi Stock</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    <tr>
+                                        <td className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase">Réception</td>
+                                        <td className="px-8 py-4">
+                                            <select disabled={!isStock()} value={stockData.reception || 'Aucune'} onChange={e => setStockData({ ...stockData, reception: e.target.value })} className="w-full text-xs font-black uppercase border-0 bg-transparent focus:ring-0">
+                                                <option value="Aucune">Aucune</option>
+                                                <option value="Partielle">Partielle</option>
+                                                <option value="Totale">Totale</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase">Date Réception</td>
+                                        <td className="px-8 py-4">
+                                            <input type="date" disabled={!isStock()} value={stockData.receivedAt || ''} onChange={e => setStockData({ ...stockData, receivedAt: e.target.value })} className="w-full text-xs font-black border-0 bg-transparent focus:ring-0" />
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    {/* Consistance Section (Existing) */}
-                    <div className="bg-slate-50 rounded-[2.5rem] p-8">
-                        <div className="flex items-center gap-3 mb-8">
-                            <Layers size={20} className="text-blue-600" />
-                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Consistance des prestations par lot</h3>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm group hover:border-blue-300 transition-colors">
-                                <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <FlaskConical size={16} />
-                                </div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Équipements</span>
-                                <p className="text-sm font-bold text-slate-700 leading-relaxed">{order.equipmentDetails || "Aucun détail saisi"}</p>
-                            </div>
-                            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm group hover:border-indigo-300 transition-colors">
-                                <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <Info size={16} />
-                                </div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Réactifs</span>
-                                <p className="text-sm font-bold text-slate-700 leading-relaxed">{order.reagentDetails || "Aucun détail saisi"}</p>
-                            </div>
-                            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm group hover:border-emerald-300 transition-colors">
-                                <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <Package size={16} />
-                                </div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Consommables</span>
-                                <p className="text-sm font-bold text-slate-700 leading-relaxed">{order.consumableDetails || "Aucun détail saisi"}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Operational Workflow Sections */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                        {/* Import Section */}
-                        <div className="bg-white p-8 rounded-[2rem] border border-blue-100 shadow-sm space-y-6">
-                            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-                                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
-                                    <Plane size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-black text-slate-900 uppercase">Dossier Importations</h3>
-                                    <p className="text-[10px] text-slate-500 font-bold tracking-tight">Suivi logistique et douanier</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Autorisation d'Importation</label>
-                                    <select
-                                        disabled={!isImport()}
-                                        value={importData.authImport || ''}
-                                        onChange={e => setImportData({ ...importData, authImport: e.target.value })}
-                                        className="w-full p-3 bg-slate-50 border-2 border-slate-50 rounded-xl font-bold text-sm outline-none focus:border-blue-500 disabled:opacity-70"
-                                    >
-                                        <option value="">En attente...</option>
-                                        <option value="Confirmée">Confirmée</option>
-                                        <option value="Non disponible">Non disponible</option>
-                                    </select>
-                                </div>
-
-                                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lancement Importation</span>
-                                    <input
-                                        type="checkbox"
-                                        disabled={!isImport()}
-                                        checked={importData.importLaunched || false}
-                                        onChange={e => setImportData({ ...importData, importLaunched: e.target.checked })}
-                                        className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Délai Prév. Dédouanement</label>
-                                    <input
-                                        type="date"
-                                        disabled={!isImport()}
-                                        value={importData.estCustomsDate || ''}
-                                        onChange={e => setImportData({ ...importData, estCustomsDate: e.target.value })}
-                                        className="w-full p-3 bg-slate-50 border-2 border-slate-50 rounded-xl font-bold text-sm outline-none focus:border-blue-500 disabled:opacity-70"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Date Dédouanement Effectif</label>
-                                    <input
-                                        type="date"
-                                        disabled={!isImport()}
-                                        value={importData.clearedAt || ''}
-                                        onChange={e => setImportData({ ...importData, clearedAt: e.target.value })}
-                                        className="w-full p-3 bg-emerald-50 border-2 border-emerald-50 rounded-xl font-bold text-sm outline-none focus:border-emerald-500 disabled:opacity-70"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Stock Section */}
-                        <div className="bg-white p-8 rounded-[2rem] border border-emerald-100 shadow-sm space-y-6">
-                            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-                                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
-                                    <Box size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-black text-slate-900 uppercase">Gestion des Stocks</h3>
-                                    <p className="text-[10px] text-slate-500 font-bold tracking-tight">Réception et conformité</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-6">
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Réception Marchandises</label>
-                                    <select
-                                        disabled={!isStock()}
-                                        value={stockData.reception || 'Aucune'}
-                                        onChange={e => setStockData({ ...stockData, reception: e.target.value })}
-                                        className="w-full p-3 bg-slate-50 border-2 border-slate-50 rounded-xl font-bold text-sm outline-none focus:border-emerald-500 disabled:opacity-70"
-                                    >
-                                        <option value="Aucune">Aucune Réception</option>
-                                        <option value="Partielle">Réception Partielle</option>
-                                        <option value="Totale">Réception Totale</option>
-                                    </select>
-                                </div>
-
-                                {stockData.reception !== 'Aucune' && (
-                                    <div>
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Date de Réception</label>
-                                        <input
-                                            type="date"
-                                            disabled={!isStock()}
-                                            value={stockData.receivedAt || ''}
-                                            onChange={e => setStockData({ ...stockData, receivedAt: e.target.value })}
-                                            className="w-full p-3 bg-slate-50 border-2 border-slate-50 rounded-xl font-bold text-sm outline-none focus:border-emerald-500 disabled:opacity-70"
-                                        />
-                                    </div>
-                                )}
-
-                                <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                                    <p className="text-[10px] font-bold text-emerald-800 leading-tight">
-                                        Note: La notification "Prêt à être livré" sera envoyée automatiquement dès confirmation de la réception totale.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Global Save for operational changes */}
+                    {/* Global Save */}
                     {(isImport() || isStock()) && (
                         <div className="flex justify-center pt-8">
-                            <button
-                                onClick={handleSaveWorkflow}
-                                disabled={isSaving}
-                                className="flex items-center gap-3 px-12 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-sm transition-all shadow-xl shadow-blue-200 active:scale-95 disabled:opacity-50"
-                            >
-                                {isSaving ? "Enregistrement..." : "Sauvegarder les étapes opérationnelles"}
-                                <CheckCircle2 size={20} />
+                            <button onClick={handleSaveWorkflow} disabled={isSaving} className="px-12 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all flex items-center gap-3">
+                                {isSaving ? "Enregistrement..." : "Valider les étapes opérationnelles"}
+                                <CheckCircle2 size={18} />
                             </button>
                         </div>
                     )}
+                </div>
 
-                    {/* Execution Dates Chronology */}
-                    <div className="bg-slate-900 rounded-[3rem] p-12 text-white relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 blur-[80px] rounded-full -mr-32 -mt-32"></div>
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-3 mb-10">
-                                <PlayCircle size={20} className="text-blue-500" />
-                                <h3 className="text-sm font-black uppercase tracking-widest">Chronologie du délai d'exécution</h3>
+                {/* Execution Dates Chronology */}
+                <div className="bg-slate-900 rounded-[3rem] p-12 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 blur-[80px] rounded-full -mr-32 -mt-32"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-10">
+                            <PlayCircle size={20} className="text-blue-500" />
+                            <h3 className="text-sm font-black uppercase tracking-widest">Chronologie du délai d'exécution</h3>
+                        </div>
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-4 px-4">
+                            <div className="text-center group">
+                                <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Lancement Officiel</div>
+                                <div className="text-2xl font-black group-hover:text-blue-400 transition-colors">{formatDate(order.startDate || order.dateOds)}</div>
                             </div>
-                            <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-4 px-4">
-                                <div className="text-center group">
-                                    <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Lancement Officiel</div>
-                                    <div className="text-2xl font-black group-hover:text-blue-400 transition-colors">{formatDate(order.startDate || order.dateOds)}</div>
+                            <div className="flex-1 h-px bg-slate-800 relative hidden md:block">
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 bg-slate-900 border border-slate-800 rounded-full py-1 text-[10px] font-black text-blue-500 uppercase whitespace-nowrap">
+                                    Durée: {order.delay} Jours
                                 </div>
-                                <div className="flex-1 h-px bg-slate-800 relative hidden md:block">
-                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 bg-slate-900 border border-slate-800 rounded-full py-1 text-[10px] font-black text-blue-500 uppercase whitespace-nowrap">
-                                        Durée: {order.delay} Jours
-                                    </div>
-                                </div>
-                                <div className="text-center group">
-                                    <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 group-hover:text-emerald-400 transition-colors">Échéance Contractuelle</div>
-                                    <div className="text-2xl font-black text-emerald-500">{remainingInfo?.formattedDate}</div>
-                                </div>
+                            </div>
+                            <div className="text-center group">
+                                <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 group-hover:text-emerald-400 transition-colors">Échéance Contractuelle</div>
+                                <div className="text-2xl font-black text-emerald-500">{remainingInfo?.formattedDate}</div>
                             </div>
                         </div>
                     </div>
-
-                    {/* Suspension / Stop Section */}
-                    {order.hasStopRequest === 'Oui' && (
-                        <div className="bg-red-50 border border-red-100 rounded-[2.5rem] p-8 relative overflow-hidden shadow-sm">
-                            <div className="absolute top-0 right-0 p-8 opacity-5">
-                                <StopCircle size={100} className="text-red-600" />
-                            </div>
-                            <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-200">
-                                        <AlertCircle size={24} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-black text-red-900 uppercase">Suspension du Délai</h3>
-                                        <p className="text-xs text-red-700 font-bold">Interruption d'activités déclarée</p>
-                                    </div>
-                                </div>
-                                <div className="flex gap-4">
-                                    {hasStopRequest && (
-                                        <button onClick={() => openPdf(order.id, 'storage_stops_req')} className="px-6 py-3 bg-white border border-red-200 text-red-600 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-red-50 transition-colors flex items-center gap-2 shadow-sm">
-                                            <FileText size={16} /> Demande PDF
-                                        </button>
-                                    )}
-                                    {canCreate && (
-                                        <label className="px-6 py-3 bg-white border border-dashed border-red-200 text-red-400 hover:text-red-600 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2">
-                                            {isUploading ? <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div> : <Upload size={14} />}
-                                            {hasStopRequest ? "Mettre à jour Demande" : "Attacher Demande"}
-                                            <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'stop_request')} />
-                                        </label>
-                                    )}
-
-                                    {hasStopResponse && (
-                                        <button onClick={() => openPdf(order.id, 'storage_stops_res')} className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-red-700 transition-colors flex items-center gap-2 shadow-lg shadow-red-200">
-                                            <FileCheck size={16} /> Accord PDF
-                                        </button>
-                                    )}
-                                    {canCreate && (
-                                        <label className="px-6 py-3 bg-red-50 border border-dashed border-red-300 text-red-600 hover:bg-red-100 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2">
-                                            {isUploading ? <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div> : <Plus size={14} />}
-                                            {hasStopResponse ? "Mettre à jour Accord" : "Attacher Accord"}
-                                            <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'stop_response')} />
-                                        </label>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-                                <div className="bg-white p-6 rounded-3xl border border-red-50 shadow-sm flex flex-col">
-                                    <span className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-2 block">Date de suspension</span>
-                                    <span className="text-xl font-black text-red-900">{formatDate(order.stopDate)}</span>
-                                </div>
-                                <div className="bg-white p-6 rounded-3xl border border-red-50 shadow-sm flex flex-col">
-                                    <span className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-2 block">Reprise d'activité</span>
-                                    <span className="text-xl font-black text-red-900">{formatDate(order.resumeDate) || "En cours..."}</span>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
-                {/* Footer Action */}
-                <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-black text-slate-500">
-                            ODS
+                {/* Suspension / Stop Section */}
+                {order.hasStopRequest === 'Oui' && (
+                    <div className="bg-red-50 border border-red-100 rounded-[2.5rem] p-8 relative overflow-hidden shadow-sm">
+                        <div className="absolute top-0 right-0 p-8 opacity-5">
+                            <StopCircle size={100} className="text-red-600" />
                         </div>
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Fin de consultation</span>
+                        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-200">
+                                    <AlertCircle size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-red-900 uppercase">Suspension du Délai</h3>
+                                    <p className="text-xs text-red-700 font-bold">Interruption d'activités déclarée</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-4">
+                                {hasStopRequest && (
+                                    <button onClick={() => openPdf(order.id, 'storage_stops_req')} className="px-6 py-3 bg-white border border-red-200 text-red-600 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-red-50 transition-colors flex items-center gap-2 shadow-sm">
+                                        <FileText size={16} /> Demande PDF
+                                    </button>
+                                )}
+                                {canCreate && (
+                                    <label className="px-6 py-3 bg-white border border-dashed border-red-200 text-red-400 hover:text-red-600 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2">
+                                        {isUploading ? <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div> : <Upload size={14} />}
+                                        {hasStopRequest ? "Mettre à jour Demande" : "Attacher Demande"}
+                                        <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'stop_request')} />
+                                    </label>
+                                )}
+
+                                {hasStopResponse && (
+                                    <button onClick={() => openPdf(order.id, 'storage_stops_res')} className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-red-700 transition-colors flex items-center gap-2 shadow-lg shadow-red-200">
+                                        <FileCheck size={16} /> Accord PDF
+                                    </button>
+                                )}
+                                {canCreate && (
+                                    <label className="px-6 py-3 bg-red-50 border border-dashed border-red-300 text-red-600 hover:bg-red-100 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2">
+                                        {isUploading ? <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div> : <Plus size={14} />}
+                                        {hasStopResponse ? "Mettre à jour Accord" : "Attacher Accord"}
+                                        <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'stop_response')} />
+                                    </label>
+                                )}
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                            <div className="bg-white p-6 rounded-3xl border border-red-50 shadow-sm flex flex-col">
+                                <span className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-2 block">Date de suspension</span>
+                                <span className="text-xl font-black text-red-900">{formatDate(order.stopDate)}</span>
+                            </div>
+                            <div className="bg-white p-6 rounded-3xl border border-red-50 shadow-sm flex flex-col">
+                                <span className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-2 block">Reprise d'activité</span>
+                                <span className="text-xl font-black text-red-900">{formatDate(order.resumeDate) || "En cours..."}</span>
+                            </div>
+                        </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="px-10 py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-sm transition-all shadow-xl shadow-slate-200 active:scale-95"
-                    >
-                        Fermer le dossier
-                    </button>
+                )}
+            </div>
+
+            {/* Footer Action */}
+            <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-black text-slate-500">
+                        ODS
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Fin de consultation</span>
                 </div>
+                <button
+                    onClick={onClose}
+                    className="px-10 py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-sm transition-all shadow-xl shadow-slate-200 active:scale-95"
+                >
+                    Fermer le dossier
+                </button>
             </div>
         </div>
+        </div >
     );
 };
 
