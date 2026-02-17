@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { orderService } from '../services/orderService';
 import { useAuth } from '../context/AuthContext';
-import OrderDetailModal from '../components/OrderDetailModal';
 import { notificationService } from '../services/notificationService';
 import {
     FileText,
@@ -28,14 +27,15 @@ import {
     Upload,
     Plus
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
     const auth = useAuth();
+    const navigate = useNavigate();
     const canCreate = auth?.canCreateOds();
     const currentUser = auth?.currentUser;
     const [orders, setOrders] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
-    const [selectedOrder, setSelectedOrder] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [syncStatus, setSyncStatus] = useState(""); // Nouveau : statut de migration
@@ -346,8 +346,7 @@ const Dashboard = () => {
                                                         notificationService.markAsRead(n.id, currentUser.email);
                                                         loadNotifications();
                                                         if (n.orderId) {
-                                                            const ord = orders.find(o => o.id === n.orderId);
-                                                            if (ord) setSelectedOrder(ord);
+                                                            navigate(`/order/${n.orderId}`);
                                                         }
                                                         setShowNotifications(false);
                                                     }}
@@ -524,7 +523,7 @@ const Dashboard = () => {
                                     return (
                                         <tr
                                             key={order.id || Math.random()}
-                                            onClick={() => setSelectedOrder(order)}
+                                            onClick={() => navigate(`/order/${order.id}`)}
                                             className="group hover:bg-blue-50/50 transition-all cursor-pointer border-b border-slate-50 last:border-0"
                                         >
                                             <td className="px-6 py-7">
@@ -636,13 +635,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <OrderDetailModal
-                order={selectedOrder}
-                isOpen={!!selectedOrder}
-                onClose={() => setSelectedOrder(null)}
-                openPdf={openPdf}
-                onUpdate={loadOrders}
-            />
+            {/* Modal removed in favor of standalone page */}
         </div>
     );
 };
