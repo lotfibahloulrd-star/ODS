@@ -229,7 +229,7 @@ const INITIAL_ORDERS = [
         id: 'init-15',
         client: 'Univ. Tiaret',
         refOds: 'Convention 01/2025',
-        object: 'Labo reproduction animale',
+        object: 'Acquisition d\'équipements scientifique et technologique pour différents laboratoires au profit de l\'Univ. de Tiaret',
         dateOds: '2026-01-28',
         delay: '120',
         amount: '4680865.00',
@@ -239,7 +239,15 @@ const INITIAL_ORDERS = [
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
         createdAt: '2026-01-28T10:00:00.000Z',
-        files: {}
+        files: {},
+        articles: [
+            { no: '01', ref: 'CE232', designation: 'Fourniture, installation et mise en service de: Centrifugeuse réfrigérée 3-16KL (Inclus Rotor RT286 et Adaptateur RE450)', qte: 1, pu: 1535000, total: 1535000, marque: 'ORTO' },
+            { no: '02', ref: '634-6041', designation: 'Fourniture, installation et mise en service de: Spectrophotomètre UV visible', qte: 1, pu: 1655500, total: 1655500, marque: 'VWR' },
+            { no: '03', ref: '9010-0323', designation: 'Fourniture, installation et mise en service de: Incubateur à convection naturelle 56l', qte: 1, pu: 291000, total: 291000, marque: 'BINDER' },
+            { no: '04', ref: 'MB.1001.LCD', designation: 'Fourniture, installation et mise en service de: Microscope LCD', qte: 1, pu: 132000, total: 132000, marque: 'EUROMEX' },
+            { no: '05', ref: '321-62352-18', designation: 'Fourniture, installation et mise en service de: Balance de précision EWJ6000-1M', qte: 1, pu: 320000, total: 320000, marque: 'SHIMADZU' }
+        ],
+        totals: { ht: 3933500, tva: 747365, ttc: 4680865 }
     }
 ];
 

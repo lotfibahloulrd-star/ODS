@@ -424,6 +424,65 @@ const OrderDetails = () => {
                         </div>
                     </div>
 
+                    {/* Articles Section (BPU / DQE) if available */}
+                    {order.articles && order.articles.length > 0 && (
+                        <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
+                            <div className="bg-slate-50 px-8 py-5 border-b border-slate-100 flex justify-between items-center">
+                                <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">Détail Quantitatif et Estimatif (DQE)</h4>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{order.articles.length} Articles</span>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50/50 border-b border-slate-100">
+                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">N°</th>
+                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Référence</th>
+                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Désignation</th>
+                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Qté</th>
+                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">PU HT</th>
+                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Montant HT</th>
+                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Marque</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {order.articles.map((art, idx) => (
+                                            <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                                                <td className="px-6 py-4 text-[11px] font-black text-slate-400">{art.no}</td>
+                                                <td className="px-6 py-4 text-[11px] font-bold text-blue-600">{art.ref}</td>
+                                                <td className="px-6 py-4 text-[11px] font-medium text-slate-600 leading-relaxed max-w-md">{art.designation}</td>
+                                                <td className="px-6 py-4 text-[11px] font-black text-slate-900 text-center">{art.qte}</td>
+                                                <td className="px-6 py-4 text-[11px] font-bold text-slate-700 text-right">{formatAmount(art.pu)}</td>
+                                                <td className="px-6 py-4 text-[11px] font-black text-slate-900 text-right">{formatAmount(art.total)}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[9px] font-black uppercase italic">{art.marque}</span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    {order.totals && (
+                                        <tfoot className="bg-slate-50">
+                                            <tr>
+                                                <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">Total HT</td>
+                                                <td className="px-6 py-4 text-right text-xs font-black text-slate-900">{formatAmount(order.totals.ht)}</td>
+                                                <td></td>
+                                            </tr>
+                                            <tr>
+                                                <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">TVA 19%</td>
+                                                <td className="px-6 py-4 text-right text-xs font-black text-slate-900">{formatAmount(order.totals.tva)}</td>
+                                                <td></td>
+                                            </tr>
+                                            <tr className="bg-indigo-50/50">
+                                                <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-indigo-600 tracking-[0.2em]">Total TTC</td>
+                                                <td className="px-6 py-4 text-right text-sm font-black text-indigo-600">{formatAmount(order.totals.ttc)}</td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    )}
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Operational Flow */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                         {/* Import Table */}
