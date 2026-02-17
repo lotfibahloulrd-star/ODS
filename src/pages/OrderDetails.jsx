@@ -511,6 +511,13 @@ const OrderDetails = () => {
                                             <span className="text-xs font-bold text-slate-600">{importData.importLaunched ? "Dossier Ouvert" : "À lancer"}</span>
                                         </div>
                                     </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">Passation Commande</label>
+                                        <div className="flex items-center gap-3 h-[42px]">
+                                            <input type="checkbox" disabled={!isImport()} checked={importData.orderPlaced || false} onChange={e => setImportData({ ...importData, orderPlaced: e.target.checked })} className="w-5 h-5 rounded text-emerald-600 border-2 border-slate-200" />
+                                            <span className="text-xs font-bold text-emerald-600">{importData.orderPlaced ? "Confirmée" : "En attente"}</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">Date Dédouanement</label>

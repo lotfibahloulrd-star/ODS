@@ -507,7 +507,10 @@ const Dashboard = () => {
                                         <tr
                                             key={order.id || Math.random()}
                                             onClick={() => navigate(`/order/${order.id}`)}
-                                            className="group hover:bg-blue-50/50 transition-all cursor-pointer border-b border-slate-50 last:border-0"
+                                            className={`group transition-all cursor-pointer border-b border-slate-50 last:border-0 ${order.importStatus?.orderPlaced
+                                                    ? 'bg-emerald-50/80 hover:bg-emerald-100/80'
+                                                    : 'hover:bg-blue-50/50'
+                                                }`}
                                         >
                                             <td className="px-6 py-7">
                                                 <div className="font-black text-slate-900 uppercase text-[11px] truncate max-w-[180px] tracking-tight" title={order.client}>
