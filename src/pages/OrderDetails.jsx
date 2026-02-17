@@ -153,8 +153,29 @@ const OrderDetails = () => {
     };
 
     const openPdf = (orderId, storageKey) => {
-        const fileUrl = `./api.php?action=get_file&orderId=${orderId}&storageKey=${storageKey}`;
-        window.open(fileUrl, '_blank');
+        // Construction du chemin absolu via le BASE_URL de Vite
+        const baseUrl = import.meta.env.BASE_URL || '/';
+        const apiPath = baseUrl.endsWith('/') ? `${baseUrl}api.php` : `${baseUrl}/api.php`;
+        const fileUrl = `${apiPath}?action=get_file&orderId=${orderId}&storageKey=${storageKey}`;
+
+        const newWindow = window.open();
+        if (newWindow) {
+            newWindow.document.write(`
+                <html>
+                    <head><title>Visualisation Document</title></head>
+                    <body style="margin:0; background: #e2e8f0; display:flex; justify-content:center; align-items:center; font-family:sans-serif;">
+                        <embed src="${fileUrl}" width="100%" height="100%" type="application/pdf" />
+                        <div style="position:fixed; bottom:30px; right:30px; display:flex; gap:15px; align-items:center;">
+                            <a href="${fileUrl}" download style="background:#2563eb; color:white; padding:12px 24px; border-radius:12px; text-decoration:none; font-weight:bold; box-shadow:0 10px 15px -3px rgba(37, 99, 235, 0.4); transition:all 0.3s; font-size:14px;">Télécharger le fichier</a>
+                            <button onclick="window.close()" style="background:white; color:#64748b; padding:12px 24px; border-radius:12px; border:1px solid #e2e8f0; font-weight:bold; cursor:pointer; font-size:14px;">Fermer</button>
+                        </div>
+                    </body>
+                </html>
+            `);
+        } else {
+            // Fallback si popup bloquée
+            window.location.href = fileUrl;
+        }
     };
 
     if (isLoading) return (
