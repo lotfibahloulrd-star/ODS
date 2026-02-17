@@ -265,44 +265,47 @@ export const orderService = {
             if (!response.ok) throw new Error("API Unavailable");
             let sharedOrders = await response.json();
 
-            // Si le serveur contient moins d'ODS que notre liste initiale, on injecte tout
-            if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length) {
-                console.log("Injection des 15 ODS initiaux sur le serveur...");
+            // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
+            const DATA_VERSION = 'ods_data_v3';
+            const localVersion = localStorage.getItem('ods_data_version');
 
-                // Fusion pour ne pas perdre les ordres créés manuellement entre temps
+            if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
+                console.log("Mise à jour des données (Version " + DATA_VERSION + ")...");
+
                 const mergedMap = new Map();
-                // 1. Charger les 15 initiaux
                 INITIAL_ORDERS.forEach(o => mergedMap.set(o.id, o));
-                // 2. Charger ce qu'il y a sur le serveur (éventuels nouveaux ordres)
                 if (Array.isArray(sharedOrders)) sharedOrders.forEach(o => mergedMap.set(o.id, o));
-                // 3. Charger le local backup au cas où
-                const localDataStr = localStorage.getItem('ods_data_v2');
+
+                const localDataStr = localStorage.getItem(DATA_VERSION);
                 if (localDataStr) JSON.parse(localDataStr).forEach(o => mergedMap.set(o.id, o));
 
                 const finalOrders = Array.from(mergedMap.values())
                     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
                 await orderService._saveAllToShared(finalOrders);
+                localStorage.setItem('ods_data_version', DATA_VERSION);
                 return finalOrders;
             }
 
             return sharedOrders;
         } catch (e) {
-            const localData = localStorage.getItem('ods_data_v2');
+            const DATA_VERSION = 'ods_data_v3';
+            const localData = localStorage.getItem(DATA_VERSION);
             return localData ? JSON.parse(localData) : INITIAL_ORDERS;
         }
     },
 
     _saveAllToShared: async (orders) => {
+        const DATA_VERSION = 'ods_data_v3';
         try {
             await fetch(`${API_URL}?action=save_orders`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orders)
             });
-            localStorage.setItem('ods_data_v2', JSON.stringify(orders));
+            localStorage.setItem(DATA_VERSION, JSON.stringify(orders));
         } catch (e) {
-            localStorage.setItem('ods_data_v2', JSON.stringify(orders));
+            localStorage.setItem(DATA_VERSION, JSON.stringify(orders));
         }
     },
 
