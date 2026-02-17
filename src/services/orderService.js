@@ -266,15 +266,29 @@ export const orderService = {
             let sharedOrders = await response.json();
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v3';
+            const DATA_VERSION = 'ods_data_v4';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
-                console.log("Mise à jour des données (Version " + DATA_VERSION + ")...");
+                console.log("Mise à jour structurée des données (Version " + DATA_VERSION + ")...");
 
                 const mergedMap = new Map();
-                INITIAL_ORDERS.forEach(o => mergedMap.set(o.id, o));
-                if (Array.isArray(sharedOrders)) sharedOrders.forEach(o => mergedMap.set(o.id, o));
+
+                // 1. Charger tout ce qui vient du serveur d'abord (données réelles des utilisateurs)
+                if (Array.isArray(sharedOrders)) {
+                    sharedOrders.forEach(o => mergedMap.set(o.id, o));
+                }
+
+                // 2. ÉCRASER les ordres initiaux par les nouvelles définitions (pour inclure les nouveaux champs comme 'articles')
+                // On fusionne pour garder les fichiers et statuts déjà saisis par l'utilisateur
+                INITIAL_ORDERS.forEach(o => {
+                    const existing = mergedMap.get(o.id);
+                    if (existing) {
+                        mergedMap.set(o.id, { ...existing, ...o, files: existing.files || o.files });
+                    } else {
+                        mergedMap.set(o.id, o);
+                    }
+                });
 
                 const localDataStr = localStorage.getItem(DATA_VERSION);
                 if (localDataStr) JSON.parse(localDataStr).forEach(o => mergedMap.set(o.id, o));
@@ -289,14 +303,14 @@ export const orderService = {
 
             return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v3';
+            const DATA_VERSION = 'ods_data_v4';
             const localData = localStorage.getItem(DATA_VERSION);
             return localData ? JSON.parse(localData) : INITIAL_ORDERS;
         }
     },
 
     _saveAllToShared: async (orders) => {
-        const DATA_VERSION = 'ods_data_v3';
+        const DATA_VERSION = 'ods_data_v4';
         try {
             await fetch(`${API_URL}?action=save_orders`, {
                 method: 'POST',
