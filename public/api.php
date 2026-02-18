@@ -63,7 +63,27 @@ if ($action === 'upload_file' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $storageKey = $_POST['storageKey'] ?? '';
     $fileName = $_POST['fileName'] ?? '';
     
-    if (isset($_FILES['file']) && $orderId && $storageKey) {
+    if ($orderId && $storageKey) {
+        if (!isset($_FILES['file'])) {
+            echo json_encode(['success' => false, 'message' => 'No file uploaded']);
+            exit;
+        }
+
+        if ($_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+            $errCodes = [
+                UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize in php.ini',
+                UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE in HTML form',
+                UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+                UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+                UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder',
+                UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload',
+            ];
+            $msg = $errCodes[$_FILES['file']['error']] ?? 'Unknown upload error';
+            echo json_encode(['success' => false, 'message' => $msg]);
+            exit;
+        }
+
         $ext = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
         if (!$ext || $ext === 'json') $ext = 'pdf';
         
@@ -77,8 +97,7 @@ if ($action === 'upload_file' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             @chmod($targetPath, 0644);
             
             // --- Mise à jour atomique du JSON ---
-            // On verrouille le fichier pour éviter les écritures simultanées
-            $fp = fopen($DATA_FILE, 'r+');
+            $fp = @fopen($DATA_FILE, 'r+');
             if ($fp) {
                 if (flock($fp, LOCK_EX)) {
                     $content = stream_get_contents($fp);
@@ -116,7 +135,12 @@ if ($action === 'upload_file' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 'path' => $finalName
             ]);
         } else {
-            echo json_encode(['success' => false, 'message' => 'Upload failed']);
+            $dirExists = file_exists($UPLOAD_DIR) ? 'Exists' : 'Not Found';
+            $dirWritable = is_writable($UPLOAD_DIR) ? 'Writable' : 'Not Writable';
+            echo json_encode([
+                'success' => false, 
+                'message' => "Move failed. Folder: $dirExists, $dirWritable. Check permissions on $UPLOAD_DIR"
+            ]);
         }
     } else {
         echo json_encode(['success' => false, 'message' => 'Missing data']);

@@ -251,7 +251,9 @@ const INITIAL_ORDERS = [
     }
 ];
 
-const API_URL = './api.php';
+// Calcul de l'URL de l'API de manière robuste (compatible avec les routes imbriquées)
+const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+const API_URL = baseUrl + '/api.php';
 
 export const orderService = {
     _cleanupLegacyStorage: () => {
@@ -369,11 +371,20 @@ export const orderService = {
                 method: 'POST',
                 body: formData
             });
+
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(`Erreur serveur (${response.status}): ${text.substring(0, 100)}`);
+            }
+
             const result = await response.json();
-            return result.success;
+            if (!result.success) {
+                throw new Error(result.message || "L'upload a échoué sur le serveur");
+            }
+            return true;
         } catch (e) {
             console.error("Shared Upload Failed:", e);
-            return false;
+            throw e;
         }
     },
 
