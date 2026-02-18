@@ -248,6 +248,31 @@ const INITIAL_ORDERS = [
             { no: '05', ref: '321-62352-18', designation: 'Fourniture, installation et mise en service de: Balance de précision EWJ6000-1M', qte: 1, pu: 320000, total: 320000, marque: 'SHIMADZU' }
         ],
         totals: { ht: 3933500, tva: 747365, ttc: 4680865 }
+    },
+    {
+        id: 'init-enpc-04',
+        client: 'ENP Constantine',
+        refOds: 'Lot 04 - ENPC',
+        object: 'Acquisition des équipements scientifiques pour les travaux pratiques au profit de l\'Ecole Nationale Polytechnique de Constantine (Lot 04)',
+        dateOds: '2026-02-18',
+        delay: '120',
+        amount: '15462860.00',
+        division: 'Division Analytique',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2026-02-18T09:00:00.000Z',
+        files: {},
+        articles: [
+            { no: '01', ref: 'EPG104', designation: 'Fourniture, installation et mise en service d\'un banc de formation pour moteur à essence', qte: 1, pu: 2438000, total: 2438000, marque: 'BEDO' },
+            { no: '02', ref: 'BSB111', designation: 'Fourniture, installation et mise en service d\'un banc de formation sur le système antiblocage ABC/EBD/ASR. Formateur de freins à disques et tambours ABS avec défauts.', qte: 1, pu: 2892000, total: 2892000, marque: 'BEDO' },
+            { no: '03', ref: 'EFU105', designation: 'Fourniture, installation et mise en service d\'un panneau de formation sur le système de contrôle électrique des moteur à essence. Systeme didactique "Injection de carburant"', qte: 1, pu: 2257000, total: 2257000, marque: 'BEDO' },
+            { no: '04', ref: 'EDE104', designation: 'Fourniture, installation et mise en service d\'un banc moteur diesel à commande électronique common Rail. Système modulaire de gestion moteur "Common Rail" Ensemble MMM1.', qte: 1, pu: 2642000, total: 2642000, marque: 'BEDO' },
+            { no: '05', ref: 'EFU104', designation: 'Fourniture, installation et mise en service d\'un Simulateur de système du carburant GPL. Circuit d\'alimentation GPL sur socle- Formateur statique', qte: 1, pu: 1144000, total: 1144000, marque: 'BEDO' },
+            { no: '06', ref: 'BES104', designation: 'Fourniture, installation et mise en service d\'un banc de formation sur les capteurs et les actionneurs. Equipements de base "Capteurs et actionneurs en automobile"', qte: 1, pu: 1621000, total: 1621000, marque: 'BEDO' }
+        ],
+        totals: { ht: 12994000, tva: 2468860, ttc: 15462860 }
     }
 ];
 
