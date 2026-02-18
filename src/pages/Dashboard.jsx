@@ -292,7 +292,7 @@ const Dashboard = () => {
                     <div className="flex flex-col gap-1">
                         <p className="text-slate-500 font-bold flex items-center gap-2">
                             <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
-                            Suivi en temps réel des engagements <span className="text-[10px] opacity-30 font-black ml-2">V2.9-ROLES</span>
+                            Suivi en temps réel des engagements <span className="text-[10px] opacity-30 font-black ml-2">V3.0-CONSISTENCY</span>
                         </p>
                         {syncStatus && (
                             <div className="flex items-center gap-2 mt-1">
