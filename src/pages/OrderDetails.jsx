@@ -445,36 +445,87 @@ const OrderDetails = () => {
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">PU HT</th>
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Montant HT</th>
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Marque</th>
-                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-emerald-600 text-center">Commande</th>
+                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-blue-600 text-center">Suivi Étapes Importation</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
-                                        {localArticles.map((art, idx) => (
-                                            <tr key={idx} className={`hover:bg-slate-50/50 transition-colors ${art.ordered ? 'bg-emerald-50/30' : ''}`}>
-                                                <td className="px-6 py-4 text-[11px] font-black text-slate-400">{art.no}</td>
-                                                <td className="px-6 py-4 text-[11px] font-bold text-blue-600">{art.ref}</td>
-                                                <td className="px-6 py-4 text-[11px] font-medium text-slate-600 leading-relaxed max-w-md">{art.designation}</td>
-                                                <td className="px-6 py-4 text-[11px] font-black text-slate-900 text-center">{art.qte}</td>
-                                                <td className="px-6 py-4 text-[11px] font-bold text-slate-700 text-right">{formatAmount(art.pu)}</td>
-                                                <td className="px-6 py-4 text-[11px] font-black text-slate-900 text-right">{formatAmount(art.total)}</td>
-                                                <td className="px-6 py-4">
-                                                    <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[9px] font-black uppercase italic">{art.marque}</span>
-                                                </td>
-                                                <td className="px-6 py-4 text-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        disabled={!isImport()}
-                                                        checked={art.ordered || false}
-                                                        onChange={e => {
-                                                            const newArticles = [...localArticles];
-                                                            newArticles[idx] = { ...art, ordered: e.target.checked };
-                                                            setLocalArticles(newArticles);
-                                                        }}
-                                                        className="w-5 h-5 rounded text-emerald-600 border-2 border-slate-200 cursor-pointer"
-                                                    />
-                                                </td>
-                                            </tr>
-                                        ))}
+                                        {localArticles.map((art, idx) => {
+                                            const isAuthOk = importData.authImport === 'Confirmée';
+
+                                            // Helper to check stage
+                                            const hasStage = (stage) => art.stages && art.stages[stage];
+
+                                            const toggleStage = (stage) => {
+                                                if (!isImport()) return;
+                                                // La commande ne peut être lancée que si l'autorisation est confirmée
+                                                if (stage === 'ordered' && !isAuthOk && !hasStage('ordered')) {
+                                                    alert("L'autorisation d'importation doit être 'Confirmée' pour lancer la commande.");
+                                                    return;
+                                                }
+
+                                                const newArticles = [...localArticles];
+                                                const currentStages = art.stages || {};
+                                                newArticles[idx] = {
+                                                    ...art,
+                                                    stages: { ...currentStages, [stage]: !currentStages[stage] },
+                                                    // On garde 'ordered' pour la compatibilité tableau de bord
+                                                    ordered: stage === 'ordered' ? !currentStages[stage] : (currentStages.ordered || false)
+                                                };
+                                                setLocalArticles(newArticles);
+                                            };
+
+                                            return (
+                                                <tr key={idx} className={`hover:bg-slate-50/50 transition-colors ${hasStage('cleared') ? 'bg-emerald-50/30' : (hasStage('ordered') ? 'bg-blue-50/20' : '')}`}>
+                                                    <td className="px-6 py-4 text-[11px] font-black text-slate-400">{art.no}</td>
+                                                    <td className="px-6 py-4 text-[11px] font-bold text-blue-600">{art.ref}</td>
+                                                    <td className="px-6 py-4 text-[11px] font-medium text-slate-600 leading-relaxed max-w-md">{art.designation}</td>
+                                                    <td className="px-6 py-4 text-[11px] font-black text-slate-900 text-center">{art.qte}</td>
+                                                    <td className="px-6 py-4 text-[11px] font-bold text-slate-700 text-right">{formatAmount(art.pu)}</td>
+                                                    <td className="px-6 py-4 text-[11px] font-black text-slate-900 text-right">{formatAmount(art.total)}</td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[9px] font-black uppercase italic">{art.marque}</span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center justify-center gap-1 bg-slate-50 p-1.5 rounded-2xl border border-slate-100 w-fit mx-auto">
+                                                            <button
+                                                                onClick={() => toggleStage('ordered')}
+                                                                className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all flex items-center gap-1.5 ${hasStage('ordered') ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-slate-400 hover:bg-white'}`}
+                                                                title="Commande Lancée"
+                                                            >
+                                                                <span>🛒</span> Commande
+                                                            </button>
+                                                            <div className={`w-3 h-px ${hasStage('ordered') ? 'bg-blue-200' : 'bg-slate-200'}`}></div>
+                                                            <button
+                                                                onClick={() => toggleStage('shipped')}
+                                                                disabled={!hasStage('ordered')}
+                                                                className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all flex items-center gap-1.5 ${hasStage('shipped') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-slate-400 hover:bg-white disabled:opacity-30'}`}
+                                                                title="En cours d'expédition"
+                                                            >
+                                                                <span>🚢</span> Expé.
+                                                            </button>
+                                                            <div className={`w-3 h-px ${hasStage('shipped') ? 'bg-indigo-200' : 'bg-slate-200'}`}></div>
+                                                            <button
+                                                                onClick={() => toggleStage('customs')}
+                                                                disabled={!hasStage('shipped')}
+                                                                className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all flex items-center gap-1.5 ${hasStage('customs') ? 'bg-amber-600 text-white shadow-lg shadow-amber-100' : 'text-slate-400 hover:bg-white disabled:opacity-30'}`}
+                                                                title="En cours de dédouanement"
+                                                            >
+                                                                <span>🛡️</span> Douane
+                                                            </button>
+                                                            <div className={`w-3 h-px ${hasStage('customs') ? 'bg-amber-200' : 'bg-slate-200'}`}></div>
+                                                            <button
+                                                                onClick={() => toggleStage('cleared')}
+                                                                disabled={!hasStage('customs')}
+                                                                className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all flex items-center gap-1.5 ${hasStage('cleared') ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'text-slate-400 hover:bg-white disabled:opacity-30'}`}
+                                                                title="Dédouané"
+                                                            >
+                                                                <span>✅</span> Prêt
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                     {order.totals && (
                                         <tfoot className="bg-slate-50">
