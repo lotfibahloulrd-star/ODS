@@ -451,15 +451,39 @@ const NewOrder = ({ onSave }) => {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">🧪 Équipements</label>
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">🧪 Équipements</label>
+                                            <button
+                                                onClick={() => setFormData({ ...formData, equipmentDetails: "Système complet piloté par microprocesseur. Engagement incluant : Installation, Qualification (IQ/OQ) et Formation certifiante pour 03 utilisateurs. Garantie : 24 mois." })}
+                                                className="text-[8px] font-black bg-blue-50 text-blue-600 px-2 py-1 rounded-lg hover:bg-blue-600 hover:text-white transition-all uppercase"
+                                            >
+                                                Inspirez-moi
+                                            </button>
+                                        </div>
                                         <textarea rows={4} className="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl font-bold text-slate-600 text-sm outline-none focus:border-blue-500 shadow-sm" placeholder="Liste des principaux équipements..." value={formData.equipmentDetails} onChange={e => setFormData({ ...formData, equipmentDetails: e.target.value })}></textarea>
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">⚗️ Réactifs</label>
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">⚗️ Réactifs</label>
+                                            <button
+                                                onClick={() => setFormData({ ...formData, reagentDetails: "Kit de démarrage comprenant : Solutions étalons certifiées (NIST) et réactifs de grade analytique. Validité résiduelle minimale à la livraison : 18 mois." })}
+                                                className="text-[8px] font-black bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg hover:bg-indigo-600 hover:text-white transition-all uppercase"
+                                            >
+                                                Inspirez-moi
+                                            </button>
+                                        </div>
                                         <textarea rows={4} className="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl font-bold text-slate-600 text-sm outline-none focus:border-indigo-500 shadow-sm" placeholder="Consistance des réactifs..." value={formData.reagentDetails} onChange={e => setFormData({ ...formData, reagentDetails: e.target.value })}></textarea>
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">📦 Consommables</label>
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">📦 Consommables</label>
+                                            <button
+                                                onClick={() => setFormData({ ...formData, consumableDetails: "Lot de consommables techniques pour 2000 analyses. Inclus : Accessoires de maintenance préventive de premier niveau (joints, septas, tubulures)." })}
+                                                className="text-[8px] font-black bg-emerald-50 text-emerald-600 px-2 py-1 rounded-lg hover:bg-emerald-600 hover:text-white transition-all uppercase"
+                                            >
+                                                Inspirez-moi
+                                            </button>
+                                        </div>
                                         <textarea rows={4} className="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl font-bold text-slate-600 text-sm outline-none focus:border-emerald-500 shadow-sm" placeholder="Détails consommables..." value={formData.consumableDetails} onChange={e => setFormData({ ...formData, consumableDetails: e.target.value })}></textarea>
                                     </div>
                                 </div>
