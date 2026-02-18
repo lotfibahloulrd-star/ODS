@@ -453,7 +453,8 @@ const OrderDetails = () => {
                                             const isAuthOk = importData.authImport === 'Confirmée';
 
                                             // Helper to check stage
-                                            const hasStage = (stage) => art.stages && art.stages[stage];
+                                            const hasStage = (stage) => art.stages && art.stages[stage]?.done;
+                                            const getStageData = (stage) => art.stages && art.stages[stage];
 
                                             const toggleStage = (stage) => {
                                                 if (!isImport()) return;
@@ -465,11 +466,20 @@ const OrderDetails = () => {
 
                                                 const newArticles = [...localArticles];
                                                 const currentStages = art.stages || {};
+                                                const isDone = !currentStages[stage]?.done;
+
                                                 newArticles[idx] = {
                                                     ...art,
-                                                    stages: { ...currentStages, [stage]: !currentStages[stage] },
+                                                    stages: {
+                                                        ...currentStages,
+                                                        [stage]: {
+                                                            done: isDone,
+                                                            at: isDone ? new Date().toISOString() : null,
+                                                            by: isDone ? currentUser.firstName : null
+                                                        }
+                                                    },
                                                     // On garde 'ordered' pour la compatibilité tableau de bord
-                                                    ordered: stage === 'ordered' ? !currentStages[stage] : (currentStages.ordered || false)
+                                                    ordered: stage === 'ordered' ? isDone : (currentStages.ordered?.done || false)
                                                 };
                                                 setLocalArticles(newArticles);
                                             };
@@ -487,40 +497,36 @@ const OrderDetails = () => {
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center justify-center gap-1 bg-slate-50 p-1.5 rounded-2xl border border-slate-100 w-fit mx-auto">
-                                                            <button
-                                                                onClick={() => toggleStage('ordered')}
-                                                                className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all flex items-center gap-1.5 ${hasStage('ordered') ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-slate-400 hover:bg-white'}`}
-                                                                title="Commande Lancée"
-                                                            >
-                                                                <span>🛒</span> Commande
-                                                            </button>
-                                                            <div className={`w-3 h-px ${hasStage('ordered') ? 'bg-blue-200' : 'bg-slate-200'}`}></div>
-                                                            <button
-                                                                onClick={() => toggleStage('shipped')}
-                                                                disabled={!hasStage('ordered')}
-                                                                className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all flex items-center gap-1.5 ${hasStage('shipped') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-slate-400 hover:bg-white disabled:opacity-30'}`}
-                                                                title="En cours d'expédition"
-                                                            >
-                                                                <span>🚢</span> Expé.
-                                                            </button>
-                                                            <div className={`w-3 h-px ${hasStage('shipped') ? 'bg-indigo-200' : 'bg-slate-200'}`}></div>
-                                                            <button
-                                                                onClick={() => toggleStage('customs')}
-                                                                disabled={!hasStage('shipped')}
-                                                                className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all flex items-center gap-1.5 ${hasStage('customs') ? 'bg-amber-600 text-white shadow-lg shadow-amber-100' : 'text-slate-400 hover:bg-white disabled:opacity-30'}`}
-                                                                title="En cours de dédouanement"
-                                                            >
-                                                                <span>🛡️</span> Douane
-                                                            </button>
-                                                            <div className={`w-3 h-px ${hasStage('customs') ? 'bg-amber-200' : 'bg-slate-200'}`}></div>
-                                                            <button
-                                                                onClick={() => toggleStage('cleared')}
-                                                                disabled={!hasStage('customs')}
-                                                                className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all flex items-center gap-1.5 ${hasStage('cleared') ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'text-slate-400 hover:bg-white disabled:opacity-30'}`}
-                                                                title="Dédouané"
-                                                            >
-                                                                <span>✅</span> Prêt
-                                                            </button>
+                                                            {[
+                                                                { key: 'ordered', label: 'Commande', emoji: '🛒', color: 'bg-blue-600', shadow: 'shadow-blue-100', text: 'text-blue-200' },
+                                                                { key: 'shipped', label: 'Expé.', emoji: '🚢', color: 'bg-indigo-600', shadow: 'shadow-indigo-100', text: 'text-indigo-200' },
+                                                                { key: 'customs', label: 'Douane', emoji: '🛡️', color: 'bg-amber-600', shadow: 'shadow-amber-100', text: 'text-amber-200' },
+                                                                { key: 'cleared', label: 'Prêt', emoji: '✅', color: 'bg-emerald-600', shadow: 'shadow-emerald-100', text: 'text-emerald-200' }
+                                                            ].map((step, sIdx, steps) => (
+                                                                <React.Fragment key={step.key}>
+                                                                    <div className="group relative">
+                                                                        <button
+                                                                            onClick={() => toggleStage(step.key)}
+                                                                            disabled={sIdx > 0 && !hasStage(steps[sIdx - 1].key)}
+                                                                            className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all flex items-center gap-1.5 ${hasStage(step.key) ? `${step.color} text-white shadow-lg ${step.shadow}` : 'text-slate-400 hover:bg-white disabled:opacity-30'}`}
+                                                                        >
+                                                                            <span>{step.emoji}</span> {step.label}
+                                                                        </button>
+                                                                        {hasStage(step.key) && (
+                                                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-3 py-2 bg-slate-900 text-white rounded-lg text-[8px] font-bold opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
+                                                                                <div className="flex flex-col gap-0.5">
+                                                                                    <span>Le {new Date(getStageData(step.key).at).toLocaleDateString()} à {new Date(getStageData(step.key).at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                                                    <span className="text-blue-400 uppercase tracking-widest border-t border-slate-800 pt-0.5 mt-0.5">Par {getStageData(step.key).by}</span>
+                                                                                </div>
+                                                                                <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45 -mt-1"></div>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    {sIdx < steps.length - 1 && (
+                                                                        <div className={`w-3 h-px ${hasStage(step.key) ? step.text.replace('text', 'bg') : 'bg-slate-200'}`}></div>
+                                                                    )}
+                                                                </React.Fragment>
+                                                            ))}
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -563,7 +569,7 @@ const OrderDetails = () => {
                                 {importData.importLaunched && <span className="text-[9px] font-black bg-white/20 px-2 py-0.5 rounded-lg border border-white/20">LANCÉ</span>}
                             </div>
                             <div className="p-8 space-y-6">
-                                <div className="grid grid-cols-1 gap-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">Autorisation</label>
                                         <select disabled={!isImport()} value={importData.authImport || ''} onChange={e => setImportData({ ...importData, authImport: e.target.value })} className="w-full text-xs font-black uppercase border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all">
@@ -572,6 +578,12 @@ const OrderDetails = () => {
                                             <option value="Non disponible">Non disponible</option>
                                         </select>
                                     </div>
+                                    {importData.authImport === 'Confirmée' && (
+                                        <div className="animate-in fade-in slide-in-from-left-4 duration-300">
+                                            <label className="text-[10px] font-black text-blue-400 uppercase mb-3 block">Date d'Obtention</label>
+                                            <input type="date" disabled={!isImport()} value={importData.authDate || ''} onChange={e => setImportData({ ...importData, authDate: e.target.value })} className="w-full text-xs font-black border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all" />
+                                        </div>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">Date Dédouanement</label>
