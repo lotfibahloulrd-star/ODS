@@ -508,8 +508,8 @@ const Dashboard = () => {
                                             key={order.id || Math.random()}
                                             onClick={() => navigate(`/order/${order.id}`)}
                                             className={`group transition-all cursor-pointer border-b border-slate-50 last:border-0 ${(order.importStatus?.orderPlaced || order.articles?.some(a => a.ordered))
-                                                    ? 'bg-emerald-50/80 hover:bg-emerald-100/80'
-                                                    : 'hover:bg-blue-50/50'
+                                                ? 'bg-emerald-50/80 hover:bg-emerald-100/80'
+                                                : 'hover:bg-blue-50/50'
                                                 }`}
                                         >
                                             <td className="px-6 py-7">
@@ -527,7 +527,13 @@ const Dashboard = () => {
                                             </td>
                                             <td className="px-6 py-7">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="text-[11px] font-black text-blue-600 tracking-tight">{order.refOds || order.ref || "-"}</div>
+                                                    <div className="group/ref relative flex items-center gap-1.5">
+                                                        <div className="text-[11px] font-black text-blue-600 tracking-tight">{order.refOds || order.ref || "-"}</div>
+                                                        {(!order.refOds && !order.ref) && (
+                                                            <div className="text-[8px] bg-blue-50 text-blue-400 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">À saisir</div>
+                                                        )}
+                                                        <Plus size={10} className="text-blue-300 opacity-0 group-hover/ref:opacity-100 transition-opacity" />
+                                                    </div>
                                                     {hasOds && (
                                                         <button onClick={e => { e.stopPropagation(); openPdf(order.id, 'storage_ods'); }} className="w-6 h-6 flex items-center justify-center text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all">
                                                             <FileText size={12} />
@@ -537,7 +543,13 @@ const Dashboard = () => {
                                             </td>
                                             <td className="px-6 py-7">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="text-[11px] font-bold text-indigo-600 tracking-tight">{order.refContract || "-"}</div>
+                                                    <div className="group/ref relative flex items-center gap-1.5">
+                                                        <div className="text-[11px] font-bold text-indigo-600 tracking-tight">{order.refContract || "-"}</div>
+                                                        {!order.refContract && (
+                                                            <div className="text-[8px] bg-indigo-50 text-indigo-400 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">À saisir</div>
+                                                        )}
+                                                        <Plus size={10} className="text-indigo-300 opacity-0 group-hover/ref:opacity-100 transition-opacity" />
+                                                    </div>
                                                     {hasContract && (
                                                         <button onClick={e => { e.stopPropagation(); openPdf(order.id, 'storage_contracts'); }} className="w-6 h-6 flex items-center justify-center text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-600 hover:text-white transition-all">
                                                             <FileCheck size={12} />

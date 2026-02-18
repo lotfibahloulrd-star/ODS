@@ -18,6 +18,10 @@ const OrderDetails = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [isEditingAmount, setIsEditingAmount] = useState(false);
     const [tempAmount, setTempAmount] = useState("");
+    const [isEditingRefOds, setIsEditingRefOds] = useState(false);
+    const [tempRefOds, setTempRefOds] = useState("");
+    const [isEditingRefContract, setIsEditingRefContract] = useState(false);
+    const [tempRefContract, setTempRefContract] = useState("");
 
     const loadOrder = async () => {
         setIsLoading(true);
@@ -30,6 +34,8 @@ const OrderDetails = () => {
                 setStockData(found.stockStatus || {});
                 setLocalArticles(found.articles || []);
                 setTempAmount(found.amount || "");
+                setTempRefOds(found.refOds || found.ref || "");
+                setTempRefContract(found.refContract || "");
             }
         } catch (error) {
             console.error("Error loading order:", error);
@@ -118,6 +124,34 @@ const OrderDetails = () => {
             alert("Montant mis à jour !");
         } catch (e) {
             alert("Erreur lors de la mise à jour du montant.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleSaveRefOds = async () => {
+        setIsSaving(true);
+        try {
+            await orderService.updateOrder(order.id, { refOds: tempRefOds }, currentUser.firstName);
+            setIsEditingRefOds(false);
+            loadOrder();
+            alert("Référence ODS mise à jour !");
+        } catch (e) {
+            alert("Erreur lors de la mise à jour de la référence ODS.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleSaveRefContract = async () => {
+        setIsSaving(true);
+        try {
+            await orderService.updateOrder(order.id, { refContract: tempRefContract }, currentUser.firstName);
+            setIsEditingRefContract(false);
+            loadOrder();
+            alert("Référence Contrat mise à jour !");
+        } catch (e) {
+            alert("Erreur lors de la mise à jour de la référence Contrat.");
         } finally {
             setIsSaving(false);
         }
@@ -252,9 +286,28 @@ const OrderDetails = () => {
                             <span className="text-slate-500 font-bold">•</span>
                             <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">ID: {order.id}</span>
                         </div>
-                        <h2 className="text-4xl font-black tracking-tight leading-tight">
-                            {order.refOds || order.ref || "SANS RÉFÉRENCE"}
-                        </h2>
+                        {isEditingRefOds ? (
+                            <div className="flex gap-4 items-center">
+                                <input
+                                    type="text"
+                                    value={tempRefOds}
+                                    onChange={e => setTempRefOds(e.target.value)}
+                                    className="bg-white/10 border border-white/20 p-4 rounded-2xl text-2xl font-black text-white outline-none focus:border-blue-400 w-full max-w-xl"
+                                    autoFocus
+                                />
+                                <button onClick={handleSaveRefOds} className="px-6 py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all">Enregistrer</button>
+                                <button onClick={() => setIsEditingRefOds(false)} className="text-white/50 hover:text-white font-black text-[10px] uppercase">Annuler</button>
+                            </div>
+                        ) : (
+                            <div className="group flex items-center gap-4">
+                                <h2 className="text-4xl font-black tracking-tight leading-tight">
+                                    {order.refOds || order.ref || "SANS RÉFÉRENCE"}
+                                </h2>
+                                <button onClick={() => { setTempRefOds(order.refOds || order.ref || ""); setIsEditingRefOds(true); }} className="opacity-0 group-hover:opacity-100 p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all">
+                                    <Plus size={16} />
+                                </button>
+                            </div>
+                        )}
                         <p className="text-slate-400 font-medium max-w-3xl text-lg leading-relaxed">{order.object}</p>
                     </div>
                 </div>
@@ -336,19 +389,35 @@ const OrderDetails = () => {
                                             </div>
                                         </td>
                                         <td className="px-8 py-6 text-right">
-                                            {order.files?.storage_contracts ? (
-                                                <button onClick={() => openPdf(order.id, 'storage_contracts')} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 ml-auto shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
-                                                    <ExternalLink size={14} /> Voir le Contrat
-                                                </button>
-                                            ) : (
-                                                <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
-                                                    <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-indigo-500 transition-colors">Attacher</span>
-                                                    <div className="w-10 h-10 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-indigo-500 group-hover:text-indigo-500 transition-all">
-                                                        <Plus size={16} />
+                                            <div className="flex flex-col items-end gap-2">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="text-[11px] font-black text-indigo-400 uppercase tracking-widest mr-2">Contrat {order.refContract || '(Non saisi)'}</div>
+                                                    {order.files?.storage_contracts ? (
+                                                        <button onClick={() => openPdf(order.id, 'storage_contracts')} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
+                                                            <ExternalLink size={14} /> Voir le Contrat
+                                                        </button>
+                                                    ) : (
+                                                        <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
+                                                            <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-indigo-500 transition-colors">Attacher PDF</span>
+                                                            <div className="w-8 h-8 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-indigo-500 group-hover:text-indigo-500 transition-all">
+                                                                <Plus size={14} />
+                                                            </div>
+                                                            <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'contract')} />
+                                                        </label>
+                                                    )}
+                                                </div>
+                                                {isEditingRefContract ? (
+                                                    <div className="flex gap-2">
+                                                        <input type="text" value={tempRefContract} onChange={e => setTempRefContract(e.target.value)} className="p-2 border border-indigo-200 rounded-lg text-[10px] font-black outline-none w-48" autoFocus />
+                                                        <button onClick={handleSaveRefContract} className="bg-indigo-600 text-white px-3 py-1 rounded-lg text-[9px] font-black">OK</button>
+                                                        <button onClick={() => setIsEditingRefContract(false)} className="text-[9px] font-black text-slate-400 uppercase">X</button>
                                                     </div>
-                                                    <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'contract')} />
-                                                </label>
-                                            )}
+                                                ) : (
+                                                    <button onClick={() => { setTempRefContract(order.refContract || ""); setIsEditingRefContract(true); }} className="text-[9px] font-black text-indigo-400 hover:text-indigo-600 transition-colors uppercase flex items-center gap-1">
+                                                        <Plus size={10} /> Modifier la référence texte
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                     <tr>
