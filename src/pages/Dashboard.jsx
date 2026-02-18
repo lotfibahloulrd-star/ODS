@@ -481,14 +481,14 @@ const Dashboard = () => {
                         <tbody className="divide-y divide-slate-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="8" className="px-6 py-20 text-center">
+                                    <td colSpan="9" className="px-6 py-20 text-center">
                                         <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
                                         <p className="text-slate-500 font-bold tracking-tight">Analyse des données en cours...</p>
                                     </td>
                                 </tr>
                             ) : filteredOrders.length === 0 ? (
                                 <tr>
-                                    <td colSpan="8" className="px-6 py-20 text-center">
+                                    <td colSpan="9" className="px-6 py-20 text-center">
                                         <Package className="mx-auto text-slate-300 mb-6" size={64} />
                                         <p className="text-slate-500 font-black text-lg">Aucun engagement trouvé</p>
                                         <p className="text-slate-400 text-sm mt-1">Ajustez vos filtres ou créez un nouvel ODS</p>
@@ -500,6 +500,7 @@ const Dashboard = () => {
                                     const hasOds = !!(order.files?.storage_ods);
                                     const hasContract = !!(order.files?.storage_contracts);
 
+                                    const isImportLaunched = order.importStatus?.importLaunched;
                                     const isImportCleared = !!order.importStatus?.clearedAt;
                                     const isStockReceived = order.stockStatus?.reception === 'Totale';
 
