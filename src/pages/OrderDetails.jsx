@@ -385,7 +385,7 @@ const OrderDetails = () => {
                             ) : (
                                 <div className="flex items-center gap-3">
                                     <span className="text-xl font-black text-slate-900 uppercase block">{order.client}</span>
-                                    {isSuperAdmin() && <button onClick={() => { setTempClient(order.client); setIsEditingClient(true); }} className="p-2 opacity-0 group-hover:opacity-100 hover:bg-white text-slate-300 hover:text-blue-500 rounded-lg transition-all"><Plus size={14} /></button>}
+                                    {isSuperAdmin() && <button onClick={() => { setTempClient(order.client); setIsEditingClient(true); }} className="p-2 hover:bg-white text-blue-500 rounded-lg transition-all border border-blue-100 bg-blue-50/50"><Plus size={14} /></button>}
                                 </div>
                             )}
                         </div>
