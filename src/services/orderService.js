@@ -276,6 +276,38 @@ const INITIAL_ORDERS = [
             { no: '06', ref: 'BES104', designation: 'Fourniture, installation et mise en service d\'un banc de formation sur les capteurs et les actionneurs. Equipements de base "Capteurs et actionneurs en automobile"', qte: 1, pu: 1621000, total: 1621000, marque: 'BEDO' }
         ],
         totals: { ht: 12994000, tva: 2468860, ttc: 15462860 }
+    },
+    {
+        id: 'init-bc-001885',
+        client: 'Université Scientifique (Lab)',
+        refOds: 'BC 001885',
+        refContract: 'BC N°: 001885 Du 09/07/2025',
+        object: 'ACQUISITION ET LIVRAISON DES EQUIPEMENTS DE LABORATOIRE',
+        dateOds: '2025-07-09',
+        delay: '120',
+        amount: '7163046.73',
+        division: 'Division Analytique',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-07-09T10:00:00.000Z',
+        files: {},
+        articles: [
+            { no: '01', ref: '9020-0311', designation: 'Etuve réfrigérée', qte: 1, pu: 770000, total: 770000, marque: 'BINDER', available: true },
+            { no: '02', ref: 'HS120', designation: 'Hotte d\'extraction chimique', qte: 1, pu: 754000, total: 754000, marque: 'CAD', available: true },
+            { no: '03', ref: 'F0A011400000', designation: 'Hotte d\'extraction bacteriologique', qte: 1, pu: 1225167, total: 1225167, marque: 'FASTER', available: true },
+            { no: '04', ref: 'LEV015.98.2100A', designation: 'Multimetre parametre ph-cond-temp (Sondes et solutions incluses)', qte: 1, pu: 325000, total: 325000, marque: 'HACH', available: true },
+            { no: '05', ref: 'TL-25-STIR-MI', designation: 'Burette automatique avec agitateur', qte: 1, pu: 302500, total: 302500, marque: 'MICROLITE', available: true },
+            { no: '06', ref: 'LPV444.99.00210', designation: 'Turbidimetre de paillasse', qte: 1, pu: 945000, total: 945000, marque: 'HACH', available: true },
+            { no: '07', ref: '05721753', designation: 'Thermometre de precision pour contrôle des étuves tem gamme mesure 1/50', qte: 6, pu: 55400, total: 332400, marque: 'TESTO', available: true },
+            { no: '08', ref: '-', designation: 'Tabouret pour laboratoire', qte: 4, pu: 13050, total: 52200, marque: 'CAD', available: true },
+            { no: '09', ref: 'LTV082.99.10002', designation: 'Bloc chauffante bain sec', qte: 1, pu: 254500, total: 254500, marque: 'HACH', available: true },
+            { no: '10', ref: '56K001901', designation: 'Testeur d\'indice de colmatage de l\'eau SDI', qte: 2, pu: 215600, total: 431200, available: false },
+            { no: '11', ref: 'DRAI-055-001', designation: 'Egoutoir pour verrerie de laboratoire', qte: 2, pu: 9200, total: 18400, marque: 'LABBOX', available: true },
+            { no: '12', ref: '172244', designation: 'Densimetre', qte: 1, pu: 609000, total: 609000, marque: 'ANTON PAR', available: true }
+        ],
+        totals: { ht: 6019367, tva: 1143679.73, ttc: 7163046.73 }
     }
 ];
 
@@ -296,7 +328,7 @@ export const orderService = {
             let sharedOrders = await response.json();
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v6';
+            const DATA_VERSION = 'ods_data_v8';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
@@ -333,14 +365,14 @@ export const orderService = {
 
             return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v6';
+            const DATA_VERSION = 'ods_data_v8';
             const localData = localStorage.getItem(DATA_VERSION);
             return localData ? JSON.parse(localData) : INITIAL_ORDERS;
         }
     },
 
     _saveAllToShared: async (orders) => {
-        const DATA_VERSION = 'ods_data_v6';
+        const DATA_VERSION = 'ods_data_v8';
         try {
             await fetch(`${API_URL}?action=save_orders`, {
                 method: 'POST',

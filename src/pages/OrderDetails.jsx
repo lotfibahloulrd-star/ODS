@@ -98,6 +98,17 @@ const OrderDetails = () => {
         reader.readAsDataURL(file);
     };
 
+    const availabilityInfo = useMemo(() => {
+        if (!order || !localArticles.length) return { totalHt: 0, availableHt: 0, percentage: 0 };
+        const totalHt = order.totals?.ht || localArticles.reduce((sum, a) => sum + (a.total || 0), 0) || 0;
+        const availableHt = localArticles.reduce((sum, a) => sum + (a.available ? (a.total || 0) : 0), 0) || 0;
+        return {
+            totalHt,
+            availableHt,
+            percentage: totalHt > 0 ? Math.round((availableHt / totalHt) * 100) : 0
+        };
+    }, [order, localArticles]);
+
     const handleSaveWorkflow = async () => {
         setIsSaving(true);
         try {
@@ -314,7 +325,7 @@ const OrderDetails = () => {
 
                 <div className="p-10 space-y-12">
                     {/* Key Stats Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 group hover:border-blue-200 transition-all">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Client Engagé</span>
                             <span className="text-xl font-black text-slate-900 uppercase block">{order.client}</span>
@@ -340,6 +351,15 @@ const OrderDetails = () => {
                                 <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-tighter ${remainingInfo?.isOverdue ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
                                     {remainingInfo?.isOverdue ? `${Math.abs(remainingInfo.days)} J RETARD` : `${remainingInfo?.days} J RESTANTS`}
                                 </span>
+                            </div>
+                        </div>
+                        <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 group hover:border-emerald-200 transition-all">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Avancement (Articles Dispos)</span>
+                            <div className="flex items-center gap-3">
+                                <span className={`text-2xl font-black ${availabilityInfo.percentage === 100 ? 'text-emerald-600' : 'text-amber-600'}`}>{availabilityInfo.percentage}%</span>
+                                <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden border border-slate-100">
+                                    <div className={`h-full transition-all duration-1000 ${availabilityInfo.percentage === 100 ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${availabilityInfo.percentage}%` }}></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -513,7 +533,8 @@ const OrderDetails = () => {
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Qté</th>
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">PU HT</th>
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Montant HT</th>
-                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Marque</th>
+                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Marque</th>
+                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-emerald-600 text-center">Dispo</th>
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-blue-600 text-center">Suivi Étapes Importation</th>
                                         </tr>
                                     </thead>
@@ -563,6 +584,19 @@ const OrderDetails = () => {
                                                     <td className="px-6 py-4 text-[11px] font-black text-slate-900 text-right">{formatAmount(art.total)}</td>
                                                     <td className="px-6 py-4">
                                                         <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[9px] font-black uppercase italic">{art.marque}</span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const newArticles = [...localArticles];
+                                                                newArticles[idx] = { ...newArticles[idx], available: !newArticles[idx].available };
+                                                                setLocalArticles(newArticles);
+                                                            }}
+                                                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${art.available ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'}`}
+                                                        >
+                                                            <CheckCircle size={20} />
+                                                        </button>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center justify-center gap-1 bg-slate-50 p-1.5 rounded-2xl border border-slate-100 w-fit mx-auto">

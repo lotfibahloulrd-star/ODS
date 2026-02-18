@@ -292,7 +292,7 @@ const Dashboard = () => {
                     <div className="flex flex-col gap-1">
                         <p className="text-slate-500 font-bold flex items-center gap-2">
                             <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
-                            Suivi en temps réel des engagements <span className="text-[10px] opacity-30 font-black ml-2">V3.0-CONSISTENCY</span>
+                            Suivi en temps réel des engagements <span className="text-[10px] opacity-30 font-black ml-2">V3.1-PROGRESS</span>
                         </p>
                         {syncStatus && (
                             <div className="flex items-center gap-2 mt-1">
@@ -472,6 +472,7 @@ const Dashboard = () => {
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-slate-400">Valeur</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Réf. ODS</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">Réf. Contrat</th>
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-emerald-600">Avancement</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-red-500">ODS d'Arrêt</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-slate-400">Logistique</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-right text-slate-400">Détails</th>
@@ -499,9 +500,13 @@ const Dashboard = () => {
                                     const hasOds = !!(order.files?.storage_ods);
                                     const hasContract = !!(order.files?.storage_contracts);
 
-                                    const isImportLaunched = order.importStatus?.importLaunched;
                                     const isImportCleared = !!order.importStatus?.clearedAt;
                                     const isStockReceived = order.stockStatus?.reception === 'Totale';
+
+                                    // Calcul de l'avancement "Dispo"
+                                    const totalHt = order.totals?.ht || order.articles?.reduce((sum, a) => sum + (a.total || 0), 0) || 0;
+                                    const availableHt = order.articles?.sort((a, b) => a.no - b.no).reduce((sum, a) => sum + (a.available ? (a.total || 0) : 0), 0) || 0;
+                                    const progress = totalHt > 0 ? Math.round((availableHt / totalHt) * 100) : 0;
 
                                     return (
                                         <tr
@@ -555,6 +560,19 @@ const Dashboard = () => {
                                                             <FileCheck size={12} />
                                                         </button>
                                                     )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-7 text-center">
+                                                <div className="flex flex-col items-center gap-1.5 min-w-[100px]">
+                                                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/50">
+                                                        <div
+                                                            className={`h-full transition-all duration-1000 ${progress >= 100 ? 'bg-emerald-500' : progress > 50 ? 'bg-blue-500' : 'bg-amber-500'}`}
+                                                            style={{ width: `${progress}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    <span className={`text-[10px] font-black ${progress >= 100 ? 'text-emerald-600' : 'text-slate-600'}`}>
+                                                        {progress}% <span className="text-[8px] opacity-40">DISPO</span>
+                                                    </span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-7 text-center">
