@@ -264,6 +264,9 @@ const INITIAL_ORDERS = [
         isReadyForDelivery: false,
         createdAt: '2026-02-18T09:00:00.000Z',
         files: {},
+        equipmentDetails: 'Lot de 06 bancs de formation technique et didactique de marque BEDO destinés au département de Génie Mécanique. Inclus : Banc moteur essence (EPG104), Banc ABS/EBD/ASR (BSB111), Panneau contrôle électrique (EFU105), Banc Diesel Common Rail (EDE104), Simulateur GPL (EFU104) et Banc capteurs/actionneurs (BES104). Fourniture incluant l\'installation, la mise en service et la formation technique approfondie. Garantie : 24 mois.',
+        reagentDetails: 'S/O (Équipements didactiques matériels).',
+        consumableDetails: 'Accessoires et kits de raccordement inclus pour chaque banc. Documentation pédagogique complète (manuels TP/TD) fournie en Français.',
         articles: [
             { no: '01', ref: 'EPG104', designation: 'Fourniture, installation et mise en service d\'un banc de formation pour moteur à essence', qte: 1, pu: 2438000, total: 2438000, marque: 'BEDO' },
             { no: '02', ref: 'BSB111', designation: 'Fourniture, installation et mise en service d\'un banc de formation sur le système antiblocage ABC/EBD/ASR. Formateur de freins à disques et tambours ABS avec défauts.', qte: 1, pu: 2892000, total: 2892000, marque: 'BEDO' },
@@ -293,7 +296,7 @@ export const orderService = {
             let sharedOrders = await response.json();
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v5';
+            const DATA_VERSION = 'ods_data_v6';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
@@ -330,14 +333,14 @@ export const orderService = {
 
             return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v5';
+            const DATA_VERSION = 'ods_data_v6';
             const localData = localStorage.getItem(DATA_VERSION);
             return localData ? JSON.parse(localData) : INITIAL_ORDERS;
         }
     },
 
     _saveAllToShared: async (orders) => {
-        const DATA_VERSION = 'ods_data_v5';
+        const DATA_VERSION = 'ods_data_v6';
         try {
             await fetch(`${API_URL}?action=save_orders`, {
                 method: 'POST',
