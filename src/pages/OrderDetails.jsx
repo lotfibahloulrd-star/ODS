@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 const OrderDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { currentUser, isImport, isStock, canCreateOds, canEditAmount } = useAuth();
+    const { currentUser, isImport, isStock, canCreateOds, canEditAmount, isSuperAdmin } = useAuth();
 
     const [order, setOrder] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -22,6 +22,18 @@ const OrderDetails = () => {
     const [tempRefOds, setTempRefOds] = useState("");
     const [isEditingRefContract, setIsEditingRefContract] = useState(false);
     const [tempRefContract, setTempRefContract] = useState("");
+    const [isEditingClient, setIsEditingClient] = useState(false);
+    const [tempClient, setTempClient] = useState("");
+    const [isEditingObject, setIsEditingObject] = useState(false);
+    const [tempObject, setTempObject] = useState("");
+    const [isEditingDateOds, setIsEditingDateOds] = useState(false);
+    const [tempDateOds, setTempDateOds] = useState("");
+    const [isEditingDelay, setIsEditingDelay] = useState(false);
+    const [tempDelay, setTempDelay] = useState("");
+    const [isEditingEquipment, setIsEditingEquipment] = useState(false);
+    const [tempEquipment, setTempEquipment] = useState("");
+    const [isEditingReagent, setIsEditingReagent] = useState(false);
+    const [tempReagent, setTempReagent] = useState("");
 
     const loadOrder = async () => {
         setIsLoading(true);
@@ -36,6 +48,12 @@ const OrderDetails = () => {
                 setTempAmount(found.amount || "");
                 setTempRefOds(found.refOds || found.ref || "");
                 setTempRefContract(found.refContract || "");
+                setTempClient(found.client || "");
+                setTempObject(found.object || "");
+                setTempDateOds(found.dateOds || found.startDate || "");
+                setTempDelay(found.delay || "");
+                setTempEquipment(found.equipmentDetails || "");
+                setTempReagent(found.reagentDetails || "");
             }
         } catch (error) {
             console.error("Error loading order:", error);
@@ -163,6 +181,20 @@ const OrderDetails = () => {
             alert("Référence Contrat mise à jour !");
         } catch (e) {
             alert("Erreur lors de la mise à jour de la référence Contrat.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleSaveAdminFields = async (field, value, tempSetter, editSetter, label) => {
+        setIsSaving(true);
+        try {
+            await orderService.updateOrder(order.id, { [field]: value }, currentUser.firstName);
+            editSetter(false);
+            loadOrder();
+            alert(`${label} mis à jour !`);
+        } catch (e) {
+            alert(`Erreur lors de la mise à jour de ${label}.`);
         } finally {
             setIsSaving(false);
         }
@@ -319,7 +351,24 @@ const OrderDetails = () => {
                                 </button>
                             </div>
                         )}
-                        <p className="text-slate-400 font-medium max-w-3xl text-lg leading-relaxed">{order.object}</p>
+                        {isEditingObject ? (
+                            <div className="flex gap-4 items-center">
+                                <textarea
+                                    value={tempObject}
+                                    onChange={e => setTempObject(e.target.value)}
+                                    className="bg-white/10 border border-white/20 p-4 rounded-2xl text-lg font-medium text-white outline-none focus:border-blue-400 w-full max-w-3xl"
+                                    autoFocus
+                                    rows={3}
+                                />
+                                <button onClick={() => handleSaveAdminFields('object', tempObject, setTempObject, setIsEditingObject, 'Objet')} className="px-6 py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all">OK</button>
+                                <button onClick={() => setIsEditingObject(false)} className="text-white/50 hover:text-white font-black text-[10px] uppercase">X</button>
+                            </div>
+                        ) : (
+                            <div className="group flex items-center gap-4">
+                                <p className="text-slate-400 font-medium max-w-3xl text-lg leading-relaxed">{order.object}</p>
+                                {isSuperAdmin() && <button onClick={() => { setTempObject(order.object); setIsEditingObject(true); }} className="opacity-0 group-hover:opacity-100 p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all"><Plus size={16} /></button>}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -328,7 +377,17 @@ const OrderDetails = () => {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 group hover:border-blue-200 transition-all">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Client Engagé</span>
-                            <span className="text-xl font-black text-slate-900 uppercase block">{order.client}</span>
+                            {isEditingClient ? (
+                                <div className="flex gap-2">
+                                    <input type="text" value={tempClient} onChange={e => setTempClient(e.target.value)} className="flex-1 p-2 bg-white border-2 border-blue-200 rounded-xl font-black text-slate-900 outline-none" autoFocus />
+                                    <button onClick={() => handleSaveAdminFields('client', tempClient, setTempClient, setIsEditingClient, 'Client')} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase">OK</button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xl font-black text-slate-900 uppercase block">{order.client}</span>
+                                    {isSuperAdmin() && <button onClick={() => { setTempClient(order.client); setIsEditingClient(true); }} className="p-2 opacity-0 group-hover:opacity-100 hover:bg-white text-slate-300 hover:text-blue-500 rounded-lg transition-all"><Plus size={14} /></button>}
+                                </div>
+                            )}
                         </div>
                         <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 group hover:border-emerald-200 transition-all">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Montant TTC</span>
@@ -505,11 +564,35 @@ const OrderDetails = () => {
                                 <tbody className="divide-y divide-slate-100">
                                     <tr>
                                         <td className="px-8 py-6 w-1/3 text-[10px] font-black text-slate-400 uppercase">Équipements</td>
-                                        <td className="px-8 py-6 text-xs font-bold text-slate-600 leading-relaxed">{order.equipmentDetails || "-"}</td>
+                                        <td className="px-8 py-6 text-xs font-bold text-slate-600 leading-relaxed group relative">
+                                            {isEditingEquipment ? (
+                                                <div className="flex gap-2">
+                                                    <textarea value={tempEquipment} onChange={e => setTempEquipment(e.target.value)} className="flex-1 p-2 border border-blue-200 rounded-xl outline-none" rows={3} autoFocus />
+                                                    <button onClick={() => handleSaveAdminFields('equipmentDetails', tempEquipment, setTempEquipment, setIsEditingEquipment, 'Détails Équipements')} className="px-3 py-1 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase h-fit">OK</button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-between">
+                                                    <span>{order.equipmentDetails || "-"}</span>
+                                                    {isSuperAdmin() && <button onClick={() => { setTempEquipment(order.equipmentDetails || ""); setIsEditingEquipment(true); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-100 rounded-lg"><Plus size={12} /></button>}
+                                                </div>
+                                            )}
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase">Réactifs</td>
-                                        <td className="px-8 py-6 text-xs font-bold text-slate-600 leading-relaxed">{order.reagentDetails || "-"}</td>
+                                        <td className="px-8 py-6 text-xs font-bold text-slate-600 leading-relaxed group relative">
+                                            {isEditingReagent ? (
+                                                <div className="flex gap-2">
+                                                    <textarea value={tempReagent} onChange={e => setTempReagent(e.target.value)} className="flex-1 p-2 border border-blue-200 rounded-xl outline-none" rows={2} autoFocus />
+                                                    <button onClick={() => handleSaveAdminFields('reagentDetails', tempReagent, setTempReagent, setIsEditingReagent, 'Détails Réactifs')} className="px-3 py-1 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase h-fit">OK</button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-between">
+                                                    <span>{order.reagentDetails || "-"}</span>
+                                                    {isSuperAdmin() && <button onClick={() => { setTempReagent(order.reagentDetails || ""); setIsEditingReagent(true); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-100 rounded-lg"><Plus size={12} /></button>}
+                                                </div>
+                                            )}
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -547,7 +630,7 @@ const OrderDetails = () => {
                                             const getStageData = (stage) => art.stages && art.stages[stage];
 
                                             const toggleStage = (stage) => {
-                                                if (!isImport()) return;
+                                                if (!isImport() && !isSuperAdmin()) return;
                                                 // La commande ne peut être lancée que si l'autorisation est confirmée
                                                 if (stage === 'ordered' && !isAuthOk && !hasStage('ordered')) {
                                                     alert("L'autorisation d'importation doit être 'Confirmée' pour lancer la commande.");
@@ -675,7 +758,7 @@ const OrderDetails = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">Autorisation</label>
-                                        <select disabled={!isImport()} value={importData.authImport || ''} onChange={e => setImportData({ ...importData, authImport: e.target.value })} className="w-full text-xs font-black uppercase border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all">
+                                        <select disabled={!isImport() && !isSuperAdmin()} value={importData.authImport || ''} onChange={e => setImportData({ ...importData, authImport: e.target.value })} className="w-full text-xs font-black uppercase border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all">
                                             <option value="">En attente...</option>
                                             <option value="Confirmée">Confirmée</option>
                                             <option value="Non disponible">Non disponible</option>
@@ -684,13 +767,13 @@ const OrderDetails = () => {
                                     {importData.authImport === 'Confirmée' && (
                                         <div className="animate-in fade-in slide-in-from-left-4 duration-300">
                                             <label className="text-[10px] font-black text-blue-400 uppercase mb-3 block">Date d'Obtention</label>
-                                            <input type="date" disabled={!isImport()} value={importData.authDate || ''} onChange={e => setImportData({ ...importData, authDate: e.target.value })} className="w-full text-xs font-black border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all" />
+                                            <input type="date" disabled={!isImport() && !isSuperAdmin()} value={importData.authDate || ''} onChange={e => setImportData({ ...importData, authDate: e.target.value })} className="w-full text-xs font-black border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all" />
                                         </div>
                                     )}
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">Date Dédouanement</label>
-                                    <input type="date" disabled={!isImport()} value={importData.clearedAt || ''} onChange={e => setImportData({ ...importData, clearedAt: e.target.value })} className="w-full text-xs font-black border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all" />
+                                    <input type="date" disabled={!isImport() && !isSuperAdmin()} value={importData.clearedAt || ''} onChange={e => setImportData({ ...importData, clearedAt: e.target.value })} className="w-full text-xs font-black border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all" />
                                 </div>
                             </div>
                         </div>
@@ -707,7 +790,7 @@ const OrderDetails = () => {
                             <div className="p-8 space-y-6">
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">État Réception</label>
-                                    <select disabled={!isStock()} value={stockData.reception || 'Aucune'} onChange={e => setStockData({ ...stockData, reception: e.target.value })} className="w-full text-xs font-black uppercase border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-emerald-200 outline-none transition-all">
+                                    <select disabled={!isStock() && !isSuperAdmin()} value={stockData.reception || 'Aucune'} onChange={e => setStockData({ ...stockData, reception: e.target.value })} className="w-full text-xs font-black uppercase border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-emerald-200 outline-none transition-all">
                                         <option value="Aucune">Aucune</option>
                                         <option value="Partielle">Partielle</option>
                                         <option value="Totale">Totale</option>
@@ -715,14 +798,14 @@ const OrderDetails = () => {
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">Date Réception Magasin</label>
-                                    <input type="date" disabled={!isStock()} value={stockData.receivedAt || ''} onChange={e => setStockData({ ...stockData, receivedAt: e.target.value })} className="w-full text-xs font-black border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-emerald-200 outline-none transition-all" />
+                                    <input type="date" disabled={!isStock() && !isSuperAdmin()} value={stockData.receivedAt || ''} onChange={e => setStockData({ ...stockData, receivedAt: e.target.value })} className="w-full text-xs font-black border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-emerald-200 outline-none transition-all" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Operational Save Button */}
-                    {(isImport() || isStock()) && (
+                    {(isImport() || isStock() || isSuperAdmin()) && (
                         <div className="flex justify-center pt-4">
                             <button onClick={handleSaveWorkflow} disabled={isSaving} className="px-12 py-5 bg-slate-900 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-slate-200 hover:bg-black hover:-translate-y-1 transition-all disabled:opacity-50 disabled:translate-y-0 active:scale-95 flex items-center gap-4">
                                 {isSaving ? "Synchronisation..." : "Valider les étapes opérationnelles"}
@@ -740,13 +823,33 @@ const OrderDetails = () => {
                                 <h3 className="text-[11px] font-black uppercase tracking-[0.3em]">Chronologie de l'exécution</h3>
                             </div>
                             <div className="flex flex-col md:flex-row justify-between items-center gap-12 md:gap-4 px-4">
-                                <div className="text-center">
+                                <div className="text-center group relative">
                                     <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Notification ODS</div>
-                                    <div className="text-3xl font-black">{formatDate(order.startDate || order.dateOds)}</div>
+                                    {isEditingDateOds ? (
+                                        <div className="flex flex-col gap-2">
+                                            <input type="date" value={tempDateOds} onChange={e => setTempDateOds(e.target.value)} className="bg-slate-800 border border-slate-700 p-2 rounded-xl text-xs font-black text-white outline-none" autoFocus />
+                                            <button onClick={() => handleSaveAdminFields('dateOds', tempDateOds, setTempDateOds, setIsEditingDateOds, 'Date ODS')} className="px-3 py-1 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase">OK</button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-3 justify-center">
+                                            <div className="text-3xl font-black">{formatDate(order.startDate || order.dateOds)}</div>
+                                            {isSuperAdmin() && <button onClick={() => { setTempDateOds(order.startDate || order.dateOds || ""); setIsEditingDateOds(true); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-800 rounded-lg text-slate-400"><Plus size={14} /></button>}
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="flex-1 h-px bg-slate-800 relative hidden md:block">
-                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-6 bg-slate-900 border border-slate-700 rounded-full py-2 text-[10px] font-black text-blue-400 uppercase tracking-widest whitespace-nowrap shadow-xl">
-                                        Délai: {order.delay} JOURS
+                                <div className="flex-1 h-px bg-slate-800 relative hidden md:block group">
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-6 bg-slate-900 border border-slate-700 rounded-full py-2 text-[10px] font-black text-blue-400 uppercase tracking-widest whitespace-nowrap shadow-xl flex items-center gap-3">
+                                        {isEditingDelay ? (
+                                            <div className="flex items-center gap-2">
+                                                <input type="number" value={tempDelay} onChange={e => setTempDelay(e.target.value)} className="bg-slate-800 border border-slate-700 w-20 p-1 rounded text-center outline-none" autoFocus />
+                                                <button onClick={() => handleSaveAdminFields('delay', tempDelay, setTempDelay, setIsEditingDelay, 'Délai')} className="text-emerald-500 hover:text-emerald-400"><CheckCircle2 size={14} /></button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                Délai: {order.delay} JOURS
+                                                {isSuperAdmin() && <button onClick={() => { setTempDelay(order.delay || ""); setIsEditingDelay(true); }} className="opacity-0 group-hover:opacity-100 hover:text-white transition-all"><Plus size={10} /></button>}
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="text-center">
