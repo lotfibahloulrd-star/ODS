@@ -505,7 +505,7 @@ const Dashboard = () => {
 
                                     // Calcul de l'avancement "Dispo"
                                     const totalHt = order.totals?.ht || order.articles?.reduce((sum, a) => sum + (a.total || 0), 0) || 0;
-                                    const availableHt = order.articles?.sort((a, b) => a.no - b.no).reduce((sum, a) => sum + (a.available ? (a.total || 0) : 0), 0) || 0;
+                                    const availableHt = order.articles?.reduce((sum, a) => sum + (a.available ? (a.total || 0) : 0), 0) || 0;
                                     const progress = totalHt > 0 ? Math.round((availableHt / totalHt) * 100) : 0;
 
                                     return (

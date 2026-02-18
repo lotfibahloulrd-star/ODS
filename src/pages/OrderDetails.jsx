@@ -595,7 +595,7 @@ const OrderDetails = () => {
                                                             }}
                                                             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${art.available ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'}`}
                                                         >
-                                                            <CheckCircle size={20} />
+                                                            <CheckCircle2 size={20} />
                                                         </button>
                                                     </td>
                                                     <td className="px-6 py-4">
