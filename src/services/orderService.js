@@ -310,6 +310,54 @@ const INITIAL_ORDERS = [
         totals: { ht: 6019367, tva: 1143679.73, ttc: 7163046.73 }
     },
     {
+        id: 'init-el-oued-11-25',
+        client: 'UNIVERSITE ECHAHID HAMMA LAKHDAR EL OUED',
+        refOds: 'MARCHE N° 11/2025',
+        refContract: 'MARCHE N° 11/2025 Du 10/08/2025',
+        object: 'ACQUISITION D\'EQUIPEMENTS AU PROFIT DU LABORATOIRE DE BIOLOGIE ENVIRONNEMENTALE ET SANTE DE L\'UNIVERSITE D\'EL OUED',
+        dateOds: '2025-08-10',
+        delay: '120',
+        amount: '29117574.50',
+        division: 'Division Laboratoire',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-08-10T10:00:00.000Z',
+        files: {},
+        articles: [
+            { no: '01', ref: 'IS.1153.EPLi', designation: 'Microscope trinoculaire pour le fons claire+Caméra ultra rapide modèle, 10MP', qte: 1, pu: 394000, total: 394000, marque: 'EUROMEX' },
+            { no: '02', ref: 'A1RT-206', designation: 'Chlorophyll meter', qte: 1, pu: 722550, total: 722550, marque: 'KONICA' },
+            { no: '03', ref: '208-01720-58', designation: 'Spectrophotomètre d\'absorption atomique flamme et four (SAAS) + 8 lampes+ bouteilles', qte: 1, pu: 6385000, total: 6385000, marque: 'SHIMADZU' },
+            { no: '03.1', ref: '-', designation: 'Compresseur d\'air', qte: 1, pu: 200000, total: 200000, marque: 'SHIMADZU' },
+            { no: '03.2', ref: '-', designation: 'Refroidisseur d\'eau', qte: 1, pu: 400000, total: 400000, marque: 'SHIMADZU' },
+            { no: '03.3', ref: '-', designation: 'Bruleur air/acétylène', qte: 1, pu: 150000, total: 150000, marque: 'SHIMADZU' },
+            { no: '03.4', ref: '-', designation: 'Lampe à cathode creuse', qte: 8, pu: 90000, total: 720000, marque: 'SHIMADZU' },
+            { no: '03.5', ref: '-', designation: 'Solution étalons', qte: 8, pu: 14000, total: 112000, marque: 'SHIMADZU' },
+            { no: '03.6', ref: '-', designation: 'Nébuliseur en verre à haute efficacité', qte: 1, pu: 130000, total: 130000, marque: 'SHIMADZU' },
+            { no: '03.7', ref: '-', designation: 'Hotte suspendue en acier inoxydable', qte: 1, pu: 130000, total: 130000, marque: 'SHIMADZU' },
+            { no: '03.8', ref: '-', designation: 'Tube en graphite haute performance', qte: 1, pu: 12000, total: 12000, marque: 'SHIMADZU' },
+            { no: '03.9', ref: '-', designation: 'Générateur de vapeur d\'hydrure', qte: 1, pu: 800000, total: 800000, marque: 'SHIMADZU' },
+            { no: '03.10', ref: '-', designation: 'Système breveté de flamme air-C2H2-O2', qte: 1, pu: 210000, total: 210000, marque: 'SHIMADZU' },
+            { no: '03.11', ref: '-', designation: 'Bouteille d\'argon ultra pure 99,9999%, 10,5m3+', qte: 1, pu: 150000, total: 150000, marque: 'SHIMADZU' },
+            { no: '03.12', ref: '-', designation: 'Manodetendeur', qte: 1, pu: 23000, total: 23000, marque: 'SHIMADZU' },
+            { no: '03.13', ref: '-', designation: 'Bouteille d\'acytélène 99,6%, 5m3+ manodetendeur', qte: 1, pu: 150000, total: 150000, marque: 'SHIMADZU' },
+            { no: '03.14', ref: '-', designation: 'PC bureau i5+Ecran 22"', qte: 1, pu: 200000, total: 200000, marque: 'SHIMADZU' },
+            { no: '04', ref: '-', designation: 'Chromatographie phase gazeuse couplé masse (GC-MS)+ détecteur FID+Bibliothèque+ Générateur de gaz+PC bureau', qte: 1, pu: 1900000, total: 1900000, marque: 'SHIMADZU' },
+            { no: '04.1', ref: '-', designation: 'Port d\'injecteur divisé/non divisé avec contrôle EFC', qte: 1, pu: 600000, total: 600000, marque: 'SHIMADZU' },
+            { no: '04.2', ref: '-', designation: 'Echantillonneur automatique de liquide AS6100', qte: 1, pu: 700000, total: 700000, marque: 'SHIMADZU' },
+            { no: '04.3', ref: '-', designation: 'Spécrtroscopie de masse (MS)', qte: 1, pu: 5200000, total: 5200000, marque: 'SHIMADZU' },
+            { no: '04.4', ref: '-', designation: 'Colonne haute performance-5MS', qte: 1, pu: 130000, total: 130000, marque: 'SHIMADZU' },
+            { no: '04.5', ref: '-', designation: 'Détecteur FID', qte: 1, pu: 600000, total: 600000, marque: 'SHIMADZU' },
+            { no: '04.6', ref: '-', designation: 'Base de donnée NIST/EPA/NIH Mass Spectral Library 2020 edition', qte: 1, pu: 400000, total: 400000, marque: 'SHIMADZU' },
+            { no: '04.7', ref: '-', designation: 'Générateur d\'hydrogène NM250plus', qte: 1, pu: 900000, total: 900000, marque: 'SHIMADZU' },
+            { no: '04.8', ref: '-', designation: 'Générateur d\'azote haut performance 750', qte: 1, pu: 1200000, total: 1200000, marque: 'SHIMADZU' },
+            { no: '04.9', ref: '-', designation: 'Générateur d\'air zéro GT 1500 plus', qte: 1, pu: 500000, total: 500000, marque: 'SHIMADZU' },
+            { no: '05', ref: '207-28100-58', designation: 'Spectrophotomètre Uv-Visible à double faisceau+Cuves Quartz+ Cuve en verre +Logiciel', qte: 1, pu: 1450000, total: 1450000, marque: 'SHIMADZU' }
+        ],
+        totals: { ht: 24468550, tva: 4649024.50, ttc: 29117574.50 }
+    },
+    {
         id: 'init-saeg-tiaret-02-25',
         client: 'SAEG UNITE DE PRODUCTION TIARET',
         refOds: '02/2025/SPE/DRPO/TIARET',
@@ -356,7 +404,7 @@ export const orderService = {
             let sharedOrders = await response.json();
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v12';
+            const DATA_VERSION = 'ods_data_v13';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
