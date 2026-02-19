@@ -308,6 +308,34 @@ const INITIAL_ORDERS = [
             { no: '12', ref: '172244', designation: 'Densimetre', qte: 1, pu: 609000, total: 609000, marque: 'ANTON PAR', available: true }
         ],
         totals: { ht: 6019367, tva: 1143679.73, ttc: 7163046.73 }
+    },
+    {
+        id: 'init-saeg-tiaret-02-25',
+        client: 'SAEG UNITE DE PRODUCTION TIARET',
+        refOds: '02/2025/SPE/DRPO/TIARET',
+        refContract: 'BC N°: 02/2025/SPE/DRPO/UNITE DE TIARET',
+        object: 'ACQUISITION ET MISE EN SERVICE D\'UN ANALYSEUR DES FUMEES POUR L\'UNITE DE TIARET',
+        dateOds: '2025-02-19',
+        delay: '90',
+        amount: '6504317.47',
+        division: 'Division Analytique',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-02-19T09:00:00.000Z',
+        files: {},
+        articles: [
+            { no: '01', ref: '06323510', designation: 'Appareil d\'analyse de fumée portable avec cellule intégré sur l\'appareil et accessoires', qte: 1, pu: 5465813, total: 5465813, marque: 'TESTO' },
+            { no: '02', ref: '06007610', designation: 'Sonde de mesure', qte: 2, pu: 0, total: 0, marque: 'TESTO' },
+            { no: '03', ref: '03930000', designation: 'Cellule O2 de rechange', qte: 2, pu: 0, total: 0, marque: 'TESTO' },
+            { no: '04', ref: '03930104', designation: 'Cellule CO de rechange', qte: 2, pu: 0, total: 0, marque: 'TESTO' },
+            { no: '05', ref: '03930400', designation: 'Cellule CO2 de rechange', qte: 2, pu: 0, total: 0, marque: 'TESTO' },
+            { no: '06', ref: '03930150', designation: 'Cellule NO de rechange', qte: 2, pu: 0, total: 0, marque: 'TESTO' },
+            { no: '07', ref: '03930200', designation: 'Cellule NO2 de rechange', qte: 2, pu: 0, total: 0, marque: 'TESTO' },
+            { no: '08', ref: '03930250', designation: 'Cellule SO2 de rechange', qte: 2, pu: 0, total: 0, marque: 'TESTO' }
+        ],
+        totals: { ht: 5465813, tva: 1038504.47, ttc: 6504317.47 }
     }
 ];
 
@@ -328,7 +356,7 @@ export const orderService = {
             let sharedOrders = await response.json();
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v11';
+            const DATA_VERSION = 'ods_data_v12';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
@@ -365,14 +393,14 @@ export const orderService = {
 
             return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v11';
+            const DATA_VERSION = 'ods_data_v12';
             const localData = localStorage.getItem(DATA_VERSION);
             return localData ? JSON.parse(localData) : INITIAL_ORDERS;
         }
     },
 
     _saveAllToShared: async (orders) => {
-        const DATA_VERSION = 'ods_data_v11';
+        const DATA_VERSION = 'ods_data_v12';
         try {
             await fetch(`${API_URL}?action=save_orders`, {
                 method: 'POST',
