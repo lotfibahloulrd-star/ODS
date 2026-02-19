@@ -486,6 +486,28 @@ const INITIAL_ORDERS = [
             { no: '08', ref: '03930250', designation: 'Cellule SO2 de rechange', qte: 2, pu: 0, total: 0, marque: 'TESTO' }
         ],
         totals: { ht: 5465813, tva: 1038504.47, ttc: 6504317.47 }
+    },
+    {
+        id: 'init-mdn-force-naval-25',
+        client: 'MDN FORCE NAVAL',
+        refOds: 'MARCHE',
+        refContract: 'MARCHE',
+        object: 'ACQUISITION DE L\'ENCEINTE CLIMATIQUE',
+        dateOds: '2025-02-19',
+        delay: '120',
+        amount: '9424800.00',
+        division: 'Division Laboratoire',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-02-19T11:45:00.000Z',
+        files: {},
+        equipmentDetails: 'Enceinte climatique de corrosion. Mesure d\'accompagnement : 505 000,00 DA.',
+        articles: [
+            { no: '01', ref: '9020-0382', designation: 'Enceinte climatique de corrosion', qte: 1, pu: 7920000.00, total: 7920000.00, marque: '-' }
+        ],
+        totals: { ht: 7920000.00, tva: 1504800.00, ttc: 9424800.00 }
     }
 ];
 
@@ -506,7 +528,7 @@ export const orderService = {
             let sharedOrders = await response.json();
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v18';
+            const DATA_VERSION = 'ods_data_v19';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
@@ -543,14 +565,14 @@ export const orderService = {
 
             return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v18';
+            const DATA_VERSION = 'ods_data_v19';
             const localData = localStorage.getItem(DATA_VERSION);
             return localData ? JSON.parse(localData) : INITIAL_ORDERS;
         }
     },
 
     _saveAllToShared: async (orders) => {
-        const DATA_VERSION = 'ods_data_v18';
+        const DATA_VERSION = 'ods_data_v19';
         try {
             await fetch(`${API_URL}?action=save_orders`, {
                 method: 'POST',
