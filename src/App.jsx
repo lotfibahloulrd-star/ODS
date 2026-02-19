@@ -48,7 +48,7 @@ function AppContent() {
                             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
                                 <span className="font-black text-xl">O</span>
                             </div>
-                            <h1 className="text-xl font-black text-slate-900 tracking-tight hidden md:block">ODS <span className="text-blue-600">PILOT</span> <span className="text-[10px] font-bold text-slate-400 align-top">v4.4</span></h1>
+                            <h1 className="text-xl font-black text-slate-900 tracking-tight hidden md:block">ODS <span className="text-blue-600">PILOT</span> <span className="text-[10px] font-bold text-slate-400 align-top">v4.5</span></h1>
                         </div>
 
                         <nav className="flex items-center bg-slate-100/50 p-1.5 rounded-2xl border border-slate-100 overflow-x-auto no-scrollbar">
@@ -84,7 +84,7 @@ function AppContent() {
                             <div className="hidden lg:flex flex-col items-end px-3">
                                 <span className="text-xs font-black text-slate-900 leading-none mb-0.5">{currentUser.firstName} {currentUser.lastName}</span>
                                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{currentUser.division}</span>
-                                <span className="text-[10px] opacity-30 font-black ml-2">V4.4-DEPLOY</span>
+                                <span className="text-[10px] opacity-30 font-black ml-2">V4.5-DEPLOY</span>
                             </div>
                             <div className="flex items-center gap-1">
                                 <button onClick={handleChangePassword} title="Changer de mot de passe" className="w-10 h-10 flex items-center justify-center hover:bg-white hover:text-blue-600 text-slate-400 rounded-xl transition-all">

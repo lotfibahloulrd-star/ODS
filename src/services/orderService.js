@@ -535,6 +535,32 @@ const INITIAL_ORDERS = [
             { no: '06', ref: '-', designation: 'Ensemble d\'étalonnage de turbidité (<0,1NTU-20 NTU-200NTU-1000NTU-4000NTU)', qte: 1, pu: 98500.00, total: 98500.00, marque: 'HACH' }
         ],
         totals: { ht: 375900.00, tva: 71421.00, ttc: 447321.00 }
+    },
+    {
+        id: 'init-crbt-lot2-02-25',
+        client: 'CENTRE DE RECHERCHE EN BIOTECHNOLOGIE (CRBT) CONSTANTINE',
+        refOds: 'MARCHE N° 02/2025',
+        refContract: 'MARCHE N° 02/2025 - LOT 02',
+        object: 'ACQUISITION, INSTALLATION MISE EN SERVICE EQUIPEMENTS SCIENTIFIQUES DU LABORATOIRE CULTURE CELLULAIRE BSL2 DU CRBT - LOT 02: STERILISATION ET LAVAGE',
+        dateOds: '2025-02-19',
+        delay: '120',
+        amount: '27867182.00',
+        division: 'Division Laboratoire',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-02-19T13:00:00.000Z',
+        files: {},
+        equipmentDetails: 'Équipements de stérilisation et lavage : Purification d\'eau, Armoire de séchage, Autoclave, Laveur désinfecteur.',
+        articles: [
+            { no: '01', ref: 'ZIQ7005TOC', designation: 'SYSTÈME DE PURIFICATION D\'EAU TYPE2', qte: 1, pu: 3615000.00, total: 3615000.00, marque: 'MERCK' },
+            { no: '02', ref: 'ZRDSVP3EU', designation: 'SYSTÈME DE PRODUCTION D\'EAU OSMOEE', qte: 1, pu: 704900.00, total: 704900.00, marque: 'MERCK' },
+            { no: '03', ref: 'XAS320', designation: 'ARMOIRE DE SECHAGE', qte: 2, pu: 527900.00, total: 1055800.00, marque: 'FRANCE ETUVE' },
+            { no: '04', ref: '1100', designation: 'AUTOCLAVE VERTICAL DE LABORATOIRE', qte: 2, pu: 5310550.00, total: 10621100.00, marque: 'SYSTEC' },
+            { no: '05', ref: '10215770', designation: 'LAVEUR DESINFECTEUR', qte: 2, pu: 3710500.00, total: 7421000.00, marque: 'MIELE' }
+        ],
+        totals: { ht: 23417800.00, tva: 4449382.00, ttc: 27867182.00 }
     }
 ];
 
@@ -555,7 +581,7 @@ export const orderService = {
             let sharedOrders = await response.json();
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v20';
+            const DATA_VERSION = 'ods_data_v21';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
@@ -592,7 +618,7 @@ export const orderService = {
 
             return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v20';
+            const DATA_VERSION = 'ods_data_v21';
             const localData = localStorage.getItem(DATA_VERSION);
             return localData ? JSON.parse(localData) : INITIAL_ORDERS;
         }
