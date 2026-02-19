@@ -561,6 +561,35 @@ const INITIAL_ORDERS = [
             { no: '05', ref: '10215770', designation: 'LAVEUR DESINFECTEUR', qte: 2, pu: 3710500.00, total: 7421000.00, marque: 'MIELE', available: true }
         ],
         totals: { ht: 23417800.00, tva: 4449382.00, ttc: 27867182.00 }
+    },
+    {
+        id: 'init-el-oued-06-25-lot1',
+        client: 'UNIVERSITE ECHAHID HAMMA LAKHDAR EL OUED',
+        refOds: 'MARCHE N° 06/2025',
+        refContract: 'MARCHE N° 06/2025 Du 19/06/2025',
+        object: 'ACQUISITION ET INSTALLATION D\'EQUIPEMENTS COMPLEMENTAIRES AU PROFIT DE L\'UNIVERSITE D\'EL OUED - LOT 01: ACQUISITION D\'EQUIPEMENT DE LABORATOIRE',
+        dateOds: '2025-06-19',
+        delay: '120',
+        amount: '2347066.16',
+        division: 'Division Laboratoire',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-06-19T10:00:00.000Z',
+        files: {},
+        equipmentDetails: 'Balance analytique, Incubateur microbiologique, Disperser à ultrasons, Viscosimètre capillaire, Densimètre, Mortier et pilon, Lampes UV.',
+        articles: [
+            { no: '01', ref: '321-62900-23', designation: 'BALANCE ANALYTIQUE HAUTE PRECISION HOMOLOGABLE', qte: 1, pu: 403750.50, total: 403750.50, marque: 'SHIMADZU' },
+            { no: '02', ref: '9090-0016', designation: 'INCUBATEUR MICROBIOLOGIQUE AVEC ACCESSOIRES', qte: 1, pu: 190000.00, total: 190000.00, marque: 'BINDER' },
+            { no: '03', ref: 'UP50H', designation: 'DISPERSER A ULTRASONS (SONIFICATEUR HOMOGENEISATEUR) + Statif ST1-16 + Sonotrode MS3', qte: 1, pu: 993500.00, total: 993500.00, marque: 'HIELSCHER' },
+            { no: '04', ref: '10707021', designation: 'VISCOSIMETRE CAPILLAIRE ASTM (UNE 400313, ASTM D445-446, ASTM D2515 AND ISO 3104-310)', qte: 1, pu: 81100.00, total: 81100.00, marque: 'SI ANALYTICS' },
+            { no: '05', ref: '11782565', designation: 'DENSIMETRE POUR HUILE MINERALE TRACABLE', qte: 1, pu: 17200.00, total: 17200.00, marque: 'ALLA France' },
+            { no: '06', ref: 'MORG-100-001', designation: 'MORTIER ET PILON EN AGATE GRANIT 50ML ØEXT 100MM', qte: 1, pu: 70200.00, total: 70200.00, marque: '-' },
+            { no: '07', ref: 'VILB311100611', designation: 'LAMPES UV', qte: 1, pu: 108287.00, total: 108287.00, marque: 'VILBER' },
+            { no: '08', ref: 'VILB311100631', designation: 'LAMPES UV', qte: 1, pu: 108287.00, total: 108287.00, marque: 'VILBER' }
+        ],
+        totals: { ht: 1972324.50, tva: 374741.66, ttc: 2347066.16 }
     }
 ];
 
@@ -581,7 +610,7 @@ export const orderService = {
             let sharedOrders = await response.json();
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v22';
+            const DATA_VERSION = 'ods_data_v23';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
@@ -618,7 +647,7 @@ export const orderService = {
 
             return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v22';
+            const DATA_VERSION = 'ods_data_v23';
             const localData = localStorage.getItem(DATA_VERSION);
             return localData ? JSON.parse(localData) : INITIAL_ORDERS;
         }
