@@ -339,6 +339,47 @@ const INITIAL_ORDERS = [
         totals: { ht: 2487426.58, tva: 472611.05, ttc: 2960037.63 }
     },
     {
+        id: 'init-saidal-139-25',
+        client: 'GROUPE SAIDAL',
+        refOds: 'CONTRAT N° 139/2025',
+        refContract: 'CONTRAT N° 139/EQUIP.LAB.DIVERS SITES/DDI/BGM/GS/2025',
+        object: 'ACQUISITION, INSTALLATION MISE EN SERVICE ET QUALIFICATION D\'EQUIPEMENTS DE LABORATOIRE DESTINES AUX DIVERS SITES DU GROUPE SAIDAL',
+        dateOds: '2025-02-19',
+        delay: '90',
+        amount: '81749052.67',
+        division: 'Division Laboratoire',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-02-19T11:30:00.000Z',
+        files: {},
+        equipmentDetails: 'Équipements de laboratoire variés pour les sites CRD, MEDEA et CONSTANTINE',
+        articles: [
+            { no: '01', ref: 'OsmoTECH XT', designation: 'Osmomètre (Convenience kit, Embout, Solution réf, Imprimante)', qte: 1, pu: 5179000.00, total: 5179000.00, marque: 'Advanced Instruments', site: 'CRD' },
+            { no: '02', ref: 'SA20500600', designation: 'Agitateur magnétique chauffant à 04 postes (Helice, Sonde, Pince)', qte: 1, pu: 532100.00, total: 532100.00, marque: '-', site: 'CRD' },
+            { no: '03', ref: '05630110', designation: 'Thermomètre à sonde digital (Sonde d\'immersion)', qte: 1, pu: 77700.00, total: 77700.00, marque: 'Testo', site: 'CRD' },
+            { no: '04', ref: '-', designation: 'Enregistreur de température et humidité', qte: 4, pu: 158300.00, total: 633200.00, marque: '-', site: 'CRD' },
+            { no: '05', ref: '-', designation: 'Thermomètre digital', qte: 1, pu: 47000.00, total: 47000.00, marque: '-', site: 'CRD' },
+            { no: '06', ref: '-', designation: 'Autoclave', qte: 1, pu: 4923000.00, total: 4923000.00, marque: '-', site: 'CRD' },
+            { no: '07', ref: '-', designation: 'pHmètre', qte: 2, pu: 535522.76, total: 1071045.52, marque: '-', site: 'MEDEA' },
+            { no: '08', ref: '-', designation: 'centrifugeuse', qte: 1, pu: 868600.00, total: 868600.00, marque: '-', site: 'MEDEA' },
+            { no: '09', ref: '-', designation: 'Balance 0,1g (4-6)kg', qte: 1, pu: 539004.86, total: 539004.86, marque: '-', site: 'MEDEA' },
+            { no: '10', ref: '-', designation: 'Spectrophotomètre', qte: 2, pu: 2858902.50, total: 5717805.00, marque: '-', site: 'MEDEA' },
+            { no: '11', ref: '-', designation: 'Distilateur', qte: 1, pu: 470000.00, total: 470000.00, marque: '-', site: 'MEDEA' },
+            { no: '12', ref: '-', designation: 'Congélateur -40°C à 90°C capacité 500 à 700litres', qte: 1, pu: 2623000.00, total: 2623000.00, marque: '-', site: 'MEDEA' },
+            { no: '13', ref: '-', designation: 'Viscosimètre', qte: 1, pu: 4757000.00, total: 4757000.00, marque: '-', site: 'MEDEA' },
+            { no: '14', ref: '-', designation: 'Equipement CAMAG SCIENTIC UV CABINET 4 WITH UV LAMPAS4', qte: 1, pu: 500227.54, total: 500227.54, marque: 'CAMAG', site: 'CONSTANTINE' },
+            { no: '15', ref: '22-046-680', designation: 'Advanced instruments OsmoPRO multi-sample Micro-Osmomètre', qte: 2, pu: 10078000.00, total: 20156000.00, marque: 'Advanced Instruments', site: 'CONSTANTINE' },
+            { no: '16', ref: '-', designation: 'centrifuge 5418R EPPENDORF', qte: 2, pu: 1122500.00, total: 2245000.00, marque: 'EPPENDORF', site: 'CONSTANTINE' },
+            { no: '17', ref: 'WB-4MS', designation: 'STIRRED WATER BATH WB-4MS', qte: 2, pu: 230000.00, total: 460000.00, marque: '-', site: 'CONSTANTINE' },
+            { no: '18', ref: 'CKX41', designation: 'INVERTED MICROSCOPE OLYPUS CKX41', qte: 1, pu: 13255000.00, total: 13255000.00, marque: 'OLYMPUS', site: 'CONSTANTINE' },
+            { no: '19', ref: '-', designation: 'BINDER CO2 INCUBATOR', qte: 1, pu: 2992000.00, total: 2992000.00, marque: 'BINDER', site: 'CONSTANTINE' },
+            { no: '20', ref: '-', designation: 'Laminar flow hood', qte: 1, pu: 1650000.00, total: 1650000.00, marque: '-', site: 'CONSTANTINE' }
+        ],
+        totals: { ht: 68696682.92, tva: 13052369.75, ttc: 81749052.67 }
+    },
+    {
         id: 'init-crbt-const-17-25',
         client: 'CENTRE DE RECHERCHE EN BIOTECHNOLOGIE (CRBT) CONSTANTINE',
         refOds: 'MARCHE N°17/2025',
@@ -465,7 +506,7 @@ export const orderService = {
             let sharedOrders = await response.json();
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v17';
+            const DATA_VERSION = 'ods_data_v18';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
@@ -502,14 +543,14 @@ export const orderService = {
 
             return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v17';
+            const DATA_VERSION = 'ods_data_v18';
             const localData = localStorage.getItem(DATA_VERSION);
             return localData ? JSON.parse(localData) : INITIAL_ORDERS;
         }
     },
 
     _saveAllToShared: async (orders) => {
-        const DATA_VERSION = 'ods_data_v17';
+        const DATA_VERSION = 'ods_data_v18';
         try {
             await fetch(`${API_URL}?action=save_orders`, {
                 method: 'POST',

@@ -634,6 +634,7 @@ const OrderDetails = () => {
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">PU HT</th>
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Montant HT</th>
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Marque</th>
+                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Site</th>
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-emerald-600 text-center">Dispo</th>
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-blue-600 text-center">Suivi Étapes Importation</th>
                                         </tr>
@@ -682,8 +683,11 @@ const OrderDetails = () => {
                                                     <td className="px-6 py-4 text-[11px] font-black text-slate-900 text-center">{art.qte}</td>
                                                     <td className="px-6 py-4 text-[11px] font-bold text-slate-700 text-right">{formatAmount(art.pu)}</td>
                                                     <td className="px-6 py-4 text-[11px] font-black text-slate-900 text-right">{formatAmount(art.total)}</td>
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-6 py-4 text-center">
                                                         <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[9px] font-black uppercase italic">{art.marque}</span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        <span className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded text-[9px] font-black uppercase tracking-widest">{art.site || "-"}</span>
                                                     </td>
                                                     <td className="px-6 py-4 text-center">
                                                         <button
@@ -739,17 +743,17 @@ const OrderDetails = () => {
                                     {order.totals && (
                                         <tfoot className="bg-slate-50">
                                             <tr>
-                                                <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">Total HT</td>
+                                                <td colSpan="6" className="px-6 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">Total HT</td>
                                                 <td className="px-6 py-4 text-right text-xs font-black text-slate-900">{formatAmount(order.totals.ht)}</td>
                                                 <td></td>
                                             </tr>
                                             <tr>
-                                                <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">TVA 19%</td>
+                                                <td colSpan="6" className="px-6 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">TVA 19%</td>
                                                 <td className="px-6 py-4 text-right text-xs font-black text-slate-900">{formatAmount(order.totals.tva)}</td>
                                                 <td></td>
                                             </tr>
                                             <tr className="bg-indigo-50/50">
-                                                <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-indigo-600 tracking-[0.2em]">Total TTC</td>
+                                                <td colSpan="6" className="px-6 py-4 text-right text-[10px] font-black uppercase text-indigo-600 tracking-[0.2em]">Total TTC</td>
                                                 <td className="px-6 py-4 text-right text-sm font-black text-indigo-600">{formatAmount(order.totals.ttc)}</td>
                                                 <td className="bg-white"></td>
                                             </tr>
@@ -937,7 +941,7 @@ const OrderDetails = () => {
                     <button onClick={() => navigate('/')} className="px-12 py-4 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95">Terminer Consultation</button>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
