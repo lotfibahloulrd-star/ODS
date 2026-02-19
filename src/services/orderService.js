@@ -465,7 +465,7 @@ export const orderService = {
             let sharedOrders = await response.json();
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v16';
+            const DATA_VERSION = 'ods_data_v17';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
@@ -502,14 +502,14 @@ export const orderService = {
 
             return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v16';
+            const DATA_VERSION = 'ods_data_v17';
             const localData = localStorage.getItem(DATA_VERSION);
             return localData ? JSON.parse(localData) : INITIAL_ORDERS;
         }
     },
 
     _saveAllToShared: async (orders) => {
-        const DATA_VERSION = 'ods_data_v16';
+        const DATA_VERSION = 'ods_data_v17';
         try {
             await fetch(`${API_URL}?action=save_orders`, {
                 method: 'POST',
