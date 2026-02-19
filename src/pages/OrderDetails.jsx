@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, FileCheck, ExternalLink, Calendar, User, Info, Clock, CheckCircle2, Package, Layers, FlaskConical, AlertCircle, PlayCircle, StopCircle, DollarSign, Plane, Truck, Anchor, Box, Ship, Upload, Plus } from 'lucide-react';
+import { ArrowLeft, FileText, FileCheck, ExternalLink, Calendar, User, Info, Clock, CheckCircle2, Package, Layers, FlaskConical, AlertCircle, PlayCircle, StopCircle, DollarSign, Plane, Truck, Anchor, Box, Ship, Upload, Plus, RotateCcw } from 'lucide-react';
 import { orderService } from '../services/orderService';
 import { useAuth } from '../context/AuthContext';
 
@@ -460,19 +460,27 @@ const OrderDetails = () => {
                                             </div>
                                         </td>
                                         <td className="px-8 py-6 text-right">
-                                            {order.files?.storage_ods ? (
-                                                <button onClick={() => openPdf(order.id, 'storage_ods')} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 ml-auto shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all">
-                                                    <ExternalLink size={14} /> Voir l'ODS
-                                                </button>
-                                            ) : (
-                                                <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
-                                                    <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-blue-500 transition-colors">Attacher</span>
-                                                    <div className="w-10 h-10 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-blue-500 group-hover:text-blue-500 transition-all">
-                                                        <Plus size={16} />
-                                                    </div>
-                                                    <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'ods')} />
-                                                </label>
-                                            )}
+                                            <div className="flex items-center justify-end gap-3">
+                                                {order.files?.storage_ods ? (
+                                                    <>
+                                                        <button onClick={() => openPdf(order.id, 'storage_ods')} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all">
+                                                            <ExternalLink size={14} /> Voir l'ODS
+                                                        </button>
+                                                        <label className="p-2 bg-slate-100 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all cursor-pointer" title="Remplacer le document">
+                                                            <RotateCcw size={16} />
+                                                            <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'ods')} />
+                                                        </label>
+                                                    </>
+                                                ) : (
+                                                    <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-blue-500 transition-colors">Attacher</span>
+                                                        <div className="w-10 h-10 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-blue-500 group-hover:text-blue-500 transition-all">
+                                                            <Plus size={16} />
+                                                        </div>
+                                                        <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'ods')} />
+                                                    </label>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                     <tr>
@@ -489,9 +497,15 @@ const OrderDetails = () => {
                                                 <div className="flex items-center gap-3">
                                                     <div className="text-[11px] font-black text-indigo-400 uppercase tracking-widest mr-2">Contrat {order.refContract || '(Non saisi)'}</div>
                                                     {order.files?.storage_contracts ? (
-                                                        <button onClick={() => openPdf(order.id, 'storage_contracts')} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
-                                                            <ExternalLink size={14} /> Voir le Contrat
-                                                        </button>
+                                                        <>
+                                                            <button onClick={() => openPdf(order.id, 'storage_contracts')} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
+                                                                <ExternalLink size={14} /> Voir le Contrat
+                                                            </button>
+                                                            <label className="p-2 bg-slate-100 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all cursor-pointer" title="Remplacer le document">
+                                                                <RotateCcw size={16} />
+                                                                <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'contract')} />
+                                                            </label>
+                                                        </>
                                                     ) : (
                                                         <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
                                                             <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-indigo-500 transition-colors">Attacher PDF</span>
@@ -526,19 +540,27 @@ const OrderDetails = () => {
                                             </div>
                                         </td>
                                         <td className="px-8 py-6 text-right">
-                                            {order.files?.storage_stops_req ? (
-                                                <button onClick={() => openPdf(order.id, 'storage_stops_req')} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 ml-auto shadow-lg shadow-red-100 hover:bg-red-700 transition-all">
-                                                    <ExternalLink size={14} /> Voir Demande
-                                                </button>
-                                            ) : (
-                                                <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
-                                                    <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-red-500 transition-colors">Attacher</span>
-                                                    <div className="w-10 h-10 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-red-500 group-hover:text-red-500 transition-all">
-                                                        <Plus size={16} />
-                                                    </div>
-                                                    <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'stop_request')} />
-                                                </label>
-                                            )}
+                                            <div className="flex items-center justify-end gap-3">
+                                                {order.files?.storage_stops_req ? (
+                                                    <>
+                                                        <button onClick={() => openPdf(order.id, 'storage_stops_req')} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-red-100 hover:bg-red-700 transition-all">
+                                                            <ExternalLink size={14} /> Voir Demande
+                                                        </button>
+                                                        <label className="p-2 bg-slate-100 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer" title="Remplacer le document">
+                                                            <RotateCcw size={16} />
+                                                            <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'stop_request')} />
+                                                        </label>
+                                                    </>
+                                                ) : (
+                                                    <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-red-500 transition-colors">Attacher</span>
+                                                        <div className="w-10 h-10 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-red-500 group-hover:text-red-500 transition-all">
+                                                            <Plus size={16} />
+                                                        </div>
+                                                        <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'stop_request')} />
+                                                    </label>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                     <tr>
@@ -551,19 +573,27 @@ const OrderDetails = () => {
                                             </div>
                                         </td>
                                         <td className="px-8 py-6 text-right">
-                                            {order.files?.storage_stops_res ? (
-                                                <button onClick={() => openPdf(order.id, 'storage_stops_res')} className="px-4 py-2 bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 ml-auto shadow-lg shadow-amber-100 hover:bg-amber-700 transition-all">
-                                                    <ExternalLink size={14} /> Voir Officiel
-                                                </button>
-                                            ) : (
-                                                <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
-                                                    <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-amber-500 transition-colors">Attacher</span>
-                                                    <div className="w-10 h-10 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-amber-500 group-hover:text-amber-500 transition-all">
-                                                        <Plus size={16} />
-                                                    </div>
-                                                    <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'stop_response')} />
-                                                </label>
-                                            )}
+                                            <div className="flex items-center justify-end gap-3">
+                                                {order.files?.storage_stops_res ? (
+                                                    <>
+                                                        <button onClick={() => openPdf(order.id, 'storage_stops_res')} className="px-4 py-2 bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-amber-100 hover:bg-amber-700 transition-all">
+                                                            <ExternalLink size={14} /> Voir Officiel
+                                                        </button>
+                                                        <label className="p-2 bg-slate-100 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all cursor-pointer" title="Remplacer le document">
+                                                            <RotateCcw size={16} />
+                                                            <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'stop_response')} />
+                                                        </label>
+                                                    </>
+                                                ) : (
+                                                    <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-amber-500 transition-colors">Attacher</span>
+                                                        <div className="w-10 h-10 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-amber-500 group-hover:text-amber-500 transition-all">
+                                                            <Plus size={16} />
+                                                        </div>
+                                                        <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'stop_response')} />
+                                                    </label>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 </tbody>
