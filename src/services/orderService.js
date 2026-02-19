@@ -310,6 +310,35 @@ const INITIAL_ORDERS = [
         totals: { ht: 6019367, tva: 1143679.73, ttc: 7163046.73 }
     },
     {
+        id: 'init-sonatrach-gl3z-75-25',
+        client: 'SONATRACH ACTIVITE LIQUEFACTION & SEPARATION DIVISION GNL/GPL COMPLEXE GL3Z',
+        refOds: 'CONTRAT N° 75/2025',
+        refContract: 'CONTRAT N° 75/2025',
+        object: 'LA FOURNITURE, INSTALLATION ET MISE EN SERVICE D\'UN ANALYSEUR DE LA TENEUR EN EAU DANS L\'HUILE',
+        dateOds: '2025-02-19',
+        delay: '60',
+        amount: '2960037.63',
+        division: 'Division Analytique',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-02-19T11:00:00.000Z',
+        files: {},
+        equipmentDetails: 'Analyseur de la teneur en eau dans l\'huile Eco Oculomètre avec accessoires et pièces de rechange',
+        articles: [
+            { no: '01', ref: '-', designation: 'Analyseur de la teneur en eau dans l\'huile Eco Oculomètre avec accessoires', qte: 1, pu: 1897658.60, total: 1897658.60, marque: 'METROHM' },
+            { no: '02', ref: '-', designation: 'Bloc d\'alimentation', qte: 2, pu: 47178.77, total: 94357.54, marque: 'METROHM' },
+            { no: '03', ref: '-', designation: 'Barreau aimanté 13*30mm', qte: 4, pu: 2787.84, total: 11151.36, marque: 'METROHM' },
+            { no: '04', ref: '-', designation: 'Cable USB (1.8 MA-B)', qte: 2, pu: 9435.75, total: 18871.50, marque: 'METROHM' },
+            { no: '05', ref: '-', designation: 'Tamis moléculaire 250g', qte: 1, pu: 38386.36, total: 38386.36, marque: 'METROHM' },
+            { no: '06', ref: '-', designation: 'Tube graisse silicone', qte: 1, pu: 3860.08, total: 3860.08, marque: 'METROHM' },
+            { no: '07', ref: '-', designation: 'Cellule génératrice', qte: 1, pu: 373141.14, total: 373141.14, marque: 'METROHM' },
+            { no: '08', ref: '-', designation: 'Prestation : Installation et mise en service', qte: 1, pu: 50000, total: 50000, marque: '-' }
+        ],
+        totals: { ht: 2487426.58, tva: 472611.05, ttc: 2960037.63 }
+    },
+    {
         id: 'init-crbt-const-17-25',
         client: 'CENTRE DE RECHERCHE EN BIOTECHNOLOGIE (CRBT) CONSTANTINE',
         refOds: 'MARCHE N°17/2025',
@@ -436,7 +465,7 @@ export const orderService = {
             let sharedOrders = await response.json();
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v15';
+            const DATA_VERSION = 'ods_data_v16';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
@@ -473,14 +502,14 @@ export const orderService = {
 
             return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v15';
+            const DATA_VERSION = 'ods_data_v16';
             const localData = localStorage.getItem(DATA_VERSION);
             return localData ? JSON.parse(localData) : INITIAL_ORDERS;
         }
     },
 
     _saveAllToShared: async (orders) => {
-        const DATA_VERSION = 'ods_data_v15';
+        const DATA_VERSION = 'ods_data_v16';
         try {
             await fetch(`${API_URL}?action=save_orders`, {
                 method: 'POST',
