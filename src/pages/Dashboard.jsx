@@ -244,11 +244,15 @@ const Dashboard = () => {
                     date.setDate(date.getDate() + daysToAdd);
 
                     // Add interruption if present
-                    if (order.stopDate && order.resumeDate) {
+                    if (order.stopDate) {
                         const stop = new Date(order.stopDate);
-                        const resume = new Date(order.resumeDate);
-                        if (!isNaN(stop.getTime()) && !isNaN(resume.getTime()) && resume > stop) {
-                            date.setDate(date.getDate() + Math.ceil((resume - stop) / (1000 * 60 * 60 * 24)));
+                        const resume = order.resumeDate ? new Date(order.resumeDate) : new Date();
+
+                        if (!isNaN(stop.getTime())) {
+                            const effectiveResume = !isNaN(resume.getTime()) ? resume : new Date();
+                            if (effectiveResume > stop) {
+                                date.setDate(date.getDate() + Math.ceil((effectiveResume - stop) / (1000 * 60 * 60 * 24)));
+                            }
                         }
                     }
 
@@ -292,7 +296,7 @@ const Dashboard = () => {
                     <div className="flex flex-col gap-1">
                         <p className="text-slate-500 font-bold flex items-center gap-2">
                             <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
-                            Suivi en temps réel des engagements <span className="text-[10px] opacity-30 font-black ml-2">V3.8-DEPLOY</span>
+                            Suivi en temps réel des engagements <span className="text-[10px] opacity-30 font-black ml-2">V3.9-DEPLOY</span>
                         </p>
                         {syncStatus && (
                             <div className="flex items-center gap-2 mt-1">
@@ -589,7 +593,10 @@ const Dashboard = () => {
                                                                 </button>
                                                             )}
                                                         </div>
-                                                        <span className="text-[8px] font-bold text-red-400">{formatDate(order.stopDate)}</span>
+                                                        <div className="flex flex-col text-[8px] font-bold text-red-400">
+                                                            <span>Arrêt: {formatDate(order.stopDate)}</span>
+                                                            {order.resumeDate && <span className="text-emerald-500">Reprise: {formatDate(order.resumeDate)}</span>}
+                                                        </div>
                                                     </div>
                                                 ) : (
                                                     <span className="text-slate-200 text-[10px] font-black uppercase tracking-widest">RAS</span>

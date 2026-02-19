@@ -212,11 +212,14 @@ const OrderDetails = () => {
                 const add = parseInt(delay);
                 if (!isNaN(date.getTime()) && !isNaN(add)) {
                     date.setDate(date.getDate() + add);
-                    if (order.stopDate && order.resumeDate) {
+                    if (order.stopDate) {
                         const stop = new Date(order.stopDate);
-                        const resume = new Date(order.resumeDate);
-                        if (!isNaN(stop.getTime()) && !isNaN(resume.getTime()) && resume > stop) {
-                            date.setDate(date.getDate() + Math.ceil((resume - stop) / (1000 * 60 * 60 * 24)));
+                        const resume = order.resumeDate ? new Date(order.resumeDate) : new Date();
+                        if (!isNaN(stop.getTime())) {
+                            const effectiveResume = !isNaN(resume.getTime()) ? resume : new Date();
+                            if (effectiveResume > stop) {
+                                date.setDate(date.getDate() + Math.ceil((effectiveResume - stop) / (1000 * 60 * 60 * 24)));
+                            }
                         }
                     }
                     if (!isNaN(date.getTime())) endDate = date.toISOString().split('T')[0];
