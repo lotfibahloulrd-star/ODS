@@ -310,6 +310,35 @@ const INITIAL_ORDERS = [
         totals: { ht: 6019367, tva: 1143679.73, ttc: 7163046.73 }
     },
     {
+        id: 'init-crbt-const-17-25',
+        client: 'CENTRE DE RECHERCHE EN BIOTECHNOLOGIE (CRBT) CONSTANTINE',
+        refOds: 'MARCHE N°17/2025',
+        refContract: 'MARCHE N°17/2025',
+        object: 'L\'ACQUISITION, L\'INSTALLATION ET LA MISE EN SERVICE D\'EQUIPEMENTS DE BASE POUR LA STATION EXPERIMENTALE EL-BAARAOUIA AU PROFIT DU CRBT',
+        dateOds: '2025-02-19',
+        delay: '90',
+        amount: '2898483.00',
+        division: 'Division Laboratoire',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-02-19T10:00:00.000Z',
+        files: {},
+        equipmentDetails: 'Balance d\'analyse, Etuve économique, Microcentrifugeuses, Multiparamètre portable, Agitateur magnétique, Secoueur Vortex, Microscope fond claire, Loupe binoculaire',
+        articles: [
+            { no: '01', ref: '321-62900-32', designation: 'BALANCE D\'ANALYSE', qte: 1, pu: 420000, total: 420000, marque: 'SHIMADZU', available: true },
+            { no: '02', ref: '9010-0335', designation: 'ETUVE ECONOMIQUE A CONVEXION NATURELLE', qte: 1, pu: 299000, total: 299000, marque: 'BINDER' },
+            { no: '03', ref: 'CE148', designation: 'MICROCENTRIFUGEUSES', qte: 1, pu: 918000, total: 918000, marque: 'ORTO ALRESA' },
+            { no: '04', ref: 'HI98194', designation: 'MULTIPARAMETRE PORTABLE ETANCHE', qte: 1, pu: 384000, total: 384000, marque: 'HANNA' },
+            { no: '05', ref: 'F20500560', designation: 'AGITATEUR MAGNETIQUE CHAUFFANT', qte: 3, pu: 56800, total: 170400, marque: 'VELP' },
+            { no: '06', ref: 'F202A0175', designation: 'SECOUEUR VORTEX INFRAROUGE', qte: 1, pu: 54000, total: 54000, marque: 'VELP' },
+            { no: '07', ref: 'MB.1152', designation: 'MICROSCOPE FOND CLAIRE', qte: 1, pu: 101800, total: 101800, marque: 'EUROMEX' },
+            { no: '08', ref: 'SB.1402', designation: 'LOUPE BINOCULAIRE', qte: 1, pu: 88500, total: 88500, marque: 'EUROMEX' }
+        ],
+        totals: { ht: 2435700, tva: 462783, ttc: 2898483 }
+    },
+    {
         id: 'init-el-oued-11-25',
         client: 'UNIVERSITE ECHAHID HAMMA LAKHDAR EL OUED',
         refOds: 'MARCHE N° 11/2025',
@@ -404,7 +433,7 @@ export const orderService = {
             let sharedOrders = await response.json();
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v13';
+            const DATA_VERSION = 'ods_data_v14';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
