@@ -508,6 +508,33 @@ const INITIAL_ORDERS = [
             { no: '01', ref: '9020-0382', designation: 'Enceinte climatique de corrosion', qte: 1, pu: 7920000.00, total: 7920000.00, marque: '-' }
         ],
         totals: { ht: 7920000.00, tva: 1504800.00, ttc: 9424800.00 }
+    },
+    {
+        id: 'init-seaco-14-25',
+        client: 'SEACO',
+        refOds: 'CONTRAT N° 014/2025',
+        refContract: 'CONTRAT N° 014/CONS_FOUR/SEACO/2025',
+        object: 'FOURNITURE DES EQUIPEMENTS HACH LANGE DE LABORATOIRE',
+        dateOds: '2025-02-19',
+        delay: '60',
+        amount: '447321.00',
+        division: 'Division Laboratoire',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-02-19T12:00:00.000Z',
+        files: {},
+        equipmentDetails: 'Équipements HACH LANGE de laboratoire (Sonde, Solutions étalons, Cuves, Ensemble d\'étalonnage).',
+        articles: [
+            { no: '01', ref: '5071', designation: 'Sonde pour conductimètre hach SENS ION+EC 7 ref 5071', qte: 2, pu: 73800.00, total: 147600.00, marque: 'HACH' },
+            { no: '02', ref: '-', designation: 'Solution étalon pour conductimètre HACH SENS ION+EC7 147 µs/cm', qte: 2, pu: 4400.00, total: 8800.00, marque: 'HACH' },
+            { no: '03', ref: '-', designation: 'Solution étalon pour conductimètre HACH SENS ION+EC7 1288 µs/cm', qte: 2, pu: 4400.00, total: 8800.00, marque: 'HACH' },
+            { no: '04', ref: '-', designation: 'Solution étalon pour conductimètre HACH SENS ION+EC7 1413 µs/cm', qte: 2, pu: 4100.00, total: 8200.00, marque: 'HACH' },
+            { no: '05', ref: '-', designation: 'Cuve d\'échantillonnage en verre pour turbidité pack de 6', qte: 4, pu: 26000.00, total: 104000.00, marque: 'HACH' },
+            { no: '06', ref: '-', designation: 'Ensemble d\'étalonnage de turbidité (<0,1NTU-20 NTU-200NTU-1000NTU-4000NTU)', qte: 1, pu: 98500.00, total: 98500.00, marque: 'HACH' }
+        ],
+        totals: { ht: 375900.00, tva: 71421.00, ttc: 447321.00 }
     }
 ];
 
@@ -528,7 +555,7 @@ export const orderService = {
             let sharedOrders = await response.json();
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v19';
+            const DATA_VERSION = 'ods_data_v20';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
@@ -565,14 +592,14 @@ export const orderService = {
 
             return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v19';
+            const DATA_VERSION = 'ods_data_v20';
             const localData = localStorage.getItem(DATA_VERSION);
             return localData ? JSON.parse(localData) : INITIAL_ORDERS;
         }
     },
 
     _saveAllToShared: async (orders) => {
-        const DATA_VERSION = 'ods_data_v19';
+        const DATA_VERSION = 'ods_data_v20';
         try {
             await fetch(`${API_URL}?action=save_orders`, {
                 method: 'POST',
