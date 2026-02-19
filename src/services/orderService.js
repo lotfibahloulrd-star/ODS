@@ -554,11 +554,11 @@ const INITIAL_ORDERS = [
         files: {},
         equipmentDetails: 'Équipements de stérilisation et lavage : Purification d\'eau, Armoire de séchage, Autoclave, Laveur désinfecteur.',
         articles: [
-            { no: '01', ref: 'ZIQ7005TOC', designation: 'SYSTÈME DE PURIFICATION D\'EAU TYPE2', qte: 1, pu: 3615000.00, total: 3615000.00, marque: 'MERCK' },
-            { no: '02', ref: 'ZRDSVP3EU', designation: 'SYSTÈME DE PRODUCTION D\'EAU OSMOEE', qte: 1, pu: 704900.00, total: 704900.00, marque: 'MERCK' },
-            { no: '03', ref: 'XAS320', designation: 'ARMOIRE DE SECHAGE', qte: 2, pu: 527900.00, total: 1055800.00, marque: 'FRANCE ETUVE' },
-            { no: '04', ref: '1100', designation: 'AUTOCLAVE VERTICAL DE LABORATOIRE', qte: 2, pu: 5310550.00, total: 10621100.00, marque: 'SYSTEC' },
-            { no: '05', ref: '10215770', designation: 'LAVEUR DESINFECTEUR', qte: 2, pu: 3710500.00, total: 7421000.00, marque: 'MIELE' }
+            { no: '01', ref: 'ZIQ7005TOC', designation: 'SYSTÈME DE PURIFICATION D\'EAU TYPE2', qte: 1, pu: 3615000.00, total: 3615000.00, marque: 'MERCK', available: true },
+            { no: '02', ref: 'ZRDSVP3EU', designation: 'SYSTÈME DE PRODUCTION D\'EAU OSMOEE', qte: 1, pu: 704900.00, total: 704900.00, marque: 'MERCK', available: true },
+            { no: '03', ref: 'XAS320', designation: 'ARMOIRE DE SECHAGE', qte: 2, pu: 527900.00, total: 1055800.00, marque: 'FRANCE ETUVE', available: false },
+            { no: '04', ref: '1100', designation: 'AUTOCLAVE VERTICAL DE LABORATOIRE', qte: 2, pu: 5310550.00, total: 10621100.00, marque: 'SYSTEC', available: true },
+            { no: '05', ref: '10215770', designation: 'LAVEUR DESINFECTEUR', qte: 2, pu: 3710500.00, total: 7421000.00, marque: 'MIELE', available: true }
         ],
         totals: { ht: 23417800.00, tva: 4449382.00, ttc: 27867182.00 }
     }
@@ -581,7 +581,7 @@ export const orderService = {
             let sharedOrders = await response.json();
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v21';
+            const DATA_VERSION = 'ods_data_v22';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
@@ -618,7 +618,7 @@ export const orderService = {
 
             return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v21';
+            const DATA_VERSION = 'ods_data_v22';
             const localData = localStorage.getItem(DATA_VERSION);
             return localData ? JSON.parse(localData) : INITIAL_ORDERS;
         }

@@ -677,7 +677,7 @@ const OrderDetails = () => {
                                             const hasStage = (stage) => art.stages && art.stages[stage]?.done;
                                             const getStageData = (stage) => art.stages && art.stages[stage];
 
-                                            const toggleStage = (stage) => {
+                                            const toggleStage = async (stage) => {
                                                 if (!isImport() && !isSuperAdmin()) return;
                                                 // La commande ne peut être lancée que si l'autorisation est confirmée
                                                 if (stage === 'ordered' && !isAuthOk && !hasStage('ordered')) {
@@ -703,6 +703,12 @@ const OrderDetails = () => {
                                                     ordered: stage === 'ordered' ? isDone : (currentStages.ordered?.done || false)
                                                 };
                                                 setLocalArticles(newArticles);
+                                                // Auto-save pour mise à jour immédiate
+                                                try {
+                                                    await orderService.updateOrder(order.id, { articles: newArticles }, currentUser.firstName);
+                                                } catch (err) {
+                                                    console.error("Erreur auto-save étape:", err);
+                                                }
                                             };
 
                                             return (
@@ -721,11 +727,17 @@ const OrderDetails = () => {
                                                     </td>
                                                     <td className="px-6 py-4 text-center">
                                                         <button
-                                                            onClick={(e) => {
+                                                            onClick={async (e) => {
                                                                 e.stopPropagation();
                                                                 const newArticles = [...localArticles];
                                                                 newArticles[idx] = { ...newArticles[idx], available: !newArticles[idx].available };
                                                                 setLocalArticles(newArticles);
+                                                                // Auto-save pour mise à jour immédiate de l'avancement
+                                                                try {
+                                                                    await orderService.updateOrder(order.id, { articles: newArticles }, currentUser.firstName);
+                                                                } catch (err) {
+                                                                    console.error("Erreur auto-save disponibilité:", err);
+                                                                }
                                                             }}
                                                             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${art.available ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'}`}
                                                         >
