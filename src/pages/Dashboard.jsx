@@ -292,7 +292,7 @@ const Dashboard = () => {
                     <div className="flex flex-col gap-1">
                         <p className="text-slate-500 font-bold flex items-center gap-2">
                             <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
-                            Suivi en temps réel des engagements <span className="text-[10px] opacity-30 font-black ml-2">V3.6-DEPLOY</span>
+                            Suivi en temps réel des engagements <span className="text-[10px] opacity-30 font-black ml-2">V3.7-DEPLOY</span>
                         </p>
                         {syncStatus && (
                             <div className="flex items-center gap-2 mt-1">
@@ -496,7 +496,7 @@ const Dashboard = () => {
                                 </tr>
                             ) : (
                                 filteredOrders.map(order => {
-                                    const isStopping = order.hasStopRequest === 'Oui';
+                                    const isStopping = order.hasStopRequest === 'Oui' || !!(order.files?.storage_stops_req) || !!(order.files?.storage_stops_res);
                                     const hasOds = !!(order.files?.storage_ods);
                                     const hasContract = !!(order.files?.storage_contracts);
 

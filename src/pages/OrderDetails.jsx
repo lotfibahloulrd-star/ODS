@@ -310,7 +310,7 @@ const OrderDetails = () => {
                     <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest ${order.authorization === 'Oui' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
                         {order.authorization === 'Oui' ? 'Autorisé' : 'Attente Autorisation'}
                     </span>
-                    {order.hasStopRequest === 'Oui' && (
+                    {(order.hasStopRequest === 'Oui' || !!(order.files?.storage_stops_req) || !!(order.files?.storage_stops_res)) && (
                         <span className="px-4 py-2 bg-red-50 text-red-600 border border-red-100 text-[10px] font-black uppercase tracking-widest rounded-2xl flex items-center gap-2">
                             <StopCircle size={14} /> Arrêt Demandé
                         </span>
@@ -861,7 +861,7 @@ const OrderDetails = () => {
                     </div>
 
                     {/* Suspension Section if active */}
-                    {order.hasStopRequest === 'Oui' && (
+                    {(order.hasStopRequest === 'Oui' || !!(order.files?.storage_stops_req) || !!(order.files?.storage_stops_res)) && (
                         <div className="space-y-10">
                             <div className="bg-red-50 border border-red-100 rounded-[3rem] p-10 relative overflow-hidden">
                                 <div className="flex items-center justify-between mb-10 relative z-10">

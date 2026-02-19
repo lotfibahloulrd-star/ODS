@@ -354,6 +354,9 @@ const INITIAL_ORDERS = [
         isReadyForDelivery: false,
         createdAt: '2025-08-10T10:00:00.000Z',
         files: {},
+        hasStopRequest: 'Oui',
+        stopDate: '2025-02-15',
+        equipmentDetails: 'Équipements scientifiques : Microscopes, Chlorophyll meter, Spectrophotomètre d\'absorption atomique (SAA), GC-MS, etc.',
         articles: [
             { no: '01', ref: 'IS.1153.EPLi', designation: 'Microscope trinoculaire pour le fons claire+Caméra ultra rapide modèle, 10MP', qte: 1, pu: 394000, total: 394000, marque: 'EUROMEX' },
             { no: '02', ref: 'A1RT-206', designation: 'Chlorophyll meter', qte: 1, pu: 722550, total: 722550, marque: 'KONICA' },
@@ -433,7 +436,7 @@ export const orderService = {
             let sharedOrders = await response.json();
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v14';
+            const DATA_VERSION = 'ods_data_v15';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
@@ -470,14 +473,14 @@ export const orderService = {
 
             return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v12';
+            const DATA_VERSION = 'ods_data_v15';
             const localData = localStorage.getItem(DATA_VERSION);
             return localData ? JSON.parse(localData) : INITIAL_ORDERS;
         }
     },
 
     _saveAllToShared: async (orders) => {
-        const DATA_VERSION = 'ods_data_v12';
+        const DATA_VERSION = 'ods_data_v15';
         try {
             await fetch(`${API_URL}?action=save_orders`, {
                 method: 'POST',
