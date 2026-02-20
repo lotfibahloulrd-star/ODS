@@ -25,7 +25,8 @@ import {
     ShieldCheck,
     RotateCcw,
     Upload,
-    Plus
+    Plus,
+    Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -33,6 +34,7 @@ const Dashboard = () => {
     const auth = useAuth();
     const navigate = useNavigate();
     const canCreate = auth?.canCreateOds();
+    const isSuperAdmin = auth?.isSuperAdmin;
     const currentUser = auth?.currentUser;
     const [orders, setOrders] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
@@ -616,8 +618,26 @@ const Dashboard = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-7 text-right">
-                                                <div className="w-9 h-9 bg-slate-900 text-white rounded-xl flex items-center justify-center ml-auto opacity-0 group-hover:opacity-100 transition-all shadow-lg active:scale-90">
-                                                    <ArrowRight size={16} />
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {isSuperAdmin && isSuperAdmin() && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (window.confirm(`⚠️ Supprimer l'ODS "${order.client}" ?\n\nCette action est irréversible.`)) {
+                                                                    orderService.deleteOrder(order.id).then(() => {
+                                                                        setOrders(prev => prev.filter(o => o.id !== order.id));
+                                                                    }).catch(err => alert('Erreur: ' + err.message));
+                                                                }
+                                                            }}
+                                                            className="w-9 h-9 bg-red-50 text-red-400 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 hover:text-white active:scale-90"
+                                                            title="Supprimer cet ODS"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                    <div className="w-9 h-9 bg-slate-900 text-white rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg active:scale-90">
+                                                        <ArrowRight size={16} />
+                                                    </div>
                                                 </div>
                                             </td>
                                         </tr>

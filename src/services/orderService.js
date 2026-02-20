@@ -693,6 +693,14 @@ export const orderService = {
         return orders[index];
     },
 
+    deleteOrder: async (id) => {
+        const orders = await orderService.getAllOrders();
+        const filtered = orders.filter(o => o.id !== id);
+        if (filtered.length === orders.length) return false;
+        await orderService._saveAllToShared(filtered);
+        return true;
+    },
+
     _uploadToShared: async (storageKey, orderId, fileDataOrBlob, fileName) => {
         try {
             let blob = fileDataOrBlob;
