@@ -42,6 +42,27 @@ if ($action === 'get_orders') {
     exit;
 }
 
+if ($action === 'get_deleted_ids') {
+    $file = 'deleted_ods_ids.json';
+    if (file_exists($file)) {
+        echo file_get_contents($file);
+    } else {
+        echo json_encode([]);
+    }
+    exit;
+}
+
+if ($action === 'save_deleted_ids' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input = file_get_contents('php://input');
+    if ($input) {
+        file_put_contents('deleted_ods_ids.json', $input);
+        echo json_encode(['success' => true]);
+    } else {
+        echo json_encode(['success' => false]);
+    }
+    exit;
+}
+
 if ($action === 'save_orders' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = file_get_contents('php://input');
     if ($input) {

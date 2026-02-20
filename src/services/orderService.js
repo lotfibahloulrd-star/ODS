@@ -603,17 +603,43 @@ export const orderService = {
         suspiciousKeys.forEach(key => localStorage.removeItem(key));
     },
 
+    _getDeletedIds: async () => {
+        try {
+            const response = await fetch(`${API_URL}?action=get_deleted_ids`);
+            if (response.ok) {
+                const ids = await response.json();
+                if (Array.isArray(ids)) return ids;
+            }
+        } catch (e) { }
+        const local = localStorage.getItem('ods_deleted_ids');
+        return local ? JSON.parse(local) : [];
+    },
+
+    _saveDeletedIds: async (ids) => {
+        localStorage.setItem('ods_deleted_ids', JSON.stringify(ids));
+        try {
+            await fetch(`${API_URL}?action=save_deleted_ids`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(ids)
+            });
+        } catch (e) { }
+    },
+
     getAllOrders: async () => {
         try {
             const response = await fetch(`${API_URL}?action=get_orders`);
             if (!response.ok) throw new Error("API Unavailable");
             let sharedOrders = await response.json();
 
+            const deletedIds = await orderService._getDeletedIds();
+            const deletedSet = new Set(deletedIds);
+
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
             const DATA_VERSION = 'ods_data_v23';
             const localVersion = localStorage.getItem('ods_data_version');
 
-            if (!Array.isArray(sharedOrders) || sharedOrders.length < INITIAL_ORDERS.length || localVersion !== DATA_VERSION) {
+            if (!Array.isArray(sharedOrders) || localVersion !== DATA_VERSION) {
                 console.log("Mise à jour structurée des données (Version " + DATA_VERSION + ")...");
 
                 const mergedMap = new Map();
@@ -625,7 +651,9 @@ export const orderService = {
 
                 // 2. ÉCRASER les ordres initiaux par les nouvelles définitions (pour inclure les nouveaux champs comme 'articles')
                 // On fusionne pour garder les fichiers et statuts déjà saisis par l'utilisateur
+                // On exclut les ODS supprimés
                 INITIAL_ORDERS.forEach(o => {
+                    if (deletedSet.has(o.id)) return; // Ne pas ré-injecter un ODS supprimé
                     const existing = mergedMap.get(o.id);
                     if (existing) {
                         mergedMap.set(o.id, { ...existing, ...o, files: existing.files || o.files });
@@ -635,7 +663,12 @@ export const orderService = {
                 });
 
                 const localDataStr = localStorage.getItem(DATA_VERSION);
-                if (localDataStr) JSON.parse(localDataStr).forEach(o => mergedMap.set(o.id, o));
+                if (localDataStr) JSON.parse(localDataStr).forEach(o => {
+                    if (!deletedSet.has(o.id)) mergedMap.set(o.id, o);
+                });
+
+                // Retirer les ODS supprimés de la map finale
+                deletedIds.forEach(id => mergedMap.delete(id));
 
                 const finalOrders = Array.from(mergedMap.values())
                     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -645,11 +678,15 @@ export const orderService = {
                 return finalOrders;
             }
 
-            return sharedOrders;
+            // Filtrer les éventuels ODS supprimés
+            return sharedOrders.filter(o => !deletedSet.has(o.id));
         } catch (e) {
             const DATA_VERSION = 'ods_data_v23';
             const localData = localStorage.getItem(DATA_VERSION);
-            return localData ? JSON.parse(localData) : INITIAL_ORDERS;
+            const deletedLocal = localStorage.getItem('ods_deleted_ids');
+            const deletedSet = new Set(deletedLocal ? JSON.parse(deletedLocal) : []);
+            const orders = localData ? JSON.parse(localData) : INITIAL_ORDERS;
+            return orders.filter(o => !deletedSet.has(o.id));
         }
     },
 
@@ -694,10 +731,18 @@ export const orderService = {
     },
 
     deleteOrder: async (id) => {
+        // 1. Supprimer de la liste
         const orders = await orderService.getAllOrders();
         const filtered = orders.filter(o => o.id !== id);
         if (filtered.length === orders.length) return false;
         await orderService._saveAllToShared(filtered);
+
+        // 2. Mémoriser l'ID supprimé pour ne jamais le ré-injecter
+        const deletedIds = await orderService._getDeletedIds();
+        if (!deletedIds.includes(id)) {
+            deletedIds.push(id);
+            await orderService._saveDeletedIds(deletedIds);
+        }
         return true;
     },
 
