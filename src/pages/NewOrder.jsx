@@ -163,9 +163,15 @@ const NewOrder = ({ onSave }) => {
         }
     };
 
+    const [docType, setDocType] = useState('ods'); // 'ods' or 'contract'
+
     const parseExtractedText = (text) => {
         // Nettoyage sommaire
         const cleanText = text.replace(/\s+/g, ' ');
+
+        // Détection du type de document
+        const isContract = /marché|contrat|convention/i.test(text) && !/ordre de service|ods/i.test(text.substring(0, 500));
+        setDocType(isContract ? 'contract' : 'ods');
 
         const clientMatch = text.match(/(?:maitre de l'ouvrage|client|organisme|destinataire)\s?[:\.]?\s?(.+)/i);
         const refMatch = text.match(/(?:marché|référence|convention|ods n°)\s?(?:n°|réf)?\s?[:\.]?\s?([\d\/A-Z\-\s]+)/i);
@@ -192,6 +198,7 @@ const NewOrder = ({ onSave }) => {
                 ...prev,
                 client: clientMatch ? clientMatch[1].split('\n')[0].trim().substring(0, 100) : "",
                 refOds: refMatch ? refMatch[1].trim().split(' ')[0] : "",
+                refContract: isContract ? (refMatch ? refMatch[1].trim() : "") : "",
                 object: finalObject.trim(),
                 dateOds: finalDate,
                 startDate: finalDate,
@@ -220,8 +227,12 @@ const NewOrder = ({ onSave }) => {
     };
 
     const handleSave = async () => {
-        if (!formData.refOds || !formData.client) {
-            alert("Veuillez remplir au moins la référence ODS et le client.");
+        if (!formData.refOds && !formData.refContract) {
+            alert("Veuillez remplir au moins la référence ODS ou Contrat.");
+            return;
+        }
+        if (!formData.client) {
+            alert("Le nom du client est obligatoire.");
             return;
         }
 
@@ -229,10 +240,23 @@ const NewOrder = ({ onSave }) => {
         try {
             const savedOrder = await orderService.createOrder(formData);
 
-            // Save files concurrently
+            // Determine which file goes where based on docType for the scanned file
             const uploadPromises = [];
-            if (file) uploadPromises.push(handleFileUpload(file, orderService.saveOdsFile, savedOrder.id));
-            if (contractFile) uploadPromises.push(handleFileUpload(contractFile, orderService.saveContractFile, savedOrder.id));
+
+            // The 'file' state holds the document just scanned by AI
+            if (docType === 'ods' && file) {
+                uploadPromises.push(handleFileUpload(file, orderService.saveOdsFile, savedOrder.id));
+            } else if (docType === 'contract' && file) {
+                uploadPromises.push(handleFileUpload(file, orderService.saveContractFile, savedOrder.id));
+            }
+
+            // If user manually uploaded additional files in the other slots
+            // (Note: in step 3 UI, we need to handle this carefully)
+            if (contractFile && docType === 'ods') {
+                uploadPromises.push(handleFileUpload(contractFile, orderService.saveContractFile, savedOrder.id));
+            }
+            // (Note: The UI below will be updated to handle the 'file' as the primary scanned doc)
+
             if (stopRequestFile) uploadPromises.push(handleFileUpload(stopRequestFile, orderService.saveStopRequestFile, savedOrder.id));
             if (stopResponseFile) uploadPromises.push(handleFileUpload(stopResponseFile, orderService.saveStopResponseFile, savedOrder.id));
 
@@ -334,25 +358,44 @@ const NewOrder = ({ onSave }) => {
 
             {step === 3 && (
                 <div className="space-y-10 animate-fade-in">
-                    <div className="bg-emerald-500 text-white px-8 py-6 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-2xl shadow-emerald-200/50 flex items-center justify-between">
+                    <div className="bg-emerald-500 text-white px-8 py-6 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-2xl shadow-emerald-200/50 flex flex-col md:flex-row items-center justify-between gap-6">
                         <div className="flex items-center gap-4">
                             <span className="text-2xl bg-white/20 w-10 h-10 flex items-center justify-center rounded-xl">✓</span>
                             <div>
                                 <p>Extraction terminée !</p>
-                                <p className="text-[10px] opacity-70">Veuillez vérifier et compléter les informations avant d'enregistrer.</p>
+                                <p className="text-[10px] opacity-70 italic">Veuillez vérifier le type de document et les données extraites.</p>
                             </div>
                         </div>
-                        <button onClick={() => setStep(1)} className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-[10px] transition-all">RE-NUMERISER</button>
+
+                        <div className="flex bg-white/10 p-1.5 rounded-2xl border border-white/20">
+                            <button
+                                onClick={() => setDocType('ods')}
+                                className={`px-6 py-2 rounded-xl text-[10px] font-black transition-all ${docType === 'ods' ? 'bg-white text-emerald-600 shadow-lg' : 'text-white hover:bg-white/10'}`}
+                            >
+                                DOCUMENT TYPE: ODS
+                            </button>
+                            <button
+                                onClick={() => setDocType('contract')}
+                                className={`px-6 py-2 rounded-xl text-[10px] font-black transition-all ${docType === 'contract' ? 'bg-white text-emerald-600 shadow-lg' : 'text-white hover:bg-white/10'}`}
+                            >
+                                DOCUMENT TYPE: MARCHÉ
+                            </button>
+                        </div>
+
+                        <button onClick={() => setStep(1)} className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-[10px] transition-all font-black border border-white/30">RE-NUMERISER</button>
                     </div>
 
                     <div className="bg-white rounded-[4rem] border border-slate-200 shadow-2xl shadow-slate-200/50 overflow-hidden">
                         <div className="p-12 space-y-16">
                             {/* Section 1: Documents & Références */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                <div className="bg-blue-50/50 p-10 rounded-[3rem] border border-blue-100 space-y-6">
-                                    <div className="flex items-center gap-4 mb-2">
-                                        <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-200">1</div>
-                                        <h4 className="text-xs font-black uppercase tracking-widest text-blue-900">Ordre de Service (ODS)</h4>
+                                <div className={`p-10 rounded-[3rem] border transition-all ${docType === 'ods' ? 'bg-blue-50/50 border-blue-200 ring-2 ring-blue-500 ring-offset-4' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-100">1</div>
+                                            <h4 className="text-xs font-black uppercase tracking-widest text-blue-900">Ordre de Service (ODS)</h4>
+                                        </div>
+                                        {docType === 'ods' && <span className="text-[9px] font-black bg-blue-600 text-white px-2 py-1 rounded-full animate-pulse">NUMÉRISÉ</span>}
                                     </div>
                                     <div className="space-y-6">
                                         <div>
@@ -366,21 +409,33 @@ const NewOrder = ({ onSave }) => {
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest block mb-2 px-1">Fichier de l'ODS</label>
-                                            <input
-                                                type="file"
-                                                className="w-full text-xs font-bold text-slate-400 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-all border-2 border-dashed border-blue-200 p-4 rounded-3xl bg-white/50"
-                                                accept=".pdf,.jpg,.png"
-                                                onChange={e => setFile(e.target.files[0])}
-                                            />
+                                            <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest block mb-2 px-1">Fichier ODS</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="file"
+                                                    className="w-full text-xs font-bold text-slate-400 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-all border-2 border-dashed border-blue-200 p-4 rounded-3xl bg-white/50"
+                                                    accept=".pdf,.jpg,.png"
+                                                    onChange={e => {
+                                                        const newFile = e.target.files[0];
+                                                        if (docType === 'ods') setFile(newFile);
+                                                        else setContractFile(newFile);
+                                                    }}
+                                                />
+                                                {docType === 'ods' && file && (
+                                                    <p className="mt-2 text-[10px] font-bold text-blue-600 italic px-2">✓ Fichier extrait par l'IA chargé ici</p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bg-indigo-50/50 p-10 rounded-[3rem] border border-indigo-100 space-y-6">
-                                    <div className="flex items-center gap-4 mb-2">
-                                        <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-200">2</div>
-                                        <h4 className="text-xs font-black uppercase tracking-widest text-indigo-900">Marché / Contrat</h4>
+                                <div className={`p-10 rounded-[3rem] border transition-all ${docType === 'contract' ? 'bg-indigo-50/50 border-indigo-200 ring-2 ring-indigo-500 ring-offset-4' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-200">2</div>
+                                            <h4 className="text-xs font-black uppercase tracking-widest text-indigo-900">Marché / Contrat</h4>
+                                        </div>
+                                        {docType === 'contract' && <span className="text-[9px] font-black bg-indigo-600 text-white px-2 py-1 rounded-full animate-pulse">NUMÉRISÉ</span>}
                                     </div>
                                     <div className="space-y-6">
                                         <div>
@@ -394,13 +449,22 @@ const NewOrder = ({ onSave }) => {
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2 px-1">Fichier du Contrat</label>
-                                            <input
-                                                type="file"
-                                                className="w-full text-xs font-bold text-slate-400 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 transition-all border-2 border-dashed border-indigo-200 p-4 rounded-3xl bg-white/50"
-                                                accept=".pdf,.jpg,.png"
-                                                onChange={e => setContractFile(e.target.files[0])}
-                                            />
+                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2 px-1">Fichier de Contrat</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="file"
+                                                    className="w-full text-xs font-bold text-slate-400 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 transition-all border-2 border-dashed border-indigo-200 p-4 rounded-3xl bg-white/50"
+                                                    accept=".pdf,.jpg,.png"
+                                                    onChange={e => {
+                                                        const newFile = e.target.files[0];
+                                                        if (docType === 'contract') setFile(newFile);
+                                                        else setContractFile(newFile);
+                                                    }}
+                                                />
+                                                {docType === 'contract' && file && (
+                                                    <p className="mt-2 text-[10px] font-bold text-indigo-600 italic px-2">✓ Fichier extrait par l'IA chargé ici</p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
