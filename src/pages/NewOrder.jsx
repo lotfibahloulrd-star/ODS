@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Tesseract from 'tesseract.js';
+import * as pdfjsLib from 'pdfjs-dist';
 import { orderService } from '../services/orderService';
+
+// Config Worker PDF Local
+pdfjsLib.GlobalWorkerOptions.workerSrc = `${import.meta.env.BASE_URL}pdf.worker.min.js`;
 
 const NewOrder = ({ onSave }) => {
     const navigate = useNavigate();
+    const [step, setStep] = useState(1);
     const [file, setFile] = useState(null);
     const [contractFile, setContractFile] = useState(null);
     const [stopRequestFile, setStopRequestFile] = useState(null);
     const [stopResponseFile, setStopResponseFile] = useState(null);
+    const [debugLog, setDebugLog] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -107,6 +114,93 @@ const NewOrder = ({ onSave }) => {
         return date.toISOString().split('T')[0];
     };
 
+    const convertPdfToImage = async (file) => {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+        const page = await pdf.getPage(1);
+        const scale = 2.0;
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        await page.render({ canvasContext: context, viewport: viewport }).promise;
+        return canvas.toDataURL('image/png');
+    };
+
+    const processFile = async (selectedFile) => {
+        if (!selectedFile) return;
+        setFile(selectedFile);
+        setStep(2);
+        setIsLoading(true);
+        setDebugLog("Démarrage de l'analyse IA...");
+
+        try {
+            let imageToScan = selectedFile;
+            if (selectedFile.type === 'application/pdf') {
+                setDebugLog(prev => prev + "\n📄 Conversion PDF en Image...");
+                imageToScan = await convertPdfToImage(selectedFile);
+            }
+
+            setDebugLog(prev => prev + "\n🧠 Lecture Intelligente (Extraction des données)...");
+            const result = await Tesseract.recognize(imageToScan, 'eng+fra+ara', {
+                logger: m => { if (m.status === 'recognizing text') console.log(m.progress); }
+            });
+
+            const text = result.data.text;
+            if (!text || text.length < 10) throw new Error("Texte illisible");
+
+            setDebugLog(prev => prev + `\n✅ Texte trouvé (${text.length} caractères). Extraction fine...`);
+            parseExtractedText(text);
+            setIsLoading(false);
+            setStep(3);
+
+        } catch (error) {
+            console.error(error);
+            setDebugLog(prev => prev + `\n❌ Erreur: ${error.message}`);
+            setIsLoading(false);
+            setStep(3);
+        }
+    };
+
+    const parseExtractedText = (text) => {
+        // Nettoyage sommaire
+        const cleanText = text.replace(/\s+/g, ' ');
+
+        const clientMatch = text.match(/(?:maitre de l'ouvrage|client|organisme|destinataire)\s?[:\.]?\s?(.+)/i);
+        const refMatch = text.match(/(?:marché|référence|convention|ods n°)\s?(?:n°|réf)?\s?[:\.]?\s?([\d\/A-Z\-\s]+)/i);
+        const objectMatch = text.match(/(?:objet|lot|prestation|désignation)\s?[:\.]?\s?(.+)/i);
+        const dateMatch = text.match(/(\d{2}[\/\-]\d{2}[\/\-]\d{4})/);
+        const delayMatch = text.match(/(\d+)\s?(?:jours|mois)/i);
+        const amountMatch = text.match(/([\d\s\.,]+)(?:DA|DZD|TTC)/i);
+
+        let finalObject = objectMatch ? objectMatch[1].split('.')[0].trim() : "";
+        if (finalObject.length < 5) {
+            const lines = text.split('\n');
+            finalObject = lines.slice(3, 10).find(l => l.length > 20) || lines.slice(3, 5).join(' ').substring(0, 150);
+        }
+
+        setFormData(prev => {
+            const dateExtracted = dateMatch ? dateMatch[1].split(/[\/\-]/).reverse().join('-') : "";
+            // Fix possible reverse in YYYY-MM-DD vs DD-MM-YYYY
+            let finalDate = dateExtracted;
+            if (dateExtracted && dateExtracted.split('-')[0].length === 2) {
+                finalDate = dateExtracted.split('-').reverse().join('-');
+            }
+
+            return {
+                ...prev,
+                client: clientMatch ? clientMatch[1].split('\n')[0].trim().substring(0, 100) : "",
+                refOds: refMatch ? refMatch[1].trim().split(' ')[0] : "",
+                object: finalObject.trim(),
+                dateOds: finalDate,
+                startDate: finalDate,
+                delay: delayMatch ? delayMatch[1] : "",
+                amount: amountMatch ? amountMatch[1].replace(/[^0-9.]/g, '') : ""
+            };
+        });
+    };
+
     const handleFileUpload = (file, storageMethod, orderId) => {
         if (!file) return Promise.resolve();
         return new Promise((resolve, reject) => {
@@ -145,6 +239,7 @@ const NewOrder = ({ onSave }) => {
             await Promise.all(uploadPromises);
 
             alert('ODS enregistré avec succès !');
+            setStep(1);
             setFile(null);
             setContractFile(null);
             setStopRequestFile(null);
@@ -174,6 +269,7 @@ const NewOrder = ({ onSave }) => {
                 totals: { ht: 0, tva: 0, ttc: 0 }
             });
             if (onSave) onSave();
+            navigate('/');
         } catch (error) {
             console.error(error);
             if (error.name === 'QuotaExceededError' || error.message.includes('quota')) {
@@ -189,394 +285,490 @@ const NewOrder = ({ onSave }) => {
     return (
         <div className="max-w-[1600px] mx-auto pb-20">
             <div className="mb-12">
-                <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-3">Nouvel ODS <span className="text-blue-600">Saisie Manuelle</span></h2>
-                <p className="text-slate-500 font-medium">Veuillez renseigner manuellement toutes les informations relatives au nouvel ODS.</p>
+                <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-3">Nouvel ODS <span className="text-blue-600">Digitalisé</span></h2>
+                <p className="text-slate-500 font-medium font-bold">L'intelligence artificielle analyse votre document pour une saisie fluide et automatisée. Veuillez vérifier les champs extraits.</p>
             </div>
 
-            <div className="space-y-10 animate-fade-in">
-                <div className="bg-white rounded-[3rem] border border-slate-200 shadow-2xl shadow-slate-200/50 overflow-hidden">
-                    <div className="p-10 space-y-12">
-                        {/* Section 1: Documents & Références */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                            <div className="bg-blue-50/50 p-8 rounded-[2.5rem] border border-blue-100 space-y-6">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black text-xs">1</div>
-                                    <h4 className="text-[11px] font-black uppercase tracking-widest text-blue-900">Ordre de Service (ODS)</h4>
-                                </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest block mb-2">Référence ODS</label>
-                                        <input
-                                            type="text"
-                                            className="w-full p-4 bg-white border-2 border-blue-100 rounded-2xl font-black text-blue-900 outline-none focus:border-blue-500 transition-all shadow-sm"
-                                            value={formData.refOds}
-                                            onChange={e => setFormData({ ...formData, refOds: e.target.value })}
-                                            placeholder="Ex: 125/2026"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest block mb-2">Fichier Numérisé (PDF, JPG, PNG)</label>
-                                        <input
-                                            type="file"
-                                            className="w-full text-xs font-bold text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-all"
-                                            accept=".pdf,.jpg,.png"
-                                            onChange={e => setFile(e.target.files[0])}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+            {step === 1 && (
+                <div
+                    className="bg-white rounded-[3rem] border-4 border-dashed border-slate-200 p-24 text-center hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer group shadow-2xl shadow-slate-200/50"
+                    onClick={() => document.getElementById('fileInput').click()}
+                >
+                    <input id="fileInput" type="file" hidden accept=".pdf,.jpg,.png" onClick={e => e.target.value = null} onChange={(e) => processFile(e.target.files[0])} />
+                    <div className="w-24 h-24 bg-blue-600 rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-8 group-hover:scale-110 transition-transform shadow-xl shadow-blue-200">
+                        📄
+                    </div>
+                    <h3 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">Déposez l'ODS ici</h3>
+                    <p className="text-slate-500 font-black uppercase text-xs tracking-[0.2em]">PDF, JPG ou PNG • Analyse IA Automatique</p>
+                    <div className="mt-8 flex justify-center gap-4">
+                        <button className="px-6 py-2 bg-slate-100 text-slate-600 rounded-full text-xs font-black uppercase tracking-widest">Ou cliquez pour parcourir</button>
+                    </div>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setStep(3); }}
+                        className="mt-12 text-blue-600 font-black text-xs uppercase tracking-widest border-b-2 border-blue-600 hover:text-blue-800 transition-all"
+                    >
+                        Passer à la saisie manuelle
+                    </button>
+                </div>
+            )}
 
-                            <div className="bg-indigo-50/50 p-8 rounded-[2.5rem] border border-indigo-100 space-y-6">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black text-xs">2</div>
-                                    <h4 className="text-[11px] font-black uppercase tracking-widest text-indigo-900">Marché / Contrat</h4>
-                                </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2">Référence Contrat</label>
-                                        <input
-                                            type="text"
-                                            className="w-full p-4 bg-white border-2 border-indigo-100 rounded-2xl font-black text-indigo-900 outline-none focus:border-indigo-500 transition-all shadow-sm"
-                                            value={formData.refContract}
-                                            onChange={e => setFormData({ ...formData, refContract: e.target.value })}
-                                            placeholder="Ex: MARCHÉ N°45/2026"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2">Fichier Numérisé (PDF, JPG, PNG)</label>
-                                        <input
-                                            type="file"
-                                            className="w-full text-xs font-bold text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 transition-all"
-                                            accept=".pdf,.jpg,.png"
-                                            onChange={e => setContractFile(e.target.files[0])}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Section 2: Identification */}
-                        <div className="space-y-8">
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                <div className="lg:col-span-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Client / Maître d'Ouvrage</label>
-                                    <input
-                                        type="text"
-                                        className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 outline-none focus:border-blue-500 transition-all shadow-sm"
-                                        value={formData.client}
-                                        onChange={e => setFormData({ ...formData, client: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Classification / Division</label>
-                                    <select
-                                        className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 outline-none focus:border-blue-500 transition-all shadow-sm"
-                                        value={formData.division}
-                                        onChange={e => setFormData({ ...formData, division: e.target.value })}
-                                    >
-                                        <option value="Division Laboratoire">Division Laboratoire</option>
-                                        <option value="Division Analytique">Division Analytique</option>
-                                        <option value="DL et DA">DL et DA</option>
-                                        <option value="Direction">Direction</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Objet des prestations</label>
-                                <textarea
-                                    rows={3}
-                                    className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-[2rem] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all shadow-sm leading-relaxed"
-                                    value={formData.object}
-                                    onChange={e => setFormData({ ...formData, object: e.target.value })}
-                                ></textarea>
-                            </div>
-                        </div>
-
-                        {/* Section 3: Financier & Délais */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                            <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 text-center">Montant TTC (DA)</label>
-                                <input
-                                    type="text"
-                                    className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl text-center font-black text-blue-700 outline-none focus:border-blue-500"
-                                    value={formData.amount}
-                                    onChange={e => setFormData({ ...formData, amount: e.target.value })}
-                                />
-                            </div>
-                            <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 text-center">Domiciliation Bancaire</label>
-                                <input
-                                    type="text"
-                                    className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl text-center font-black text-slate-900 outline-none focus:border-blue-500"
-                                    value={formData.bankDomiciliation}
-                                    onChange={e => setFormData({ ...formData, bankDomiciliation: e.target.value })}
-                                    placeholder="Banque / Agence"
-                                />
-                            </div>
-                            <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 text-center">Date ODS / Début</label>
-                                <input
-                                    type="date"
-                                    className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl text-center font-black text-slate-900 outline-none focus:border-blue-500"
-                                    value={formData.dateOds}
-                                    onChange={e => {
-                                        const val = e.target.value;
-                                        setFormData({
-                                            ...formData,
-                                            dateOds: val,
-                                            startDate: val,
-                                            endDate: calculateEndDate(val, formData.delay, formData.stopDate, formData.resumeDate)
-                                        });
-                                    }}
-                                />
-                            </div>
-                            <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 text-center">Délai (Jours)</label>
-                                <input
-                                    type="number"
-                                    className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl text-center font-black text-slate-900 outline-none focus:border-blue-500"
-                                    value={formData.delay}
-                                    onChange={e => {
-                                        const val = e.target.value;
-                                        setFormData({
-                                            ...formData,
-                                            delay: val,
-                                            endDate: calculateEndDate(formData.startDate, val, formData.stopDate, formData.resumeDate)
-                                        });
-                                    }}
-                                />
-                            </div>
-                            <div className="bg-slate-900 p-6 rounded-[2rem] shadow-xl">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2 text-center">Échéance Estimée</label>
-                                <div className="text-center font-black text-emerald-400 text-lg py-2">
-                                    {formData.endDate ? new Date(formData.endDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : "--/--/----"}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Section 4: Suspension Section (Modern Highlight) */}
-                        <div className={`rounded-[2.5rem] p-8 transition-all ${formData.hasStopRequest === 'Oui' ? 'bg-red-50 border-2 border-red-100 shadow-lg shadow-red-100/50' : 'bg-slate-50 border border-slate-100'}`}>
-                            <div className="flex items-center justify-between mb-8">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg ${formData.hasStopRequest === 'Oui' ? 'bg-red-600 shadow-red-200' : 'bg-slate-400 shadow-slate-200'}`}>
-                                        🚨
-                                    </div>
-                                    <div>
-                                        <h4 className={`text-sm font-black uppercase tracking-widest ${formData.hasStopRequest === 'Oui' ? 'text-red-900' : 'text-slate-500'}`}>Suspension de délai (ODS d'Arrêt)</h4>
-                                        <p className="text-[10px] font-bold text-slate-400">Interruption officielle de la prestation</p>
-                                    </div>
-                                </div>
-                                <select
-                                    className={`px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest outline-none border-2 transition-all ${formData.hasStopRequest === 'Oui' ? 'bg-white border-red-200 text-red-600 focus:border-red-500' : 'bg-white border-slate-200 text-slate-500'}`}
-                                    value={formData.hasStopRequest}
-                                    onChange={e => setFormData({ ...formData, hasStopRequest: e.target.value })}
-                                >
-                                    <option value="Non">Aucun Arrêt</option>
-                                    <option value="Oui">Arrêt Détecté / Prévu</option>
-                                </select>
-                            </div>
-
-                            {formData.hasStopRequest === 'Oui' && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 animate-in fade-in slide-in-from-top-4 duration-500">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-red-400 uppercase tracking-widest block">Date d'Arrêt</label>
-                                        <input type="date" className="w-full p-4 bg-white border-2 border-red-100 rounded-2xl font-black text-red-900 outline-none focus:border-red-500" value={formData.stopDate}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setFormData({ ...formData, stopDate: val, endDate: calculateEndDate(formData.startDate, formData.delay, val, formData.resumeDate) });
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-red-400 uppercase tracking-widest block">Date de Reprise</label>
-                                        <input type="date" className="w-full p-4 bg-white border-2 border-red-100 rounded-2xl font-black text-red-900 outline-none focus:border-red-500" value={formData.resumeDate}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setFormData({ ...formData, resumeDate: val, endDate: calculateEndDate(formData.startDate, formData.delay, formData.stopDate, val) });
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-red-400 uppercase tracking-widest block">Demande PDF</label>
-                                        <input type="file" className="text-[9px] font-black text-red-300 file:bg-red-600 file:text-white file:border-0 file:rounded-lg file:px-3 file:py-1.5" onChange={e => setStopRequestFile(e.target.files[0])} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-red-400 uppercase tracking-widest block">Accord PDF</label>
-                                        <input type="file" className="text-[9px] font-black text-red-300 file:bg-red-600 file:text-white file:border-0 file:rounded-lg file:px-3 file:py-1.5" onChange={e => setStopResponseFile(e.target.files[0])} />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Section 5: Consistance Detaillee */}
-                        <div className="bg-slate-50 rounded-[2.5rem] p-10 space-y-8 border border-slate-100">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center text-white">📦</div>
-                                <h4 className="text-sm font-black uppercase tracking-widest text-slate-900">Consistance Intellectuelle & Matérielle</h4>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">🧪 Équipements</label>
-                                    <textarea rows={4} className="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl font-bold text-slate-600 text-sm outline-none focus:border-blue-500 shadow-sm" placeholder="Liste des principaux équipements..." value={formData.equipmentDetails} onChange={e => setFormData({ ...formData, equipmentDetails: e.target.value })}></textarea>
-                                </div>
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">⚗️ Réactifs</label>
-                                    <textarea rows={4} className="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl font-bold text-slate-600 text-sm outline-none focus:border-indigo-500 shadow-sm" placeholder="Consistance des réactifs..." value={formData.reagentDetails} onChange={e => setFormData({ ...formData, reagentDetails: e.target.value })}></textarea>
-                                </div>
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">📦 Consommables</label>
-                                    <textarea rows={4} className="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl font-bold text-slate-600 text-sm outline-none focus:border-emerald-500 shadow-sm" placeholder="Détails consommables..." value={formData.consumableDetails} onChange={e => setFormData({ ...formData, consumableDetails: e.target.value })}></textarea>
-                                </div>
-                            </div>
-                            <div className="mt-8 pt-8 border-t border-slate-200/50">
-                                <label className="text-[10px] font-black text-red-400 uppercase tracking-widest flex items-center gap-2 mb-3">⚖️ Poursuites Judiciaires / Contentieux</label>
-                                <textarea rows={2} className="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl font-bold text-slate-600 text-sm outline-none focus:border-red-500 shadow-sm" placeholder="Précisez ici si des poursuites sont en cours ou prévues..." value={formData.judicialProceedings} onChange={e => setFormData({ ...formData, judicialProceedings: e.target.value })}></textarea>
-                            </div>
-                        </div>
-
-                        {/* Section 6: Detail Quantitatif et Estimatif (Articles) */}
-                        <div className="bg-slate-900 rounded-[2.5rem] p-10 space-y-8 text-white shadow-2xl">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/50">📋</div>
-                                    <h4 className="text-sm font-black uppercase tracking-widest">Articles & DQE</h4>
-                                </div>
-                                <button
-                                    onClick={addArticle}
-                                    type="button"
-                                    className="px-6 py-3 bg-white text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 shadow-xl shadow-white/10"
-                                >
-                                    <span className="text-lg">+</span> Ajouter un article
-                                </button>
-                            </div>
-
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse min-w-[1000px]">
-                                    <thead>
-                                        <tr className="border-b border-white/10">
-                                            <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">N°</th>
-                                            <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Réf</th>
-                                            <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 w-1/3">Désignation</th>
-                                            <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Qté</th>
-                                            <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">PU HT</th>
-                                            <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Total HT</th>
-                                            <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Marque</th>
-                                            <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-white/5">
-                                        {formData.articles.map((art, idx) => (
-                                            <tr key={idx} className="group hover:bg-white/5 transition-all">
-                                                <td className="px-4 py-4 font-black text-slate-500">{art.no}</td>
-                                                <td className="px-2 py-4">
-                                                    <input
-                                                        type="text"
-                                                        className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs font-bold text-white outline-none focus:border-blue-500 transition-all"
-                                                        value={art.ref}
-                                                        onChange={e => updateArticle(idx, 'ref', e.target.value)}
-                                                    />
-                                                </td>
-                                                <td className="px-2 py-4">
-                                                    <textarea
-                                                        rows={1}
-                                                        className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs font-bold text-white outline-none focus:border-blue-500 resize-none transition-all"
-                                                        value={art.designation}
-                                                        onChange={e => updateArticle(idx, 'designation', e.target.value)}
-                                                    />
-                                                </td>
-                                                <td className="px-2 py-4">
-                                                    <input
-                                                        type="number"
-                                                        className="w-20 mx-auto bg-white/5 border border-white/10 rounded-lg p-2 text-xs font-black text-center text-white outline-none focus:border-blue-500 transition-all"
-                                                        value={art.qte}
-                                                        onChange={e => updateArticle(idx, 'qte', e.target.value)}
-                                                    />
-                                                </td>
-                                                <td className="px-2 py-4">
-                                                    <input
-                                                        type="number"
-                                                        className="w-32 ml-auto bg-white/5 border border-white/10 rounded-lg p-2 text-xs font-black text-right text-white outline-none focus:border-blue-500 transition-all"
-                                                        value={art.pu}
-                                                        onChange={e => updateArticle(idx, 'pu', e.target.value)}
-                                                    />
-                                                </td>
-                                                <td className="px-4 py-4 text-right">
-                                                    <span className="text-xs font-black text-blue-400 whitespace-nowrap">{new Intl.NumberFormat('fr-FR').format(art.total)} DA</span>
-                                                </td>
-                                                <td className="px-2 py-4">
-                                                    <input
-                                                        type="text"
-                                                        className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs font-bold text-center text-white outline-none focus:border-blue-500 transition-all"
-                                                        value={art.marque}
-                                                        onChange={e => updateArticle(idx, 'marque', e.target.value)}
-                                                    />
-                                                </td>
-                                                <td className="px-4 py-4 text-right">
-                                                    <button
-                                                        onClick={() => removeArticle(idx)}
-                                                        className="w-8 h-8 flex items-center justify-center bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100"
-                                                    >
-                                                        ×
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-
-                                        {formData.articles.length === 0 && (
-                                            <tr>
-                                                <td colSpan="8" className="px-4 py-20 text-center text-slate-500 italic font-medium">
-                                                    <div className="flex flex-col items-center gap-4">
-                                                        <div className="text-4xl opacity-20">📭</div>
-                                                        <p>Aucun article ajouté. Utilisez le bouton ci-dessus pour commencer la saisie du DQE.</p>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                    {formData.articles.length > 0 && (
-                                        <tfoot className="border-t-2 border-white/20 bg-white/2">
-                                            <tr>
-                                                <td colSpan="5" className="px-4 py-6 text-right font-black text-slate-400 uppercase text-[10px] tracking-widest">Total HT cumulé</td>
-                                                <td className="px-4 py-6 text-right font-black text-white text-sm whitespace-nowrap">{new Intl.NumberFormat('fr-FR').format(formData.totals.ht)} DA</td>
-                                                <td colSpan="2"></td>
-                                            </tr>
-                                            <tr>
-                                                <td colSpan="5" className="px-4 py-2 text-right font-black text-slate-400 uppercase text-[10px] tracking-widest text-xs">TVA (19%)</td>
-                                                <td className="px-4 py-2 text-right font-black text-slate-400 text-xs whitespace-nowrap">{new Intl.NumberFormat('fr-FR').format(formData.totals.tva)} DA</td>
-                                                <td colSpan="2"></td>
-                                            </tr>
-                                            <tr className="bg-blue-600/10">
-                                                <td colSpan="5" className="px-4 py-8 text-right font-black text-blue-400 uppercase text-[10px] tracking-widest">Montant Global TTC Final</td>
-                                                <td className="px-4 py-8 text-right font-black text-blue-400 text-xl whitespace-nowrap">{new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2 }).format(formData.totals.ttc)} DA</td>
-                                                <td colSpan="2"></td>
-                                            </tr>
-                                        </tfoot>
-                                    )}
-                                </table>
-                            </div>
+            {step === 2 && (
+                <div className="bg-white rounded-[3rem] shadow-2xl p-20 text-center border border-slate-100 max-w-4xl mx-auto">
+                    <div className="relative w-32 h-32 mx-auto mb-12">
+                        <div className="absolute inset-0 bg-blue-600 rounded-[2.5rem] animate-ping opacity-20"></div>
+                        <div className="relative w-32 h-32 bg-slate-900 rounded-[2.5rem] flex items-center justify-center text-5xl shadow-2xl animate-pulse">
+                            🧠
                         </div>
                     </div>
+                    <h3 className="text-3xl font-black text-slate-900 mb-6 tracking-tight">Analyse IA en cours...</h3>
+                    <div className="text-left font-mono text-[11px] bg-slate-950 text-emerald-400 p-10 rounded-[2.5rem] max-h-80 overflow-y-auto whitespace-pre-wrap leading-relaxed shadow-inner border border-white/10">
+                        <div className="flex items-center gap-2 mb-4 border-b border-white/10 pb-4">
+                            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                            <span className="uppercase tracking-widest font-black text-[10px]">Neural Processing Engine v4.0</span>
+                        </div>
+                        {debugLog}
+                        <div className="mt-4 animate-pulse">_</div>
+                    </div>
+                </div>
+            )}
 
-                    {/* Footer Actions */}
-                    <div className="p-10 bg-slate-50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
-                        <button
-                            onClick={() => navigate('/')}
-                            className="px-8 py-5 bg-white border-2 border-slate-200 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 transition-all w-full md:w-auto"
-                        >
-                            Retour au Tableau
-                        </button>
-                        <div className="flex gap-4 w-full md:w-auto">
+            {step === 3 && (
+                <div className="space-y-10 animate-fade-in">
+                    <div className="bg-emerald-500 text-white px-8 py-6 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-2xl shadow-emerald-200/50 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <span className="text-2xl bg-white/20 w-10 h-10 flex items-center justify-center rounded-xl">✓</span>
+                            <div>
+                                <p>Extraction terminée !</p>
+                                <p className="text-[10px] opacity-70">Veuillez vérifier et compléter les informations avant d'enregistrer.</p>
+                            </div>
+                        </div>
+                        <button onClick={() => setStep(1)} className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-[10px] transition-all">RE-NUMERISER</button>
+                    </div>
+
+                    <div className="bg-white rounded-[4rem] border border-slate-200 shadow-2xl shadow-slate-200/50 overflow-hidden">
+                        <div className="p-12 space-y-16">
+                            {/* Section 1: Documents & Références */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                <div className="bg-blue-50/50 p-10 rounded-[3rem] border border-blue-100 space-y-6">
+                                    <div className="flex items-center gap-4 mb-2">
+                                        <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-200">1</div>
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-blue-900">Ordre de Service (ODS)</h4>
+                                    </div>
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest block mb-2 px-1">Référence ODS</label>
+                                            <input
+                                                type="text"
+                                                className="w-full p-5 bg-white border-2 border-blue-100 rounded-2xl font-black text-blue-900 outline-none focus:border-blue-500 transition-all shadow-sm"
+                                                value={formData.refOds}
+                                                onChange={e => setFormData({ ...formData, refOds: e.target.value })}
+                                                placeholder="Ex: 125/2026"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest block mb-2 px-1">Fichier de l'ODS</label>
+                                            <input
+                                                type="file"
+                                                className="w-full text-xs font-bold text-slate-400 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-all border-2 border-dashed border-blue-200 p-4 rounded-3xl bg-white/50"
+                                                accept=".pdf,.jpg,.png"
+                                                onChange={e => setFile(e.target.files[0])}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-indigo-50/50 p-10 rounded-[3rem] border border-indigo-100 space-y-6">
+                                    <div className="flex items-center gap-4 mb-2">
+                                        <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-200">2</div>
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-indigo-900">Marché / Contrat</h4>
+                                    </div>
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2 px-1">Référence Contrat</label>
+                                            <input
+                                                type="text"
+                                                className="w-full p-5 bg-white border-2 border-indigo-100 rounded-2xl font-black text-indigo-900 outline-none focus:border-indigo-500 transition-all shadow-sm"
+                                                value={formData.refContract}
+                                                onChange={e => setFormData({ ...formData, refContract: e.target.value })}
+                                                placeholder="Ex: MARCHÉ N°45/2026"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2 px-1">Fichier du Contrat</label>
+                                            <input
+                                                type="file"
+                                                className="w-full text-xs font-bold text-slate-400 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 transition-all border-2 border-dashed border-indigo-200 p-4 rounded-3xl bg-white/50"
+                                                accept=".pdf,.jpg,.png"
+                                                onChange={e => setContractFile(e.target.files[0])}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 2: Identification */}
+                            <div className="space-y-10">
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                    <div className="lg:col-span-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3 px-1">Client / Maître d'Ouvrage</label>
+                                        <input
+                                            type="text"
+                                            className="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-[2rem] font-black text-slate-900 outline-none focus:border-blue-500 transition-all shadow-sm"
+                                            value={formData.client}
+                                            onChange={e => setFormData({ ...formData, client: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3 px-1">Classification / Division</label>
+                                        <select
+                                            className="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-[2rem] font-black text-slate-900 outline-none focus:border-blue-500 transition-all shadow-sm cursor-pointer"
+                                            value={formData.division}
+                                            onChange={e => setFormData({ ...formData, division: e.target.value })}
+                                        >
+                                            <option value="Division Laboratoire">Division Laboratoire</option>
+                                            <option value="Division Analytique">Division Analytique</option>
+                                            <option value="DL et DA">DL et DA</option>
+                                            <option value="Direction">Direction</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3 px-1">Objet des prestations</label>
+                                    <textarea
+                                        rows={4}
+                                        className="w-full p-8 bg-slate-50 border-2 border-slate-100 rounded-[3rem] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all shadow-sm leading-relaxed"
+                                        value={formData.object}
+                                        onChange={e => setFormData({ ...formData, object: e.target.value })}
+                                        placeholder="Décrivez l'objet de la commande..."
+                                    ></textarea>
+                                </div>
+                            </div>
+
+                            {/* Section 3: Financier & Délais */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                                <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-100 group hover:border-blue-200 transition-all">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3 text-center">Montant TTC (DA)</label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-4 bg-white border-2 border-slate-200 rounded-2xl text-center font-black text-blue-700 outline-none focus:border-blue-500 text-xl"
+                                        value={formData.amount}
+                                        onChange={e => setFormData({ ...formData, amount: e.target.value })}
+                                    />
+                                </div>
+                                <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-100 group hover:border-amber-200 transition-all">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3 text-center">Domiciliation Bancaire</label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-4 bg-white border-2 border-slate-200 rounded-2xl text-center font-black text-slate-900 outline-none focus:border-blue-500"
+                                        value={formData.bankDomiciliation}
+                                        onChange={e => setFormData({ ...formData, bankDomiciliation: e.target.value })}
+                                        placeholder="Banque / Agence"
+                                    />
+                                </div>
+                                <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-100 group hover:border-blue-200 transition-all">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3 text-center">Date ODS / Début</label>
+                                    <input
+                                        type="date"
+                                        className="w-full p-4 bg-white border-2 border-slate-200 rounded-2xl text-center font-black text-slate-900 outline-none focus:border-blue-500"
+                                        value={formData.dateOds}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            setFormData({
+                                                ...formData,
+                                                dateOds: val,
+                                                startDate: val,
+                                                endDate: calculateEndDate(val, formData.delay, formData.stopDate, formData.resumeDate)
+                                            });
+                                        }}
+                                    />
+                                </div>
+                                <div className="bg-slate-900 p-8 rounded-[3rem] shadow-2xl relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-5 transition-all"></div>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3 text-center">Échéance Estimée</label>
+                                    <div className="text-center font-black text-emerald-400 text-xl py-2 tracking-tight">
+                                        {formData.endDate ? new Date(formData.endDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : "--/--/----"}
+                                    </div>
+                                    <input
+                                        type="number"
+                                        className="mt-4 w-full p-2 bg-white/10 border border-white/10 rounded-xl text-center font-black text-white text-xs outline-none focus:border-emerald-500 transition-all"
+                                        value={formData.delay}
+                                        placeholder="Délai (j)"
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            setFormData({
+                                                ...formData,
+                                                delay: val,
+                                                endDate: calculateEndDate(formData.startDate, val, formData.stopDate, formData.resumeDate)
+                                            });
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Section 4: Suspension Section */}
+                            <div className={`rounded-[3rem] p-10 transition-all ${formData.hasStopRequest === 'Oui' ? 'bg-red-50 border-4 border-red-100 shadow-2xl shadow-red-100/30' : 'bg-slate-50 border border-slate-100'}`}>
+                                <div className="flex items-center justify-between mb-10">
+                                    <div className="flex items-center gap-6">
+                                        <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center text-3xl shadow-2xl ${formData.hasStopRequest === 'Oui' ? 'bg-red-600 text-white shadow-red-200' : 'bg-slate-400 text-white shadow-slate-200'}`}>
+                                            🚨
+                                        </div>
+                                        <div>
+                                            <h4 className={`text-lg font-black uppercase tracking-widest ${formData.hasStopRequest === 'Oui' ? 'text-red-900' : 'text-slate-500'}`}>Interruption de prestation</h4>
+                                            <p className="font-bold text-slate-400 text-xs">Gérez les ordres d'arrêt et de reprise</p>
+                                        </div>
+                                    </div>
+                                    <select
+                                        className={`px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest outline-none border-2 transition-all cursor-pointer ${formData.hasStopRequest === 'Oui' ? 'bg-white border-red-200 text-red-600 focus:border-red-500' : 'bg-white border-slate-200 text-slate-500'}`}
+                                        value={formData.hasStopRequest}
+                                        onChange={e => setFormData({ ...formData, hasStopRequest: e.target.value })}
+                                    >
+                                        <option value="Non">Pas d'arrêt</option>
+                                        <option value="Oui">Arrêt déclaré</option>
+                                    </select>
+                                </div>
+
+                                {formData.hasStopRequest === 'Oui' && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 animate-in fade-in zoom-in duration-500">
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-black text-red-400 uppercase tracking-widest block px-1">Date d'Arrêt</label>
+                                            <input type="date" className="w-full p-4 bg-white border-2 border-red-100 rounded-2xl font-black text-red-900 outline-none focus:border-red-500 shadow-sm" value={formData.stopDate}
+                                                onChange={e => {
+                                                    const val = e.target.value;
+                                                    setFormData({ ...formData, stopDate: val, endDate: calculateEndDate(formData.startDate, formData.delay, val, formData.resumeDate) });
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-black text-red-400 uppercase tracking-widest block px-1">Date de Reprise</label>
+                                            <input type="date" className="w-full p-4 bg-white border-2 border-red-100 rounded-2xl font-black text-red-900 outline-none focus:border-red-500 shadow-sm" value={formData.resumeDate}
+                                                onChange={e => {
+                                                    const val = e.target.value;
+                                                    setFormData({ ...formData, resumeDate: val, endDate: calculateEndDate(formData.startDate, formData.delay, formData.stopDate, val) });
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-black text-red-400 uppercase tracking-widest block px-1">DOC Arrêt (PDF)</label>
+                                            <input type="file" className="text-[10px] font-black text-red-400 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-red-600 file:text-white transition-all bg-white p-3 rounded-2xl border-2 border-dashed border-red-200 w-full" onChange={e => setStopRequestFile(e.target.files[0])} />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-black text-red-400 uppercase tracking-widest block px-1">DOC Reprise (PDF)</label>
+                                            <input type="file" className="text-[10px] font-black text-red-400 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-red-600 file:text-white transition-all bg-white p-3 rounded-2xl border-2 border-dashed border-red-200 w-full" onChange={e => setStopResponseFile(e.target.files[0])} />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Section 5: Consistance Detaillee */}
+                            <div className="bg-slate-50 rounded-[3rem] p-12 space-y-10 border border-slate-100 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-12 opacity-5 scale-150 rotate-12 group-hover:rotate-0 transition-all pointer-events-none text-8xl">📦</div>
+                                <div className="flex items-center gap-5">
+                                    <div className="w-14 h-14 bg-slate-900 rounded-[1.25rem] flex items-center justify-center text-2xl text-white shadow-xl">📁</div>
+                                    <h4 className="text-lg font-black uppercase tracking-widest text-slate-900">Consistance Technique Automatisée</h4>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center px-1">
+                                            <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">🧪 Équipements</label>
+                                            <button
+                                                onClick={() => setFormData({ ...formData, equipmentDetails: "Système complet piloté par microprocesseur. Engagement incluant : Installation, Qualification (IQ/OQ) et Formation certifiante pour 03 utilisateurs. Garantie : 24 mois." })}
+                                                className="text-[8px] font-black bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full hover:bg-blue-600 hover:text-white transition-all uppercase tracking-tighter shadow-sm"
+                                            >
+                                                Inspirez-moi
+                                            </button>
+                                        </div>
+                                        <textarea rows={5} className="w-full p-6 bg-white border-2 border-slate-100 rounded-[2rem] font-bold text-slate-600 text-sm outline-none focus:border-blue-500 shadow-inner" placeholder="Liste des principaux équipements..." value={formData.equipmentDetails} onChange={e => setFormData({ ...formData, equipmentDetails: e.target.value })}></textarea>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center px-1">
+                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">⚗️ Réactifs</label>
+                                            <button
+                                                onClick={() => setFormData({ ...formData, reagentDetails: "Kit de démarrage comprenant : Solutions étalons certifiées (NIST) et réactifs de grade analytique. Validité résiduelle minimale à la livraison : 18 mois." })}
+                                                className="text-[8px] font-black bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-full hover:bg-indigo-600 hover:text-white transition-all uppercase tracking-tighter shadow-sm"
+                                            >
+                                                Inspirez-moi
+                                            </button>
+                                        </div>
+                                        <textarea rows={5} className="w-full p-6 bg-white border-2 border-slate-100 rounded-[2rem] font-bold text-slate-600 text-sm outline-none focus:border-indigo-500 shadow-inner" placeholder="Consistance des réactifs..." value={formData.reagentDetails} onChange={e => setFormData({ ...formData, reagentDetails: e.target.value })}></textarea>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center px-1">
+                                            <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">📦 Consommables</label>
+                                            <button
+                                                onClick={() => setFormData({ ...formData, consumableDetails: "Lot de consommables techniques pour 2000 analyses. Inclus : Accessoires de maintenance préventive de premier niveau (joints, septas, tubulures)." })}
+                                                className="text-[8px] font-black bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-full hover:bg-emerald-600 hover:text-white transition-all uppercase tracking-tighter shadow-sm"
+                                            >
+                                                Inspirez-moi
+                                            </button>
+                                        </div>
+                                        <textarea rows={5} className="w-full p-6 bg-white border-2 border-slate-100 rounded-[2rem] font-bold text-slate-600 text-sm outline-none focus:border-emerald-500 shadow-inner" placeholder="Détails consommables..." value={formData.consumableDetails} onChange={e => setFormData({ ...formData, consumableDetails: e.target.value })}></textarea>
+                                    </div>
+                                </div>
+                                <div className="mt-6 pt-10 border-t border-slate-200/50">
+                                    <label className="text-[10px] font-black text-red-400 uppercase tracking-widest flex items-center gap-3 mb-4 px-1">
+                                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                                        Aspects Juridiques & Litiges
+                                    </label>
+                                    <textarea rows={2} className="w-full p-6 bg-white border-2 border-slate-100 rounded-[2rem] font-bold text-slate-600 text-sm outline-none focus:border-red-500 shadow-inner" placeholder="Précisez ici si des poursuites sont en cours or prévues..." value={formData.judicialProceedings} onChange={e => setFormData({ ...formData, judicialProceedings: e.target.value })}></textarea>
+                                </div>
+                            </div>
+
+                            {/* Section 6: Detail Quantitatif & Estimatif (Articles) */}
+                            <div className="bg-slate-900 rounded-[4rem] p-12 space-y-10 text-white shadow-2xl relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl -mr-48 -mt-48"></div>
+                                <div className="flex items-center justify-between relative z-10">
+                                    <div className="flex items-center gap-5">
+                                        <div className="w-16 h-16 bg-blue-600 rounded-[1.5rem] flex items-center justify-center text-white font-black shadow-2xl shadow-blue-500/20 text-2xl">📋</div>
+                                        <div>
+                                            <h4 className="text-xl font-black uppercase tracking-tight">Détail Quantitatif & Estimatif</h4>
+                                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1 opacity-50">Gestion structurée des articles</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={addArticle}
+                                        type="button"
+                                        className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all flex items-center gap-3 shadow-2xl shadow-white/5"
+                                    >
+                                        <span className="text-xl">+</span> Ajouter une ligne
+                                    </button>
+                                </div>
+
+                                <div className="overflow-x-auto relative z-10">
+                                    <table className="w-full text-left border-collapse min-w-[1200px]">
+                                        <thead>
+                                            <tr className="border-b border-white/5">
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-widest text-slate-500">Item</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-widest text-slate-500">Référence</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-widest text-slate-500 w-[40%]">Désignation Complète</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-widest text-slate-500 text-center">Quantité</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-widest text-slate-500 text-right">P.U HT (DA)</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-widest text-slate-500 text-right">TOTAL HT</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-widest text-slate-500 text-center">Marque</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-widest text-slate-500 text-right">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5">
+                                            {formData.articles.map((art, idx) => (
+                                                <tr key={idx} className="group hover:bg-white/[0.03] transition-all">
+                                                    <td className="px-6 py-6 font-black text-slate-600">{art.no}</td>
+                                                    <td className="px-4 py-6">
+                                                        <input
+                                                            type="text"
+                                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs font-bold text-white outline-none focus:border-blue-500 focus:bg-white/10 transition-all"
+                                                            value={art.ref}
+                                                            onChange={e => updateArticle(idx, 'ref', e.target.value)}
+                                                            placeholder="REF"
+                                                        />
+                                                    </td>
+                                                    <td className="px-4 py-6">
+                                                        <textarea
+                                                            rows={1}
+                                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs font-bold text-white outline-none focus:border-blue-500 focus:bg-white/10 resize-none transition-all scrollbar-hide"
+                                                            value={art.designation}
+                                                            onChange={e => updateArticle(idx, 'designation', e.target.value)}
+                                                            placeholder="Désignation détaillée..."
+                                                        />
+                                                    </td>
+                                                    <td className="px-4 py-6">
+                                                        <input
+                                                            type="number"
+                                                            className="w-24 mx-auto bg-white/5 border border-white/10 rounded-xl p-3 text-xs font-black text-center text-white outline-none focus:border-blue-500 transition-all"
+                                                            value={art.qte}
+                                                            onChange={e => updateArticle(idx, 'qte', e.target.value)}
+                                                        />
+                                                    </td>
+                                                    <td className="px-4 py-6">
+                                                        <input
+                                                            type="number"
+                                                            className="w-40 ml-auto bg-white/5 border border-white/10 rounded-xl p-3 text-xs font-black text-right text-white outline-none focus:border-blue-500 transition-all"
+                                                            value={art.pu}
+                                                            onChange={e => updateArticle(idx, 'pu', e.target.value)}
+                                                        />
+                                                    </td>
+                                                    <td className="px-6 py-6 text-right">
+                                                        <span className="text-sm font-black text-blue-400 whitespace-nowrap">{new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2 }).format(art.total)}</span>
+                                                    </td>
+                                                    <td className="px-4 py-6">
+                                                        <input
+                                                            type="text"
+                                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs font-bold text-center text-white outline-none focus:border-blue-500 transition-all"
+                                                            value={art.marque}
+                                                            onChange={e => updateArticle(idx, 'marque', e.target.value)}
+                                                            placeholder="MARQUE"
+                                                        />
+                                                    </td>
+                                                    <td className="px-6 py-6 text-right">
+                                                        <button
+                                                            onClick={() => removeArticle(idx)}
+                                                            className="w-10 h-10 flex items-center justify-center bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100 shadow-lg shadow-red-500/10"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+
+                                            {formData.articles.length === 0 && (
+                                                <tr>
+                                                    <td colSpan="8" className="px-4 py-32 text-center text-slate-600 italic font-medium">
+                                                        <div className="flex flex-col items-center gap-6">
+                                                            <div className="text-6xl opacity-10">📥</div>
+                                                            <p className="text-sm">Le tableau DQE est vide. Les données financières seront extraites de l'ODS ou saisies ici.</p>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                        {formData.articles.length > 0 && (
+                                            <tfoot className="border-t-4 border-white/10 bg-white/[0.02]">
+                                                <tr>
+                                                    <td colSpan="5" className="px-8 py-8 text-right font-black text-slate-500 uppercase text-[11px] tracking-[0.2em]">Total HT Cumulé</td>
+                                                    <td className="px-8 py-8 text-right font-black text-white text-lg whitespace-nowrap">{new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2 }).format(formData.totals.ht)} DA</td>
+                                                    <td colSpan="2"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td colSpan="5" className="px-8 py-4 text-right font-black text-slate-500 uppercase text-[11px] tracking-[0.2em] opacity-50">TVA Statutaire (19%)</td>
+                                                    <td className="px-8 py-4 text-right font-black text-slate-500 text-sm whitespace-nowrap">{new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2 }).format(formData.totals.tva)} DA</td>
+                                                    <td colSpan="2"></td>
+                                                </tr>
+                                                <tr className="bg-blue-600/10">
+                                                    <td colSpan="5" className="px-8 py-10 text-right font-black text-blue-500 uppercase text-[12px] tracking-[0.3em]">Montant Contractuel Global TTC</td>
+                                                    <td className="px-8 py-10 text-right font-black text-blue-400 text-2xl whitespace-nowrap tabular-nums shadow-inner">{new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2 }).format(formData.totals.ttc)} DA</td>
+                                                    <td colSpan="2"></td>
+                                                </tr>
+                                            </tfoot>
+                                        )}
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer Actions */}
+                        <div className="p-12 bg-slate-50 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-8">
                             <button
-                                onClick={handleSave}
-                                disabled={isLoading}
-                                className="px-12 py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl hover:bg-slate-800 hover:scale-[1.05] active:scale-95 transition-all flex-1 md:flex-none"
+                                onClick={() => navigate('/')}
+                                className="px-10 py-6 bg-white border-2 border-slate-200 text-slate-500 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-400 hover:text-slate-800 transition-all w-full md:w-auto shadow-sm"
                             >
-                                {isLoading ? "Enregistrement..." : "Confirmer & Enregistrer l'ODS"}
+                                ← Quitter sans enregistrer
                             </button>
+                            <div className="flex gap-6 w-full md:w-auto">
+                                <button
+                                    onClick={handleSave}
+                                    disabled={isLoading}
+                                    className="px-16 py-6 bg-slate-900 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-slate-800 hover:scale-[1.05] active:scale-95 transition-all flex-1 md:flex-none flex items-center justify-center gap-4 group"
+                                >
+                                    {isLoading ? "Synchronisation..." : (
+                                        <>
+                                            Confirmer & Publier l'ODS
+                                            <span className="text-xl group-hover:translate-x-2 transition-transform">→</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
