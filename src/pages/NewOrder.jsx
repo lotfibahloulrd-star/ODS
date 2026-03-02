@@ -166,46 +166,128 @@ const NewOrder = ({ onSave }) => {
     const [docType, setDocType] = useState('ods'); // 'ods' or 'contract'
 
     const parseExtractedText = (text) => {
-        // Nettoyage sommaire
-        const cleanText = text.replace(/\s+/g, ' ');
+        setDebugLog(prev => prev + "\n🔍 Analyse structurelle profonde...");
 
-        // Détection du type de document
-        const isContract = /marché|contrat|convention/i.test(text) && !/ordre de service|ods/i.test(text.substring(0, 500));
+        // Nettoyage et normalisation du texte pour faciliter la recherche
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        const fullText = lines.join(' ');
+
+        // 1. Détection du type de document (ODS vs Marché/Contrat)
+        const isContract = /marché|contrat|convention|engagement/i.test(fullText) &&
+            !/ordre de service|ods/i.test(fullText.substring(0, 800));
         setDocType(isContract ? 'contract' : 'ods');
 
-        const clientMatch = text.match(/(?:maitre de l'ouvrage|client|organisme|destinataire)\s?[:\.]?\s?(.+)/i);
-        const refMatch = text.match(/(?:marché|référence|convention|ods n°)\s?(?:n°|réf)?\s?[:\.]?\s?([\d\/A-Z\-\s]+)/i);
-        const objectMatch = text.match(/(?:objet|lot|prestation|désignation)\s?[:\.]?\s?(.+)/i);
-        const dateMatch = text.match(/(\d{2}[\/\-]\d{2}[\/\-]\d{4})/);
-        const delayMatch = text.match(/(\d+)\s?(?:jours|mois)/i);
-        const amountMatch = text.match(/([\d\s\.,]+)(?:DA|DZD|TTC)/i);
+        // 2. Extraction du Client (Maître de l'ouvrage)
+        // Recherche des patterns classiques ou de la première ligne significative si rien n'est trouvé
+        let client = "";
+        const clientPatterns = [
+            /(?:mait?re\s+de\s+l['\s]ouvrage|client|organisme|destinataire|ministere|direction|universite|centre)\s*[:.-]?\s*([^0-9\n]{3,100})/i,
+            /REP?UBL?IQUE\s+ALGERIENNE\s+[^\n]+\n+([^\n]+)/i // Souvent le ministère ou l'organisme sous l'en-tête
+        ];
 
-        let finalObject = objectMatch ? objectMatch[1].split('.')[0].trim() : "";
-        if (finalObject.length < 5) {
-            const lines = text.split('\n');
-            finalObject = lines.slice(3, 10).find(l => l.length > 20) || lines.slice(3, 5).join(' ').substring(0, 150);
+        for (const pattern of clientPatterns) {
+            const match = fullText.match(pattern) || text.match(pattern);
+            if (match) {
+                client = match[1].trim().split(/\s{2,}/)[0]; // Prendre la première partie
+                break;
+            }
         }
 
-        setFormData(prev => {
-            const dateExtracted = dateMatch ? dateMatch[1].split(/[\/\-]/).reverse().join('-') : "";
-            // Fix possible reverse in YYYY-MM-DD vs DD-MM-YYYY
-            let finalDate = dateExtracted;
-            if (dateExtracted && dateExtracted.split('-')[0].length === 2) {
-                finalDate = dateExtracted.split('-').reverse().join('-');
-            }
+        // 3. Extraction de la Référence (Numéro)
+        let ref = "";
+        const refPatterns = [
+            /(?:numéro|n°|réf|ref|marché|ods)\s*[:.-]?\s*(\d+[\d\/.\-_ ]+)/i,
+            /(?:\/)(202[2-6])\b/i // Trouver quelque chose qui ressemble à /2024, /2025
+        ];
 
-            return {
-                ...prev,
-                client: clientMatch ? clientMatch[1].split('\n')[0].trim().substring(0, 100) : "",
-                refOds: refMatch ? refMatch[1].trim().split(' ')[0] : "",
-                refContract: isContract ? (refMatch ? refMatch[1].trim() : "") : "",
-                object: finalObject.trim(),
-                dateOds: finalDate,
-                startDate: finalDate,
-                delay: delayMatch ? delayMatch[1] : "",
-                amount: amountMatch ? amountMatch[1].replace(/[^0-9.]/g, '') : ""
-            };
-        });
+        for (const pattern of refPatterns) {
+            const match = fullText.match(pattern);
+            if (match) {
+                ref = match[1].trim().split(' ')[0];
+                break;
+            }
+        }
+
+        // 4. Extraction de l'Objet (Le plus complexe)
+        let object = "";
+        const objectKeywords = /objet|lot|prestation|désignation|intitulé/i;
+        const objectIndex = lines.findIndex(l => objectKeywords.test(l));
+
+        if (objectIndex !== -1) {
+            // Prendre la ligne de l'objet et éventuellement les 2 suivantes
+            object = lines[objectIndex].replace(objectKeywords, '').replace(/[:.-]/, '').trim();
+            if (object.length < 10 && lines[objectIndex + 1]) {
+                object += " " + lines[objectIndex + 1];
+            }
+        } else {
+            // Heuristique: Chercher un bloc de texte long au milieu du document
+            const longLines = lines.filter(l => l.length > 40 && !l.includes('http'));
+            object = longLines[0] || lines.slice(5, 8).join(' ');
+        }
+
+        // 5. Extraction de la Date
+        let dateOds = "";
+        // Chercher "le : 10/05/2025" ou "Fait à ... le ..."
+        const datePatterns = [
+            /(?:le|du|date)\s*[:.-]?\s*(\d{1,2}[\/\-. ]\d{1,2}[\/\-. ]\d{2,4})/,
+            /(\d{1,2}[\/\-. ]\d{1,2}[\/\-. ]\d{4})/
+        ];
+
+        for (const pattern of datePatterns) {
+            const match = fullText.match(pattern);
+            if (match) {
+                let dateStr = match[1].replace(/[. ]/g, '/');
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    // Normaliser vers YYYY-MM-DD
+                    const day = parts[0].padStart(2, '0');
+                    const month = parts[1].padStart(2, '0');
+                    let year = parts[2];
+                    if (year.length === 2) year = "20" + year;
+                    dateOds = `${year}-${month}-${day}`;
+                    break;
+                }
+            }
+        }
+
+        // 6. Extraction du Montant
+        let amount = "";
+        const amountPatterns = [
+            /(?:montant|total|ttc|prix)\s*[:.-]?\s*([\d\s,.]+)\s*(?:da|dzd)/i,
+            /(\d[\d\s,.]+\d)\s*DA/i
+        ];
+
+        for (const pattern of amountPatterns) {
+            const match = fullText.match(pattern);
+            if (match) {
+                amount = match[1].replace(/\s/g, '').replace(/,/g, '.');
+                // Nettoyer si plusieurs points
+                const firstPoint = amount.indexOf('.');
+                if (firstPoint !== -1) {
+                    amount = amount.substring(0, firstPoint + 3);
+                }
+                break;
+            }
+        }
+
+        // 7. Extraction du Délai
+        let delay = "";
+        const delayMatch = fullText.match(/(\d+)\s*(?:jours?|mois|jr)/i);
+        if (delayMatch) delay = delayMatch[1];
+
+        setFormData(prev => ({
+            ...prev,
+            client: client.substring(0, 100).toUpperCase() || prev.client,
+            refOds: ref || prev.refOds,
+            refContract: isContract ? (ref || prev.refContract) : prev.refContract,
+            object: object.trim().substring(0, 250) || prev.object,
+            dateOds: dateOds || prev.dateOds,
+            startDate: dateOds || prev.startDate,
+            delay: delay || prev.delay,
+            amount: amount || prev.amount
+        }));
+
+        setDebugLog(prev => prev + "\n✨ Extraction fine terminée.");
     };
 
     const handleFileUpload = (file, storageMethod, orderId) => {
