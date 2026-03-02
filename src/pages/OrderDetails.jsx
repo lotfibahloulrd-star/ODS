@@ -34,10 +34,16 @@ const OrderDetails = () => {
     const [tempEquipment, setTempEquipment] = useState("");
     const [isEditingReagent, setIsEditingReagent] = useState(false);
     const [tempReagent, setTempReagent] = useState("");
+    const [isEditingConsumable, setIsEditingConsumable] = useState(false);
+    const [tempConsumable, setTempConsumable] = useState("");
     const [isEditingStopDate, setIsEditingStopDate] = useState(false);
     const [tempStopDate, setTempStopDate] = useState("");
     const [isEditingResumeDate, setIsEditingResumeDate] = useState(false);
     const [tempResumeDate, setTempResumeDate] = useState("");
+    const [isEditingBankDomiciliation, setIsEditingBankDomiciliation] = useState(false);
+    const [tempBankDomiciliation, setTempBankDomiciliation] = useState("");
+    const [isEditingJudicialProceedings, setIsEditingJudicialProceedings] = useState(false);
+    const [tempJudicialProceedings, setTempJudicialProceedings] = useState("");
 
     const loadOrder = async () => {
         setIsLoading(true);
@@ -58,8 +64,11 @@ const OrderDetails = () => {
                 setTempDelay(found.delay || "");
                 setTempEquipment(found.equipmentDetails || "");
                 setTempReagent(found.reagentDetails || "");
+                setTempConsumable(found.consumableDetails || "");
                 setTempStopDate(found.stopDate || "");
                 setTempResumeDate(found.resumeDate || "");
+                setTempBankDomiciliation(found.bankDomiciliation || "");
+                setTempJudicialProceedings(found.judicialProceedings || "");
             }
         } catch (error) {
             console.error("Error loading order:", error);
@@ -440,6 +449,57 @@ const OrderDetails = () => {
                         </div>
                     </div>
 
+                    {/* New Section: Bank & Legal Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 group hover:border-amber-200 transition-all">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Domiciliation Bancaire</span>
+                            {isEditingBankDomiciliation ? (
+                                <div className="flex gap-2">
+                                    <input type="text" value={tempBankDomiciliation} onChange={e => setTempBankDomiciliation(e.target.value)} className="flex-1 p-2 bg-white border-2 border-blue-200 rounded-xl font-black text-slate-900 outline-none" autoFocus />
+                                    <button onClick={() => handleSaveAdminFields('bankDomiciliation', tempBankDomiciliation, setTempBankDomiciliation, setIsEditingBankDomiciliation, 'Domiciliation')} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase">OK</button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xl font-black text-slate-900 uppercase block">{order.bankDomiciliation || "NON DOMICILIÉ"}</span>
+                                    {isSuperAdmin() && <button onClick={() => { setTempBankDomiciliation(order.bankDomiciliation); setIsEditingBankDomiciliation(true); }} className="p-2 hover:bg-white text-blue-500 rounded-lg transition-all border border-blue-100 bg-blue-50/50"><Plus size={14} /></button>}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 group hover:border-red-200 transition-all">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Pénalités de Retard</span>
+                            <div className="flex items-baseline gap-3">
+                                <span className={`text-2xl font-black ${remainingInfo?.isOverdue ? 'text-red-600' : 'text-slate-400'}`}>
+                                    {(() => {
+                                        if (remainingInfo?.isOverdue) {
+                                            const delayDays = Math.abs(remainingInfo.days);
+                                            const amount = parseFloat((order.amount || "0").toString().replace(/[^\d.,]/g, '').replace(',', '.'));
+                                            const penalty = Math.round(amount * 0.001 * delayDays);
+                                            return formatAmount(penalty);
+                                        }
+                                        return "0 DA";
+                                    })()}
+                                </span>
+                                {remainingInfo?.isOverdue && <span className="text-[10px] font-black text-red-400 uppercase">(1‰ / Jour)</span>}
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 group hover:border-slate-300 transition-all">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Poursuites Judiciaires / Contentieux</span>
+                            {isEditingJudicialProceedings ? (
+                                <div className="flex gap-2">
+                                    <textarea value={tempJudicialProceedings} onChange={e => setTempJudicialProceedings(e.target.value)} className="flex-1 p-4 bg-white border-2 border-blue-200 rounded-2xl font-medium text-slate-700 outline-none" rows={1} autoFocus />
+                                    <button onClick={() => handleSaveAdminFields('judicialProceedings', tempJudicialProceedings, setTempJudicialProceedings, setIsEditingJudicialProceedings, 'Poursuites')} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase h-fit">OK</button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-between">
+                                    <p className="text-slate-600 font-medium leading-relaxed truncate max-w-[200px]">{order.judicialProceedings || "Aucune."}</p>
+                                    {isSuperAdmin() && <button onClick={() => { setTempJudicialProceedings(order.judicialProceedings); setIsEditingJudicialProceedings(true); }} className="p-2 hover:bg-white text-blue-500 rounded-lg transition-all border border-blue-100 bg-blue-50/50"><Plus size={14} /></button>}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     {/* Tables grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                         {/* Documents Section */}
@@ -637,6 +697,22 @@ const OrderDetails = () => {
                                                 <div className="flex items-center justify-between">
                                                     <span>{order.reagentDetails || "-"}</span>
                                                     {isSuperAdmin() && <button onClick={() => { setTempReagent(order.reagentDetails || ""); setIsEditingReagent(true); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-100 rounded-lg"><Plus size={12} /></button>}
+                                                </div>
+                                            )}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase">Consommables</td>
+                                        <td className="px-8 py-6 text-xs font-bold text-slate-600 leading-relaxed group relative">
+                                            {isEditingConsumable ? (
+                                                <div className="flex gap-2">
+                                                    <textarea value={tempConsumable} onChange={e => setTempConsumable(e.target.value)} className="flex-1 p-2 border border-blue-200 rounded-xl outline-none" rows={2} autoFocus />
+                                                    <button onClick={() => handleSaveAdminFields('consumableDetails', tempConsumable, setTempConsumable, setIsEditingConsumable, 'Détails Consommables')} className="px-3 py-1 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase h-fit">OK</button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-between">
+                                                    <span>{order.consumableDetails || "-"}</span>
+                                                    {isSuperAdmin() && <button onClick={() => { setTempConsumable(order.consumableDetails || ""); setIsEditingConsumable(true); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-100 rounded-lg"><Plus size={12} /></button>}
                                                 </div>
                                             )}
                                         </td>

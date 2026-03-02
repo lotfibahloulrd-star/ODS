@@ -480,6 +480,9 @@ const Dashboard = () => {
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">Réf. Contrat</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-emerald-600">Avancement</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-red-500">ODS d'Arrêt</th>
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-amber-600">Domiciliation</th>
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-red-600 text-center">Pénalités (DA)</th>
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Poursuites</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-slate-400">Logistique</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-right text-slate-400">Détails</th>
                             </tr>
@@ -603,6 +606,29 @@ const Dashboard = () => {
                                                 ) : (
                                                     <span className="text-slate-200 text-[10px] font-black uppercase tracking-widest">RAS</span>
                                                 )}
+                                            </td>
+                                            <td className="px-6 py-7">
+                                                <div className="text-[10px] font-bold text-slate-600 uppercase tracking-tight">
+                                                    {order.bankDomiciliation || "-"}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-7 text-center">
+                                                {(() => {
+                                                    const days = getRemainingDays(order);
+                                                    if (days !== null && days < 0) {
+                                                        const delayDays = Math.abs(days);
+                                                        const amountStr = (order.amount || "0").toString().replace(/[^\d.,]/g, '').replace(',', '.');
+                                                        const amount = parseFloat(amountStr);
+                                                        const penalty = Math.round(amount * 0.001 * delayDays);
+                                                        return <span className="text-xs font-black text-red-600 bg-red-50 px-2 py-1 rounded-lg border border-red-100">{new Intl.NumberFormat('fr-FR').format(penalty)}</span>;
+                                                    }
+                                                    return <span className="text-slate-200 text-[10px] font-black uppercase">0</span>;
+                                                })()}
+                                            </td>
+                                            <td className="px-6 py-7">
+                                                <div className="text-[10px] font-medium text-slate-500 line-clamp-1 max-w-[150px]" title={order.judicialProceedings}>
+                                                    {order.judicialProceedings || "-"}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-7">
                                                 <div className="flex items-center justify-center gap-1.5">

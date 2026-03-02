@@ -590,6 +590,54 @@ const INITIAL_ORDERS = [
             { no: '08', ref: 'VILB311100631', designation: 'LAMPES UV', qte: 1, pu: 108287.00, total: 108287.00, marque: 'VILBER' }
         ],
         totals: { ht: 1972324.50, tva: 374741.66, ttc: 2347066.16 }
+    },
+    {
+        id: 'init-ghardaia-02-25',
+        client: 'Université GHARDAIA',
+        refOds: '02/2025',
+        object: 'Acquisition d\'équipements de laboratoire',
+        dateOds: '2025-03-02',
+        delay: '120',
+        amount: '0',
+        division: 'Division Laboratoire',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-03-02T10:00:00.000Z',
+        files: {}
+    },
+    {
+        id: 'init-annaba-25',
+        client: 'Université Annaba',
+        refOds: '-',
+        object: 'Acquisition d\'équipements de laboratoire',
+        dateOds: '2025-03-02',
+        delay: '120',
+        amount: '0',
+        division: 'Division Laboratoire',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-03-02T10:00:00.000Z',
+        files: {}
+    },
+    {
+        id: 'init-incc-069-206',
+        client: 'Gendarmerie (INCC)',
+        refOds: '069/206',
+        object: 'Acquisition d\'équipements de laboratoire',
+        dateOds: '2025-03-02',
+        delay: '120',
+        amount: '0',
+        division: 'Division Analytique',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-03-02T10:00:00.000Z',
+        files: {}
     }
 ];
 
@@ -636,7 +684,7 @@ export const orderService = {
             const deletedSet = new Set(deletedIds);
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v23';
+            const DATA_VERSION = 'ods_data_v25';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || localVersion !== DATA_VERSION) {
@@ -681,7 +729,7 @@ export const orderService = {
             // Filtrer les éventuels ODS supprimés
             return sharedOrders.filter(o => !deletedSet.has(o.id));
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v23';
+            const DATA_VERSION = 'ods_data_v24';
             const localData = localStorage.getItem(DATA_VERSION);
             const deletedLocal = localStorage.getItem('ods_deleted_ids');
             const deletedSet = new Set(deletedLocal ? JSON.parse(deletedLocal) : []);
@@ -707,14 +755,17 @@ export const orderService = {
     createOrder: async (orderData) => {
         const orders = await orderService.getAllOrders();
         const newOrder = {
-            ...orderData,
             id: Date.now().toString(),
             status: 'En cours',
             createdAt: new Date().toISOString(),
             importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
             stockStatus: { reception: 'Aucune', receivedAt: '' },
             isReadyForDelivery: false,
-            files: {}
+            latePenalties: 0,
+            bankDomiciliation: '',
+            judicialProceedings: '',
+            files: {},
+            ...orderData
         };
         orders.unshift(newOrder);
         await orderService._saveAllToShared(orders);
