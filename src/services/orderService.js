@@ -3,18 +3,19 @@ import { notificationService } from './notificationService';
 const INITIAL_ORDERS = [
     {
         id: 'init-1',
-        client: 'Gendarmerie (INCC)',
-        refOds: '005/321 (Lots 10, 11)',
-        object: 'Spectro Raman / UV-Vis',
-        dateOds: '2025-04-15',
+        client: 'MDN - Gendarmerie (INN)',
+        refOds: '005 / 321',
+        object: 'Équipements chromatographiques et spectriques',
+        dateOds: '2025-06-15',
         delay: '121',
-        amount: '388787735.30',
+        amount: '38878773.53',
         division: 'Division Analytique',
         status: 'En cours',
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2025-04-15T10:00:00.000Z',
+        createdAt: '2025-06-15T10:00:00.000Z',
+        equipmentDetails: 'Lot 02: GC/MS ; Lot 10: Raman portable ; Lot 11: UV-Vis.',
         files: {}
     },
     {
@@ -35,10 +36,10 @@ const INITIAL_ORDERS = [
     },
     {
         id: 'init-3',
-        client: 'Gendarmerie (INCC)',
-        refOds: '009/325 (Lot 01, 03, 04)',
-        object: 'Analyseur Gaz / Moufle / PCR',
-        dateOds: '2025-07-17',
+        client: 'MDN - Gendarmerie (INN)',
+        refOds: '009 / 325',
+        object: 'Équipements de laboratoire et microscopie',
+        dateOds: '2025-06-16',
         delay: '120',
         amount: '15936182.50',
         division: 'Division Laboratoire',
@@ -46,7 +47,8 @@ const INITIAL_ORDERS = [
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
-        createdAt: '2025-07-17T10:00:00.000Z',
+        createdAt: '2025-06-16T10:00:00.000Z',
+        equipmentDetails: 'Item 01: Analyseur gaz ; Item 03: Congélateur ; Item 04: Thermocycleur.',
         files: {}
     },
     {
@@ -131,18 +133,19 @@ const INITIAL_ORDERS = [
     },
     {
         id: 'init-9',
-        client: 'Gendarmerie (INCC)',
-        refOds: '077/393',
-        object: 'Maintenance Prév. & Corrective',
+        client: 'MDN - Gendarmerie (INN)',
+        refOds: '077 / 393',
+        object: 'Maintenance préventive et corrective +1',
         dateOds: '2025-12-03',
         delay: '365',
-        amount: '71400000',
+        amount: '7140000.00',
         division: 'Division Analytique',
         status: 'En cours',
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
         createdAt: '2025-12-03T10:00:00.000Z',
+        equipmentDetails: 'Maintenance équipements de marque SHIMADZU.',
         files: {}
     },
     {
@@ -638,6 +641,125 @@ const INITIAL_ORDERS = [
         isReadyForDelivery: false,
         createdAt: '2025-03-02T10:00:00.000Z',
         files: {}
+    },
+    {
+        id: 'init-cgn-3637',
+        client: 'MDN - Gendarmerie (CGN)',
+        refOds: '0058 / 3637',
+        object: 'Acquisition équipements protection environnement',
+        dateOds: '2025-05-16',
+        delay: '120',
+        amount: '68710964.95',
+        division: 'Division Analytique',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-03-02T12:00:00.000Z',
+        equipmentDetails: '07 spectromètres Raman portatifs.',
+        files: {}
+    },
+    {
+        id: 'init-chu-beo',
+        client: 'CHU Bab El Oued',
+        refOds: 'Visa 73 / 2025',
+        object: 'Équipements pour labo pharmacie et toxicologie',
+        dateOds: '2025-11-24',
+        delay: '120',
+        amount: '28211315.79',
+        division: 'Division Laboratoire',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-03-02T12:00:00.000Z',
+        equipmentDetails: 'Lot 05: Chromatographie Liquide (HPLC).',
+        files: {}
+    },
+    {
+        id: 'init-mdn-dci-1463',
+        client: 'MDN - Intendance (DCI)',
+        refOds: '1463',
+        object: 'Équipements scientifiques et techniques',
+        dateOds: '2026-02-10',
+        delay: '120',
+        amount: '0',
+        division: 'Division Analytique',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-03-02T12:00:00.000Z',
+        equipmentDetails: 'Acquisition, installation et mise en service.',
+        files: {}
+    },
+    {
+        id: 'init-univ-biskra-11-25',
+        client: 'Université de Biskra',
+        refOds: '11/25',
+        object: 'Équipements pour plateforme culture in-vitro',
+        dateOds: '2025-12-01',
+        delay: '120',
+        amount: '0',
+        division: 'Division Analytique',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-03-02T12:00:00.000Z',
+        equipmentDetails: 'Lot 02: Chromatographe UHPLC-MS/MS triple quadripôle.',
+        files: {}
+    },
+    {
+        id: 'init-univ-ghardaia-m2',
+        client: 'Université de Ghardaïa',
+        refOds: 'Marché n° 2',
+        object: 'Équipements labo écosystèmes arides',
+        dateOds: '2025-01-01',
+        delay: '120',
+        amount: '0',
+        division: 'Division Laboratoire',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-03-02T12:00:00.000Z',
+        equipmentDetails: 'Lot 03: Flore ; Lot 06: Microbiologie ; Lot 07: Biochimie.',
+        files: {}
+    },
+    {
+        id: 'init-mdn-dci-1305',
+        client: 'MDN - Intendance (DCI)',
+        refOds: '1305',
+        object: 'Équipements scientifiques et techniques',
+        dateOds: '2025-02-11',
+        delay: '120',
+        amount: '6181098.00',
+        division: 'Division Analytique',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-02-11T10:00:00.000Z',
+        equipmentDetails: 'Acquisition, installation et mise en service.',
+        files: {}
+    },
+    {
+        id: 'init-uraer-ghardaia',
+        client: 'URAER Ghardaïa',
+        refOds: '2025/08',
+        object: 'Achat matériel scientifique',
+        dateOds: '2025-01-01',
+        delay: '120',
+        amount: '979965.00',
+        division: 'Division Laboratoire',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-01-01T10:00:00.000Z',
+        equipmentDetails: 'Durée de réalisation : 04 mois.',
+        files: {}
     }
 ];
 
@@ -684,7 +806,7 @@ export const orderService = {
             const deletedSet = new Set(deletedIds);
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v25';
+            const DATA_VERSION = 'ods_data_v26';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || localVersion !== DATA_VERSION) {
