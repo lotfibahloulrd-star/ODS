@@ -43,7 +43,7 @@ export const orderService = {
             const deletedSet = new Set(deletedIds);
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v28';
+            const DATA_VERSION = 'ods_data_v29';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || localVersion !== DATA_VERSION) {
@@ -61,7 +61,7 @@ export const orderService = {
                     if (deletedSet.has(o.id)) return;
                     const existing = mergedMap.get(o.id);
                     if (existing) {
-                        mergedMap.set(o.id, { ...existing, ...o, files: existing.files || o.files });
+                        mergedMap.set(o.id, { ...o, ...existing });
                     } else {
                         mergedMap.set(o.id, o);
                     }
@@ -77,7 +77,7 @@ export const orderService = {
 
             return sharedOrders.filter(o => !deletedSet.has(o.id));
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v28';
+            const DATA_VERSION = 'ods_data_v29';
             const localData = localStorage.getItem(DATA_VERSION);
             const deletedLocal = localStorage.getItem('ods_deleted_ids');
             const deletedSet = new Set(deletedLocal ? JSON.parse(deletedLocal) : []);
@@ -87,7 +87,7 @@ export const orderService = {
     },
 
     _saveAllToShared: async (orders) => {
-        const DATA_VERSION = 'ods_data_v28';
+        const DATA_VERSION = 'ods_data_v29';
         try {
             await fetch(`${API_URL}?action=save_orders`, {
                 method: 'POST',
