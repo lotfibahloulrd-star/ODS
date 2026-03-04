@@ -4,7 +4,7 @@ import { orderService } from '../services/orderService';
 import { useAuth } from '../context/AuthContext';
 
 const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
-    const { currentUser, isImport, isStock, canCreateOds, canEditAmount } = useAuth();
+    const { currentUser, isImport, isStock, canCreateOds, canEditAmount, isSuperAdmin } = useAuth();
     const canCreate = canCreateOds();
     const canEditPrice = canEditAmount();
 
@@ -28,6 +28,11 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                 else if (type === 'contract') await orderService.saveContractFile(orderId, reader.result, file.name);
                 else if (type === 'stop_request') await orderService.saveStopRequestFile(orderId, reader.result, file.name);
                 else if (type === 'stop_response') await orderService.saveStopResponseFile(orderId, reader.result, file.name);
+                else if (type === 'auth') {
+                    await orderService.saveAuthFile(orderId, reader.result, file.name);
+                    // Mise à jour automatique du statut lors de l'upload
+                    await orderService.updateOrder(orderId, { authorization: 'Oui' }, currentUser.firstName);
+                }
 
                 if (onUpdate) onUpdate();
                 alert(`Document ${type.replace('_', ' ').toUpperCase()} attaché avec succès !`);
@@ -81,6 +86,7 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
     const hasContract = !!(order?.files?.storage_contracts);
     const hasStopRequest = !!(order?.files?.storage_stops_req);
     const hasStopResponse = !!(order?.files?.storage_stops_res);
+    const hasAuth = !!(order?.files?.storage_auth);
 
     const remainingInfo = useMemo(() => {
         try {
@@ -169,9 +175,20 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                                         <StopCircle size={12} /> Arrêt Demandé
                                     </span>
                                 )}
-                                <span className={`px-3 py-1 border text-[10px] font-black uppercase tracking-widest rounded-lg ${order.authorization === 'Oui' ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-400' : 'bg-amber-600/20 border-amber-500/30 text-amber-400'}`}>
-                                    {order.authorization === 'Oui' ? 'Autorisé' : 'Attente Autorisation'}
-                                </span>
+                                <button
+                                    onClick={async () => {
+                                        if (isSuperAdmin) {
+                                            await orderService.updateOrder(order.id, {
+                                                authorization: order.authorization === 'Oui' ? 'Non' : 'Oui'
+                                            }, currentUser.firstName);
+                                            if (onUpdate) onUpdate();
+                                        }
+                                    }}
+                                    className={`px-3 py-1 border text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${order.authorization === 'Oui' ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/30' : 'bg-amber-600/20 border-amber-500/30 text-amber-400 hover:bg-amber-600/30'}`}
+                                    title={isSuperAdmin ? "Cliquer pour changer le statut" : ""}
+                                >
+                                    {order.authorization === 'Oui' ? 'Autorisation confirmée' : 'Attente Autorisation'}
+                                </button>
                             </div>
                             <h2 className="text-3xl font-black tracking-tight leading-tight">
                                 {order.refOds || order.ref || "Sans Référence"}
@@ -304,6 +321,51 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                                                     {isUploading ? <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div> : <Plus size={14} />}
                                                     {hasContract ? "Actualiser" : "Attacher"}
                                                     <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'contract')} />
+                                                </label>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${hasAuth ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-300'}`}><FileCheck size={16} /></div>
+                                            <span className="text-xs font-black text-slate-700 uppercase">Autorisation d'Importation</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6 text-sm font-black text-slate-900">
+                                        {isSuperAdmin ? (
+                                            <button
+                                                onClick={async () => {
+                                                    const newStatus = order.authorization === 'Oui' ? 'Non' : 'Oui';
+                                                    await orderService.updateOrder(order.id, { authorization: newStatus });
+                                                    if (onUpdate) onUpdate();
+                                                }}
+                                                className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all ${order.authorization === 'Oui'
+                                                    ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                                                    : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                                                    }`}
+                                            >
+                                                {order.authorization === 'Oui' ? 'Autorisation confirmée' : 'Attente Autorisation'}
+                                            </button>
+                                        ) : (
+                                            <span className={order.authorization === 'Oui' ? 'text-emerald-600' : 'text-amber-600'}>
+                                                {order.authorization === 'Oui' ? 'Autorisation confirmée' : 'Attente Autorisation'}
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        <div className="flex justify-end gap-3">
+                                            {hasAuth && (
+                                                <button onClick={() => openPdf(order.id, 'storage_auth')} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-emerald-700 transition-all flex items-center gap-2">
+                                                    <ExternalLink size={14} /> Consulter
+                                                </button>
+                                            )}
+                                            {canCreate && (
+                                                <label className="px-4 py-2 border-2 border-dashed border-emerald-200 text-emerald-600 rounded-xl text-[10px] font-black uppercase cursor-pointer hover:border-emerald-500 transition-all flex items-center gap-2">
+                                                    {isUploading ? <div className="w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div> : <Plus size={14} />}
+                                                    {hasAuth ? "Actualiser" : "Attacher"}
+                                                    <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'auth')} />
                                                 </label>
                                             )}
                                         </div>
@@ -521,7 +583,6 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                 </button>
             </div>
         </div>
-        </div >
     );
 };
 

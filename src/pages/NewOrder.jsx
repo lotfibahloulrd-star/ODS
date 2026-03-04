@@ -14,6 +14,7 @@ const NewOrder = ({ onSave }) => {
     const [contractFile, setContractFile] = useState(null);
     const [stopRequestFile, setStopRequestFile] = useState(null);
     const [stopResponseFile, setStopResponseFile] = useState(null);
+    const [authFile, setAuthFile] = useState(null); // Import authorization file
     const [debugLog, setDebugLog] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
@@ -333,11 +334,12 @@ const NewOrder = ({ onSave }) => {
             }
 
             // If user manually uploaded additional files in the other slots
-            // (Note: in step 3 UI, we need to handle this carefully)
             if (contractFile && docType === 'ods') {
                 uploadPromises.push(handleFileUpload(contractFile, orderService.saveContractFile, savedOrder.id));
             }
-            // (Note: The UI below will be updated to handle the 'file' as the primary scanned doc)
+            if (authFile) {
+                uploadPromises.push(handleFileUpload(authFile, orderService.saveAuthFile, savedOrder.id));
+            }
 
             if (stopRequestFile) uploadPromises.push(handleFileUpload(stopRequestFile, orderService.saveStopRequestFile, savedOrder.id));
             if (stopResponseFile) uploadPromises.push(handleFileUpload(stopResponseFile, orderService.saveStopResponseFile, savedOrder.id));
@@ -350,6 +352,7 @@ const NewOrder = ({ onSave }) => {
             setContractFile(null);
             setStopRequestFile(null);
             setStopResponseFile(null);
+            setAuthFile(null);
             setFormData({
                 client: '',
                 refOds: '',
@@ -470,7 +473,7 @@ const NewOrder = ({ onSave }) => {
                     <div className="bg-white rounded-[4rem] border border-slate-200 shadow-2xl shadow-slate-200/50 overflow-hidden">
                         <div className="p-12 space-y-16">
                             {/* Section 1: Documents & Références */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                                 <div className={`p-10 rounded-[3rem] border transition-all ${docType === 'ods' ? 'bg-blue-50/50 border-blue-200 ring-2 ring-blue-500 ring-offset-4' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
                                     <div className="flex items-center justify-between mb-6">
                                         <div className="flex items-center gap-4">
@@ -547,6 +550,42 @@ const NewOrder = ({ onSave }) => {
                                                     <p className="mt-2 text-[10px] font-bold text-indigo-600 italic px-2">✓ Fichier extrait par l'IA chargé ici</p>
                                                 )}
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-emerald-50/50 p-10 rounded-[3rem] border border-emerald-100 space-y-6">
+                                    <div className="flex items-center gap-4 mb-2">
+                                        <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-emerald-200">3</div>
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-emerald-900">Autorisation d'Import</h4>
+                                    </div>
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-1 px-1">Statut</label>
+                                            <select
+                                                className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl font-black text-emerald-900 outline-none focus:border-emerald-500 shadow-sm text-xs cursor-pointer"
+                                                value={formData.authorization}
+                                                onChange={e => setFormData({ ...formData, authorization: e.target.value })}
+                                            >
+                                                <option value="Non">Attente Autorisation</option>
+                                                <option value="Oui">Autorisation confirmée</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-2 px-1">Fichier de l'Autorisation</label>
+                                            <input
+                                                type="file"
+                                                className="w-full text-xs font-bold text-slate-400 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 transition-all border-2 border-dashed border-emerald-200 p-4 rounded-3xl bg-white/50"
+                                                accept=".pdf,.jpg,.png"
+                                                onChange={e => {
+                                                    const file = e.target.files[0];
+                                                    setAuthFile(file);
+                                                    if (file) setFormData(prev => ({ ...prev, authorization: 'Oui' }));
+                                                }}
+                                            />
+                                            {authFile && (
+                                                <p className="mt-2 text-[10px] font-bold text-emerald-600 italic px-2">✓ Fichier attaché (Statut mis à jour automatiquement)</p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

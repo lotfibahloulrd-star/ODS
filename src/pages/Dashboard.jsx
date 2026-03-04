@@ -41,6 +41,7 @@ const Dashboard = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [syncStatus, setSyncStatus] = useState(""); // Nouveau : statut de migration
+    const [authFilter, setAuthFilter] = useState(false); // Nouveau : filtre pour les autorisations en attente
 
     const handleDirectUpload = (e, orderId, type) => {
         const file = e.target.files[0];
@@ -52,6 +53,10 @@ const Dashboard = () => {
             try {
                 if (type === 'ods') {
                     await orderService.saveOdsFile(orderId, reader.result, file.name);
+                } else if (type === 'auth') {
+                    await orderService.saveAuthFile(orderId, reader.result, file.name);
+                    // Mise à jour automatique du statut lors de l'upload
+                    await orderService.updateOrder(orderId, { authorization: 'Oui' }, currentUser.firstName);
                 } else {
                     await orderService.saveContractFile(orderId, reader.result, file.name);
                 }
@@ -178,14 +183,20 @@ const Dashboard = () => {
             if (!auth.canViewOrder(o)) return false;
 
             const search = searchTerm.toLowerCase();
-            return (
+            const matchesSearch = (
                 (o.client || "").toLowerCase().includes(search) ||
                 (o.object || "").toLowerCase().includes(search) ||
                 (o.refOds || o.ref || "").toLowerCase().includes(search) ||
                 (o.refContract || "").toLowerCase().includes(search)
             );
+
+            if (authFilter) {
+                return matchesSearch && o.authorization !== 'Oui';
+            }
+
+            return matchesSearch;
         });
-    }, [orders, searchTerm, auth]);
+    }, [orders, searchTerm, auth, authFilter]);
 
     const openPdf = (orderId, storageKey) => {
         // En mode partagé, on pointe vers l'API qui sert le fichier
@@ -434,14 +445,19 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden group hover:border-amber-300 transition-all cursor-default">
+                <div
+                    onClick={() => setAuthFilter(!authFilter)}
+                    className={`p-6 rounded-[2rem] border shadow-sm relative overflow-hidden group transition-all cursor-pointer ${authFilter ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-400 ring-offset-2' : 'bg-white border-slate-200 hover:border-amber-300'}`}
+                >
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
                         <Clock size={80} className="text-amber-600" />
                     </div>
                     <div className="relative z-10 text-slate-500 font-black text-[10px] uppercase tracking-widest mb-2">En Attente Autorisation</div>
                     <div className="relative z-10 text-3xl font-black text-slate-900">{stats.pendingAuth}</div>
                     <div className="relative z-10 flex items-center gap-2 mt-4">
-                        <span className="text-[10px] px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full font-black uppercase">Validation Requise</span>
+                        <span className={`text-[10px] px-2.5 py-1 rounded-full font-black uppercase ${authFilter ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700'}`}>
+                            {authFilter ? 'Filtre Actif' : 'Validation Requise'}
+                        </span>
                     </div>
                 </div>
 
@@ -474,6 +490,7 @@ const Dashboard = () => {
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-100">
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Client / Maître d'Ouvrage</th>
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-emerald-600 text-center">Autorisation</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Objet</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-slate-400">Valeur</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Réf. ODS</th>
@@ -530,6 +547,32 @@ const Dashboard = () => {
                                             <td className="px-6 py-7">
                                                 <div className="font-black text-slate-900 uppercase text-[11px] min-w-[200px] tracking-tight" title={order.client}>
                                                     {order.client || "-"}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-7 text-center">
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <button
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            if (isSuperAdmin && isSuperAdmin()) {
+                                                                await orderService.updateOrder(order.id, {
+                                                                    authorization: order.authorization === 'Oui' ? 'Non' : 'Oui'
+                                                                }, currentUser.firstName);
+                                                                loadOrders();
+                                                            }
+                                                        }}
+                                                        className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${order.authorization === 'Oui' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}
+                                                    >
+                                                        {order.authorization === 'Oui' ? 'Autorisation confirmée' : 'Attente Autorisation'}
+                                                    </button>
+                                                    {order.files?.storage_auth && (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); openPdf(order.id, 'storage_auth'); }}
+                                                            className="text-[8px] font-black text-blue-500 uppercase hover:underline"
+                                                        >
+                                                            Voir PDF
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-7">

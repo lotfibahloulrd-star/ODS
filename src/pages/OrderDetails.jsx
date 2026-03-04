@@ -83,7 +83,7 @@ const OrderDetails = () => {
         // Système de secours : Migration automatique des fichiers locaux vers le serveur pour cet ordre précis
         const syncThisOrder = async () => {
             if (!id) return;
-            const stores = ['storage_ods', 'storage_contracts', 'storage_stops_req', 'storage_stops_res'];
+            const stores = ['storage_ods', 'storage_contracts', 'storage_stops_req', 'storage_stops_res', 'storage_auth'];
             let hasSynced = false;
 
             for (const store of stores) {
@@ -118,6 +118,11 @@ const OrderDetails = () => {
                 else if (type === 'contract') await orderService.saveContractFile(orderId, reader.result, file.name);
                 else if (type === 'stop_request') await orderService.saveStopRequestFile(orderId, reader.result, file.name);
                 else if (type === 'stop_response') await orderService.saveStopResponseFile(orderId, reader.result, file.name);
+                else if (type === 'auth') {
+                    await orderService.saveAuthFile(orderId, reader.result, file.name);
+                    // Mise à jour automatique du statut lors de l'upload
+                    await orderService.updateOrder(orderId, { authorization: 'Oui' }, currentUser.firstName);
+                }
 
                 loadOrder();
                 alert(`Document ${type.replace('_', ' ').toUpperCase()} attaché avec succès !`);
@@ -333,9 +338,17 @@ const OrderDetails = () => {
                             {order.hasStopRequest === 'Oui' ? 'Annuler l\'arrêt' : 'Déclarer Arrêt ODS'}
                         </button>
                     )}
-                    <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest ${order.authorization === 'Oui' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
-                        {order.authorization === 'Oui' ? 'Autorisé' : 'Attente Autorisation'}
-                    </span>
+                    <button
+                        onClick={() => {
+                            if (isSuperAdmin()) {
+                                handleSaveAdminFields('authorization', order.authorization === 'Oui' ? 'Non' : 'Oui', () => { }, () => { }, 'Autorisation');
+                            }
+                        }}
+                        className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${order.authorization === 'Oui' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100 hover:bg-amber-100'}`}
+                        title={isSuperAdmin() ? "Cliquer pour changer le statut" : "Statut de l'autorisation"}
+                    >
+                        {order.authorization === 'Oui' ? 'Autorisation confirmée' : 'Attente Autorisation'}
+                    </button>
                     {(order.hasStopRequest === 'Oui' || !!(order.files?.storage_stops_req) || !!(order.files?.storage_stops_res)) && (
                         <span className="px-4 py-2 bg-red-50 text-red-600 border border-red-100 text-[10px] font-black uppercase tracking-widest rounded-2xl flex items-center gap-2">
                             <StopCircle size={14} /> Arrêt Demandé
@@ -651,6 +664,39 @@ const OrderDetails = () => {
                                                             <Plus size={16} />
                                                         </div>
                                                         <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'stop_response')} />
+                                                    </label>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${order.files?.storage_auth ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-300'}`}>
+                                                    <FileCheck size={16} />
+                                                </div>
+                                                <span className="text-xs font-black text-slate-700 uppercase">Autorisation d'Importation (PDF)</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6 text-right">
+                                            <div className="flex items-center justify-end gap-3">
+                                                {order.files?.storage_auth ? (
+                                                    <>
+                                                        <button onClick={() => openPdf(order.id, 'storage_auth')} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all">
+                                                            <ExternalLink size={14} /> Voir le document
+                                                        </button>
+                                                        <label className="p-2 bg-slate-100 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all cursor-pointer" title="Remplacer le document">
+                                                            <RotateCcw size={16} />
+                                                            <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'auth')} />
+                                                        </label>
+                                                    </>
+                                                ) : (
+                                                    <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-emerald-500 transition-colors">Attacher</span>
+                                                        <div className="w-10 h-10 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-emerald-500 group-hover:text-emerald-500 transition-all">
+                                                            <Plus size={16} />
+                                                        </div>
+                                                        <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'auth')} />
                                                     </label>
                                                 )}
                                             </div>
