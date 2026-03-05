@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, FileCheck, ExternalLink, Calendar, User, Info, Clock, CheckCircle2, Package, Layers, FlaskConical, AlertCircle, PlayCircle, StopCircle, DollarSign, Plane, Truck, Anchor, Box, Ship, Upload, Plus, RotateCcw } from 'lucide-react';
+import { ArrowLeft, FileText, FileCheck, ExternalLink, Calendar, User, Info, Clock, CheckCircle2, Package, Layers, FlaskConical, AlertCircle, PlayCircle, StopCircle, DollarSign, Plane, Truck, Anchor, Box, Ship, Upload, Plus, RotateCcw, Trash2, Trash } from 'lucide-react';
 import { orderService } from '../services/orderService';
 import { useAuth } from '../context/AuthContext';
 
@@ -48,6 +48,8 @@ const OrderDetails = () => {
     const [tempDeliveryDate, setTempDeliveryDate] = useState("");
     const [isEditingProgress, setIsEditingProgress] = useState(false);
     const [tempProgress, setTempProgress] = useState("");
+    const [isAddingArticle, setIsAddingArticle] = useState(false);
+    const [newArticle, setNewArticle] = useState({ no: "", ref: "", designation: "", qte: "", pu: "", marque: "", site: "" });
 
     const loadOrder = async () => {
         setIsLoading(true);
@@ -228,6 +230,53 @@ const OrderDetails = () => {
             alert(`${label} mis à jour !`);
         } catch (e) {
             alert(`Erreur lors de la mise à jour de ${label}.`);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleAddArticle = async () => {
+        if (!newArticle.designation || !newArticle.qte) {
+            alert("Veuillez renseigner au moins la désignation et la quantité.");
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const amount = parseFloat(newArticle.pu.toString().replace(',', '.')) || 0;
+            const qte = parseFloat(newArticle.qte.toString().replace(',', '.')) || 0;
+            const articleToAdd = {
+                ...newArticle,
+                qte,
+                pu: amount,
+                total: qte * amount,
+                available: false
+            };
+
+            const updatedArticles = [...localArticles, articleToAdd];
+            await orderService.updateOrder(order.id, { articles: updatedArticles }, currentUser.firstName);
+            setLocalArticles(updatedArticles);
+            setNewArticle({ no: "", ref: "", designation: "", qte: "", pu: "", marque: "", site: "" });
+            setIsAddingArticle(false);
+            loadOrder();
+        } catch (e) {
+            alert("Erreur lors de l'ajout de l'article.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleDeleteArticle = async (index) => {
+        if (!window.confirm("Voulez-vous vraiment supprimer cet article ?")) return;
+
+        setIsSaving(true);
+        try {
+            const updatedArticles = localArticles.filter((_, i) => i !== index);
+            await orderService.updateOrder(order.id, { articles: updatedArticles }, currentUser.firstName);
+            setLocalArticles(updatedArticles);
+            loadOrder();
+        } catch (e) {
+            alert("Erreur lors de la suppression de l'article.");
         } finally {
             setIsSaving(false);
         }
@@ -845,18 +894,28 @@ const OrderDetails = () => {
                         </div>
                     </div>
 
-                    {/* Articles Section (BPU / DQE) if available */}
-                    {order.articles && order.articles.length > 0 && (
+                    {/* Articles Section (BPU / DQE) always accessible for superAdmin to add articles */}
+                    {((order.articles && order.articles.length > 0) || isSuperAdmin()) && (
                         <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
                             <div className="bg-slate-50 px-8 py-5 border-b border-slate-100 flex justify-between items-center">
-                                <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">Détail Quantitatif et Estimatif (DQE)</h4>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{order.articles.length} Articles</span>
+                                <div className="flex items-center gap-4">
+                                    <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">Détail Quantitatif et Estimatif (DQE)</h4>
+                                    {isSuperAdmin() && !isAddingArticle && (
+                                        <button
+                                            onClick={() => setIsAddingArticle(true)}
+                                            className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center gap-2"
+                                        >
+                                            <Plus size={12} /> Ajouter Article
+                                        </button>
+                                    )}
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{localArticles.length} Articles</span>
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="bg-slate-50/50 border-b border-slate-100">
-                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">N°</th>
+                                            <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">N°</th>
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Référence</th>
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Désignation</th>
                                             <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Qté</th>
@@ -869,6 +928,24 @@ const OrderDetails = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
+                                        {isAddingArticle && (
+                                            <tr className="bg-indigo-50/30 animate-in fade-in duration-300">
+                                                <td className="px-4 py-3"><input type="text" placeholder="N°" value={newArticle.no} onChange={e => setNewArticle({ ...newArticle, no: e.target.value })} className="w-full bg-white border border-indigo-100 rounded p-1.5 text-[10px] uppercase font-black" /></td>
+                                                <td className="px-4 py-3"><input type="text" placeholder="Ref" value={newArticle.ref} onChange={e => setNewArticle({ ...newArticle, ref: e.target.value })} className="w-full bg-white border border-indigo-100 rounded p-1.5 text-[10px] uppercase font-black" /></td>
+                                                <td className="px-4 py-3"><input type="text" placeholder="Désignation" value={newArticle.designation} onChange={e => setNewArticle({ ...newArticle, designation: e.target.value })} className="w-full bg-white border border-indigo-100 rounded p-1.5 text-[10px] font-bold" /></td>
+                                                <td className="px-4 py-3"><input type="number" placeholder="Qté" value={newArticle.qte} onChange={e => setNewArticle({ ...newArticle, qte: e.target.value })} className="w-full bg-white border border-indigo-100 rounded p-1.5 text-[10px] font-black text-center" /></td>
+                                                <td className="px-4 py-3"><input type="text" placeholder="PU" value={newArticle.pu} onChange={e => setNewArticle({ ...newArticle, pu: e.target.value })} className="w-full bg-white border border-indigo-100 rounded p-1.5 text-[10px] font-black text-right" /></td>
+                                                <td className="px-4 py-3 text-right text-[10px] font-black text-slate-400 italic">Auto</td>
+                                                <td className="px-4 py-3"><input type="text" placeholder="Marque" value={newArticle.marque} onChange={e => setNewArticle({ ...newArticle, marque: e.target.value })} className="w-full bg-white border border-indigo-100 rounded p-1.5 text-[10px] uppercase font-black" /></td>
+                                                <td className="px-4 py-3"><input type="text" placeholder="Site" value={newArticle.site} onChange={e => setNewArticle({ ...newArticle, site: e.target.value })} className="w-full bg-white border border-indigo-100 rounded p-1.5 text-[10px] uppercase font-black" /></td>
+                                                <td colSpan="2" className="px-4 py-3">
+                                                    <div className="flex gap-2">
+                                                        <button onClick={handleAddArticle} className="flex-1 py-1.5 bg-emerald-600 text-white rounded-lg text-[9px] font-black uppercase">Valider</button>
+                                                        <button onClick={() => setIsAddingArticle(false)} className="px-2 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[9px] font-black uppercase">Annuler</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
                                         {localArticles.map((art, idx) => {
                                             const isAuthOk = importData.authImport === 'Confirmée';
 
@@ -975,6 +1052,15 @@ const OrderDetails = () => {
                                                                     )}
                                                                 </React.Fragment>
                                                             ))}
+                                                            {isSuperAdmin() && (
+                                                                <button
+                                                                    onClick={() => handleDeleteArticle(idx)}
+                                                                    className="absolute -right-8 opacity-0 group-hover/actions:opacity-100 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                                    title="Supprimer l'article"
+                                                                >
+                                                                    <Trash2 size={13} />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>
