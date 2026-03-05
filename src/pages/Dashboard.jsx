@@ -533,7 +533,10 @@ const Dashboard = () => {
                                     // Calcul de l'avancement "Dispo"
                                     const totalHt = order.totals?.ht || order.articles?.reduce((sum, a) => sum + (a.total || 0), 0) || 0;
                                     const availableHt = order.articles?.reduce((sum, a) => sum + (a.available ? (a.total || 0) : 0), 0) || 0;
-                                    const progress = totalHt > 0 ? Math.round((availableHt / totalHt) * 100) : 0;
+                                    const calculatedProgress = totalHt > 0 ? Math.round((availableHt / totalHt) * 100) : 0;
+                                    const progress = (order.manualProgress !== undefined && order.manualProgress !== null && order.manualProgress !== "")
+                                        ? parseInt(order.manualProgress)
+                                        : calculatedProgress;
 
                                     return (
                                         <tr

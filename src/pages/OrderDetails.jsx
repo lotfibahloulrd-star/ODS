@@ -46,6 +46,8 @@ const OrderDetails = () => {
     const [tempJudicialProceedings, setTempJudicialProceedings] = useState("");
     const [isEditingDeliveryDate, setIsEditingDeliveryDate] = useState(false);
     const [tempDeliveryDate, setTempDeliveryDate] = useState("");
+    const [isEditingProgress, setIsEditingProgress] = useState(false);
+    const [tempProgress, setTempProgress] = useState("");
 
     const loadOrder = async () => {
         setIsLoading(true);
@@ -72,6 +74,7 @@ const OrderDetails = () => {
                 setTempBankDomiciliation(found.bankDomiciliation || "");
                 setTempJudicialProceedings(found.judicialProceedings || "");
                 setTempDeliveryDate(found.deliveryDate || "");
+                setTempProgress(found.manualProgress !== undefined ? found.manualProgress : "");
             }
         } catch (error) {
             console.error("Error loading order:", error);
@@ -140,7 +143,14 @@ const OrderDetails = () => {
     };
 
     const availabilityInfo = useMemo(() => {
-        if (!order || !localArticles.length) return { totalHt: 0, availableHt: 0, percentage: 0 };
+        if (!order) return { totalHt: 0, availableHt: 0, percentage: 0 };
+
+        // Priorité au progrès manuel s'il existe
+        if (order.manualProgress !== undefined && order.manualProgress !== null && order.manualProgress !== "") {
+            return { totalHt: 100, availableHt: order.manualProgress, percentage: parseInt(order.manualProgress) };
+        }
+
+        if (!localArticles.length) return { totalHt: 0, availableHt: 0, percentage: 0 };
         const totalHt = order.totals?.ht || localArticles.reduce((sum, a) => sum + (a.total || 0), 0) || 0;
         const availableHt = localArticles.reduce((sum, a) => sum + (a.available ? (a.total || 0) : 0), 0) || 0;
         return {
@@ -507,13 +517,25 @@ const OrderDetails = () => {
                             </div>
                         </div>
                         <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 group hover:border-emerald-200 transition-all">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Avancement (Articles Dispos)</span>
-                            <div className="flex items-center gap-3">
-                                <span className={`text-2xl font-black ${availabilityInfo.percentage === 100 ? 'text-emerald-600' : 'text-amber-600'}`}>{availabilityInfo.percentage}%</span>
-                                <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden border border-slate-100">
-                                    <div className={`h-full transition-all duration-1000 ${availabilityInfo.percentage === 100 ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${availabilityInfo.percentage}%` }}></div>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Avancement (Réel / Dispo)</span>
+                            {isEditingProgress ? (
+                                <div className="flex gap-2">
+                                    <input type="number" min="0" max="100" value={tempProgress} onChange={e => setTempProgress(e.target.value)} className="flex-1 p-2 bg-white border-2 border-emerald-200 rounded-xl font-black text-emerald-900 outline-none" placeholder="%" autoFocus />
+                                    <button onClick={() => handleSaveAdminFields('manualProgress', tempProgress, setTempProgress, setIsEditingProgress, 'Avancement')} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase">OK</button>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="flex items-center gap-3">
+                                    <span className={`text-2xl font-black ${availabilityInfo.percentage === 100 ? 'text-emerald-600' : 'text-amber-600'}`}>{availabilityInfo.percentage}%</span>
+                                    <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden border border-slate-100">
+                                        <div className={`h-full transition-all duration-1000 ${availabilityInfo.percentage === 100 ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${availabilityInfo.percentage}%` }}></div>
+                                    </div>
+                                    {isSuperAdmin() && (
+                                        <button onClick={() => { setTempProgress(order.manualProgress || ""); setIsEditingProgress(true); }} className="opacity-0 group-hover:opacity-100 p-2 text-emerald-500 hover:bg-white rounded-lg transition-all" title="Saisir l'avancement manuellement">
+                                            <Plus size={14} />
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 
