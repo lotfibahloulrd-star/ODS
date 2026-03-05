@@ -250,7 +250,7 @@ const OrderDetails = () => {
             const targetDate = new Date(endDate);
             if (isNaN(targetDate.getTime())) return null;
 
-            const today = new Date();
+            const today = order.deliveryDate ? new Date(order.deliveryDate) : new Date();
             today.setHours(0, 0, 0, 0);
             targetDate.setHours(0, 0, 0, 0);
             const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
@@ -258,6 +258,8 @@ const OrderDetails = () => {
             return {
                 days: diffDays,
                 isOverdue: diffDays < 0,
+                isDelivered: !!order.deliveryDate,
+                deliveryDate: order.deliveryDate,
                 formattedDate: new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }).format(targetDate)
             };
         } catch (e) { return null; }
@@ -344,11 +346,25 @@ const OrderDetails = () => {
                                 handleSaveAdminFields('authorization', order.authorization === 'Oui' ? 'Non' : 'Oui', () => { }, () => { }, 'Autorisation');
                             }
                         }}
-                        className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${order.authorization === 'Oui' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100 hover:bg-amber-100'}`}
+                        className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${order.authorization === 'Oui' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}
                         title={isSuperAdmin() ? "Cliquer pour changer le statut" : "Statut de l'autorisation"}
                     >
                         {order.authorization === 'Oui' ? 'Autorisation confirmée' : 'Attente Autorisation'}
                     </button>
+
+                    {isSuperAdmin() && (
+                        <button
+                            onClick={() => {
+                                const newDate = order.deliveryDate ? null : new Date().toISOString().split('T')[0];
+                                handleSaveAdminFields('deliveryDate', newDate, () => { }, () => { }, 'Livraison');
+                            }}
+                            className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${order.deliveryDate ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600'}`}
+                        >
+                            <Package size={14} />
+                            {order.deliveryDate ? 'Livraison Confirmée' : 'Confirmer Livraison'}
+                        </button>
+                    )}
+
                     {(order.hasStopRequest === 'Oui' || !!(order.files?.storage_stops_req) || !!(order.files?.storage_stops_res)) && (
                         <span className="px-4 py-2 bg-red-50 text-red-600 border border-red-100 text-[10px] font-black uppercase tracking-widest rounded-2xl flex items-center gap-2">
                             <StopCircle size={14} /> Arrêt Demandé
@@ -944,14 +960,14 @@ const OrderDetails = () => {
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">Autorisation</label>
                                         <select disabled={!isImport() && !isSuperAdmin()} value={importData.authImport || ''} onChange={e => setImportData({ ...importData, authImport: e.target.value })} className="w-full text-xs font-black uppercase border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all">
-                                            <option value="">En attente...</option>
+                                            <option value="">Attente Autorisation</option>
                                             <option value="Confirmée">Confirmée</option>
                                             <option value="Non disponible">Non disponible</option>
                                         </select>
                                     </div>
                                     {importData.authImport === 'Confirmée' && (
                                         <div className="animate-in fade-in slide-in-from-left-4 duration-300">
-                                            <label className="text-[10px] font-black text-blue-400 uppercase mb-3 block">Date d'Obtention</label>
+                                            <label className="text-[10px] font-black text-blue-400 uppercase mb-3 block">Date de Confirmation</label>
                                             <input type="date" disabled={!isImport() && !isSuperAdmin()} value={importData.authDate || ''} onChange={e => setImportData({ ...importData, authDate: e.target.value })} className="w-full text-xs font-black border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all" />
                                         </div>
                                     )}
@@ -1038,8 +1054,12 @@ const OrderDetails = () => {
                                     </div>
                                 </div>
                                 <div className="text-center">
-                                    <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Échéance Contractuelle</div>
-                                    <div className={`text-3xl font-black ${remainingInfo?.isOverdue ? 'text-red-500' : 'text-emerald-500'}`}>{remainingInfo?.formattedDate}</div>
+                                    <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">
+                                        {remainingInfo?.isDelivered ? 'Livré le' : 'Échéance Contractuelle'}
+                                    </div>
+                                    <div className={`text-3xl font-black ${remainingInfo?.isDelivered ? 'text-blue-500' : (remainingInfo?.isOverdue ? 'text-red-500' : 'text-emerald-500')}`}>
+                                        {remainingInfo?.isDelivered ? formatDate(remainingInfo.deliveryDate) : remainingInfo?.formattedDate}
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -277,7 +277,7 @@ const Dashboard = () => {
 
             if (!endDate) return null;
             const target = new Date(endDate);
-            const today = new Date();
+            const today = order.deliveryDate ? new Date(order.deliveryDate) : new Date();
             today.setHours(0, 0, 0, 0);
             target.setHours(0, 0, 0, 0);
             if (isNaN(target.getTime())) return null;
@@ -452,7 +452,7 @@ const Dashboard = () => {
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
                         <Clock size={80} className="text-amber-600" />
                     </div>
-                    <div className="relative z-10 text-slate-500 font-black text-[10px] uppercase tracking-widest mb-2">En Attente Autorisation</div>
+                    <div className="relative z-10 text-slate-500 font-black text-[10px] uppercase tracking-widest mb-2">Attente Autorisation</div>
                     <div className="relative z-10 text-3xl font-black text-slate-900">{stats.pendingAuth}</div>
                     <div className="relative z-10 flex items-center gap-2 mt-4">
                         <span className={`text-[10px] px-2.5 py-1 rounded-full font-black uppercase ${authFilter ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700'}`}>
@@ -496,7 +496,7 @@ const Dashboard = () => {
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Réf. ODS</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">Réf. Contrat</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-emerald-600">Avancement</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-red-500">ODS d'Arrêt</th>
+                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-red-600 text-center">Suspension</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-amber-600">Domiciliation</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-red-600 text-center">Pénalités (DA)</th>
                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Poursuites</th>
@@ -658,6 +658,20 @@ const Dashboard = () => {
                                             <td className="px-6 py-7 text-center">
                                                 {(() => {
                                                     const days = getRemainingDays(order);
+                                                    if (order.deliveryDate) {
+                                                        if (days !== null && days >= 0) {
+                                                            return <div className="px-2.5 py-1 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest border border-blue-700 shadow-lg shadow-blue-100 flex items-center gap-1 justify-center"><Package size={10} /> LIVRÉ</div>;
+                                                        } else if (days !== null && days < 0) {
+                                                            const delayDays = Math.abs(days);
+                                                            const amountStr = (order.amount || "0").toString().replace(/[^\d.,]/g, '').replace(',', '.');
+                                                            const amount = parseFloat(amountStr);
+                                                            const penalty = Math.round(amount * 0.001 * delayDays);
+                                                            return <div className="flex flex-col items-center gap-1">
+                                                                <div className="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest">LIVRÉ TARD</div>
+                                                                <span className="text-[10px] font-black text-red-600">-{new Intl.NumberFormat('fr-FR').format(penalty)}</span>
+                                                            </div>;
+                                                        }
+                                                    }
                                                     if (days !== null && days < 0) {
                                                         const delayDays = Math.abs(days);
                                                         const amountStr = (order.amount || "0").toString().replace(/[^\d.,]/g, '').replace(',', '.');

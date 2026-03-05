@@ -421,7 +421,7 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                                         <td className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase">Autorisation</td>
                                         <td className="px-8 py-4">
                                             <select disabled={!isImport()} value={importData.authImport || ''} onChange={e => setImportData({ ...importData, authImport: e.target.value })} className="w-full text-xs font-black uppercase border-0 bg-transparent focus:ring-0">
-                                                <option value="">En attente...</option>
+                                                <option value="">Attente Autorisation</option>
                                                 <option value="Confirmée">Confirmée</option>
                                                 <option value="Non disponible">Non disponible</option>
                                             </select>

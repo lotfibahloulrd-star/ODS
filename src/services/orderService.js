@@ -43,7 +43,7 @@ export const orderService = {
             const deletedSet = new Set(deletedIds);
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v29';
+            const DATA_VERSION = 'ods_data_v30';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || localVersion !== DATA_VERSION) {
@@ -77,7 +77,7 @@ export const orderService = {
 
             return sharedOrders.filter(o => !deletedSet.has(o.id));
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v29';
+            const DATA_VERSION = 'ods_data_v30';
             const localData = localStorage.getItem(DATA_VERSION);
             const deletedLocal = localStorage.getItem('ods_deleted_ids');
             const deletedSet = new Set(deletedLocal ? JSON.parse(deletedLocal) : []);
@@ -87,7 +87,7 @@ export const orderService = {
     },
 
     _saveAllToShared: async (orders) => {
-        const DATA_VERSION = 'ods_data_v29';
+        const DATA_VERSION = 'ods_data_v30';
         try {
             await fetch(`${API_URL}?action=save_orders`, {
                 method: 'POST',
@@ -112,6 +112,7 @@ export const orderService = {
             latePenalties: 0,
             bankDomiciliation: '',
             judicialProceedings: '',
+            deliveryDate: null,
             files: {},
             ...orderData
         };
@@ -129,10 +130,13 @@ export const orderService = {
 
         // Notifications
         if (updates.authorization === 'Oui') {
-            notificationService.addNotification(`Autorisation d'Import obtenue pour ${orders[index].client}`, 'success', ['all'], id);
+            notificationService.addNotification(`Autorisation confirmée pour ${orders[index].client}`, 'success', ['all'], id);
         }
         if (updates.hasStopRequest === 'Oui') {
             notificationService.addNotification(`ODS STOP : Prestation arrêtée pour ${orders[index].client}`, 'error', ['all'], id);
+        }
+        if (updates.deliveryDate) {
+            notificationService.addNotification(`LIVRAISON CONFIRMÉE : ${orders[index].client} est livré !`, 'success', ['all'], id);
         }
 
         return orders[index];
