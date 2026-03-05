@@ -44,6 +44,8 @@ const OrderDetails = () => {
     const [tempBankDomiciliation, setTempBankDomiciliation] = useState("");
     const [isEditingJudicialProceedings, setIsEditingJudicialProceedings] = useState(false);
     const [tempJudicialProceedings, setTempJudicialProceedings] = useState("");
+    const [isEditingDeliveryDate, setIsEditingDeliveryDate] = useState(false);
+    const [tempDeliveryDate, setTempDeliveryDate] = useState("");
 
     const loadOrder = async () => {
         setIsLoading(true);
@@ -69,6 +71,7 @@ const OrderDetails = () => {
                 setTempResumeDate(found.resumeDate || "");
                 setTempBankDomiciliation(found.bankDomiciliation || "");
                 setTempJudicialProceedings(found.judicialProceedings || "");
+                setTempDeliveryDate(found.deliveryDate || "");
             }
         } catch (error) {
             console.error("Error loading order:", error);
@@ -353,16 +356,52 @@ const OrderDetails = () => {
                     </button>
 
                     {isSuperAdmin() && (
-                        <button
-                            onClick={() => {
-                                const newDate = order.deliveryDate ? null : new Date().toISOString().split('T')[0];
-                                handleSaveAdminFields('deliveryDate', newDate, () => { }, () => { }, 'Livraison');
-                            }}
-                            className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${order.deliveryDate ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600'}`}
-                        >
-                            <Package size={14} />
-                            {order.deliveryDate ? 'Livraison Confirmée' : 'Confirmer Livraison'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                            {isEditingDeliveryDate ? (
+                                <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm p-1.5 rounded-2xl border border-blue-200 shadow-xl animate-in zoom-in-95 duration-200">
+                                    <input
+                                        type="date"
+                                        value={tempDeliveryDate}
+                                        onChange={e => setTempDeliveryDate(e.target.value)}
+                                        className="text-[10px] font-black uppercase outline-none px-3 py-1 bg-slate-50 rounded-xl border border-slate-100 focus:border-blue-300 transition-all"
+                                        autoFocus
+                                    />
+                                    <div className="flex gap-1">
+                                        <button
+                                            onClick={() => handleSaveAdminFields('deliveryDate', tempDeliveryDate, setTempDeliveryDate, setIsEditingDeliveryDate, 'Livraison')}
+                                            className="w-8 h-8 flex items-center justify-center text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                                            title="Enregistrer la date"
+                                        >
+                                            <CheckCircle2 size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (order.deliveryDate && window.confirm("Annuler la livraison ?")) {
+                                                    handleSaveAdminFields('deliveryDate', null, setTempDeliveryDate, setIsEditingDeliveryDate, 'Livraison');
+                                                } else {
+                                                    setIsEditingDeliveryDate(false);
+                                                }
+                                            }}
+                                            className="w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                            title="Annuler/Réinitialiser"
+                                        >
+                                            <RotateCcw size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => {
+                                        setTempDeliveryDate(order.deliveryDate || new Date().toISOString().split('T')[0]);
+                                        setIsEditingDeliveryDate(true);
+                                    }}
+                                    className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] transition-all flex items-center gap-2.5 ${order.deliveryDate ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 hover:bg-blue-700' : 'bg-white border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-100 shadow-sm'}`}
+                                >
+                                    <Package size={15} />
+                                    {order.deliveryDate ? `Livré le ${formatDate(order.deliveryDate)}` : 'Confirmer Livraison'}
+                                </button>
+                            )}
+                        </div>
                     )}
 
                     {(order.hasStopRequest === 'Oui' || !!(order.files?.storage_stops_req) || !!(order.files?.storage_stops_res)) && (
@@ -1053,12 +1092,27 @@ const OrderDetails = () => {
                                         )}
                                     </div>
                                 </div>
-                                <div className="text-center">
+                                <div className="text-center group relative">
                                     <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">
                                         {remainingInfo?.isDelivered ? 'Livré le' : 'Échéance Contractuelle'}
                                     </div>
-                                    <div className={`text-3xl font-black ${remainingInfo?.isDelivered ? 'text-blue-500' : (remainingInfo?.isOverdue ? 'text-red-500' : 'text-emerald-500')}`}>
-                                        {remainingInfo?.isDelivered ? formatDate(remainingInfo.deliveryDate) : remainingInfo?.formattedDate}
+                                    <div className="flex items-center gap-3 justify-center">
+                                        <div className={`text-3xl font-black ${remainingInfo?.isDelivered ? 'text-blue-500' : (remainingInfo?.isOverdue ? 'text-red-500' : 'text-emerald-500')}`}>
+                                            {remainingInfo?.isDelivered ? formatDate(remainingInfo.deliveryDate) : remainingInfo?.formattedDate}
+                                        </div>
+                                        {isSuperAdmin() && (
+                                            <button
+                                                onClick={() => {
+                                                    setTempDeliveryDate(order.deliveryDate || new Date().toISOString().split('T')[0]);
+                                                    setIsEditingDeliveryDate(true);
+                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                }}
+                                                className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 transition-all"
+                                                title="Modifier la date de livraison"
+                                            >
+                                                <Plus size={14} />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
