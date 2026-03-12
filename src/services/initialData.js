@@ -505,5 +505,41 @@ export const INITIAL_ORDERS = [
         createdAt: '2025-01-01T10:00:00.000Z',
         equipmentDetails: 'Durée de réalisation : 04 mois.',
         files: {}
+    },
+    {
+        id: 'init-relizane-04-24',
+        client: 'Université de Relizane',
+        refOds: 'ODS N°04/2024',
+        refContract: 'Marché N°04/2024',
+        object: 'ACQUISITION DES EQUIPEMENTS SCIENTIFIQUE POUR LE RENFORCEMENT DES TRAVAUX PRATIQUES AU PROFIT DE L\'UNIVERSITE DE RELIZANE - Lot 04: Equipements Agronomie',
+        dateOds: '2025-03-12',
+        delay: '120',
+        amount: '29270196.43',
+        division: 'Division Laboratoire',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-03-12T13:45:00.000Z',
+        files: {},
+        articles: [
+            { no: '01', ref: '321-62900-23', designation: 'Balance analytique (Shimadzu AUW320)', qte: 2, pu: 398151.86, total: 796303.72, marque: 'Shimadzu' },
+            { no: '02', ref: 'BS-010145-ACI', designation: 'Agitateur à plateau (Biosan PSU-20i)', qte: 1, pu: 364000.00, total: 364000.00, marque: 'Biosan' },
+            { no: '03', ref: '228-65821-58', designation: 'Chromatographe en Phase Liquide HPLC type LC-2050C', qte: 1, pu: 6500000.00, total: 6500000.00, marque: 'Shimadzu' },
+            { no: '04', ref: 'DZ.1105', designation: 'LOUPE BINOCULAIRE', qte: 2, pu: 614100.00, total: 1228200.00, marque: 'EUROMEX' },
+            { no: '05', ref: 'BS.3153-PLI', designation: 'Microscope à fluorescence', qte: 1, pu: 1152600.00, total: 1152600.00, marque: 'EUROMEX' },
+            { no: '06', ref: 'F00001120000', designation: 'Hotte à flux laminaire vertical 1m20', qte: 1, pu: 923000.00, total: 923000.00, marque: 'Faster' },
+            { no: '07', ref: 'FOA01140000', designation: 'Poste de sécurité microbiologique FaceFAST Classic 212', qte: 1, pu: 1121000.00, total: 1121000.00, marque: 'Faster' },
+            { no: '08', ref: 'RP300310001', designation: 'Tamiseuse AS 200 digit CA', qte: 1, pu: 1151600.00, total: 1151600.00, marque: 'Retsch' },
+            { no: '09', ref: 'F30200165', designation: 'Distillateur avec accessoires et titrateur Colormétrique intégré', qte: 1, pu: 7547500.00, total: 7547500.00, marque: 'Velp Scientifica' },
+            { no: '10', ref: '435050', designation: 'Compteur de colonie SCAN 50', qte: 1, pu: 221600.00, total: 221600.00, marque: 'Interscience' },
+            { no: '11', ref: '815', designation: 'Set d\'échantillonnage et de classification de sols', qte: 1, pu: 1185000.00, total: 1185000.00, marque: 'Eijkelkamp' },
+            { no: '12', ref: '9.885021', designation: 'Viscosimètre à chute de bille', qte: 1, pu: 1128000.00, total: 1128000.00, marque: '-' },
+            { no: '13', ref: '-', designation: 'Marteau de géologue', qte: 1, pu: 2600.00, total: 2600.00, marque: '-' },
+            { no: '14', ref: 'LFKV4050', designation: 'Refrigerateur de laboratoire', qte: 1, pu: 689900.00, total: 689900.00, marque: 'LIEBHERR' },
+            { no: '15', ref: 'W-PG10L-220V', designation: 'Distillateur en Inox pour les huiles essentielles', qte: 1, pu: 80300.00, total: 80300.00, marque: 'VEVOR' },
+            { no: '16', ref: '9010-0323', designation: 'Incubateur bactériologique de laboratoire BD-56', qte: 2, pu: 252600.00, total: 505200.00, marque: 'Binder' }
+        ],
+        totals: { ht: 24596803.72, tva: 4673392.71, ttc: 29270196.43 }
     }
 ];
