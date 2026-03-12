@@ -30,11 +30,11 @@ export const AuthProvider = ({ children }) => {
 
     // Synchronisation intelligente de la base d'utilisateurs
     useEffect(() => {
-        const usersStr = localStorage.getItem('ods_users_v6');
+        const usersStr = localStorage.getItem('ods_users_v7');
         let currentUsers = usersStr ? JSON.parse(usersStr) : [];
 
         const defaultUsers = [
-            { id: 1, firstName: 'Lotfi', lastName: 'Bahloul', email: 'l.bahloul@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'user123' },
+            { id: 1, firstName: 'Lotfi', lastName: 'Bahloul', email: 'l.bahloul@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'user1234' },
             { id: 2, firstName: 'Ali', lastName: 'Ouali', email: 'a.ouali@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
             { id: 3, firstName: 'Wissem', lastName: 'Boukacem', email: 'w.boukacem@esclab-algerie.com', division: 'Juriste', role: 'Utilisateur', password: 'user123' },
             { id: 4, firstName: 'Selma', lastName: 'Boukacem', email: 's.boukacem@esclab-algerie.com', division: 'Juriste', role: 'Utilisateur', password: 'user123' },
@@ -57,17 +57,17 @@ export const AuthProvider = ({ children }) => {
         });
 
         if (hasChanges || !usersStr) {
-            localStorage.setItem('ods_users_v6', JSON.stringify(currentUsers));
+            localStorage.setItem('ods_users_v7', JSON.stringify(currentUsers));
         }
     }, []);
 
     const login = (email, password) => {
-        let usersStr = localStorage.getItem('ods_users_v6');
+        let usersStr = localStorage.getItem('ods_users_v7');
 
         // Sécurité supplémentaire : Initialisation forcée au moment du login si vide
         if (!usersStr) {
             const defaultUsers = [
-                { id: 1, firstName: 'Lotfi', lastName: 'Bahloul', email: 'l.bahloul@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'user123' },
+                { id: 1, firstName: 'Lotfi', lastName: 'Bahloul', email: 'l.bahloul@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'user1234' },
                 { id: 2, firstName: 'Ali', lastName: 'Ouali', email: 'a.ouali@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
                 { id: 3, firstName: 'Wissem', lastName: 'Boukacem', email: 'w.boukacem@esclab-algerie.com', division: 'Juriste', role: 'Utilisateur', password: 'user123' },
                 { id: 4, firstName: 'Selma', lastName: 'Boukacem', email: 's.boukacem@esclab-algerie.com', division: 'Juriste', role: 'Utilisateur', password: 'user123' },
@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }) => {
                 { id: 10, firstName: 'Tarek', lastName: 'Ait El Hocine', email: 't.aitelhocine@esclab-algerie.com', division: 'Division Analytique', role: 'Administrateur', password: 'user123' },
                 { id: 11, firstName: 'Farid', lastName: 'Taazibt', email: 'f.taazibt@esclab-algerie.com', division: 'Division Laboratoire', role: 'Administrateur', password: 'user123' }
             ];
-            localStorage.setItem('ods_users_v6', JSON.stringify(defaultUsers));
+            localStorage.setItem('ods_users_v7', JSON.stringify(defaultUsers));
             usersStr = JSON.stringify(defaultUsers);
         }
 
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }) => {
     const changePassword = (newPassword) => {
         if (!currentUser) return false;
 
-        const usersStr = localStorage.getItem('ods_users_v6');
+        const usersStr = localStorage.getItem('ods_users_v7');
         if (!usersStr) return false;
 
         const users = JSON.parse(usersStr);
@@ -106,7 +106,7 @@ export const AuthProvider = ({ children }) => {
         if (userIndex === -1) return false;
 
         users[userIndex].password = newPassword;
-        localStorage.setItem('ods_users_v6', JSON.stringify(users));
+        localStorage.setItem('ods_users_v7', JSON.stringify(users));
 
         const updatedUser = { ...currentUser, password: newPassword };
         setCurrentUser(updatedUser);
@@ -117,7 +117,7 @@ export const AuthProvider = ({ children }) => {
     const resetUserPassword = (email, newPassword) => {
         if (!isSuperAdmin()) return false;
 
-        const usersStr = localStorage.getItem('ods_users_v6');
+        const usersStr = localStorage.getItem('ods_users_v7');
         if (!usersStr) return false;
 
         const users = JSON.parse(usersStr);
@@ -126,7 +126,7 @@ export const AuthProvider = ({ children }) => {
         if (userIndex === -1) return false;
 
         users[userIndex].password = newPassword;
-        localStorage.setItem('ods_users_v6', JSON.stringify(users));
+        localStorage.setItem('ods_users_v7', JSON.stringify(users));
         return true;
     };
 
