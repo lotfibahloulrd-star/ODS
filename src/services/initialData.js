@@ -588,5 +588,25 @@ export const INITIAL_ORDERS = [
             { no: '1.2', ref: '-', designation: 'Dispositif de filtration', qte: 1, pu: 150000.00, total: 150000.00, marque: '-' }
         ],
         totals: { ht: 12740070.00, tva: 0, ttc: 12740070.00 }
+    },
+    {
+        id: 'init-udes-07-25',
+        client: 'UNITE DE DEVELOPPEMENT DES EQUIPEMENTS SOLAIRES (UDES)',
+        refOds: 'Ordre de service N°07',
+        refContract: 'Consultation N°05/UDES/2024',
+        object: 'ACQUISITION D\'EQUIPEMENT SCIENTIFIQUES AU PROFIT DE L\'UNITE DE DEVELOPPEMENT DES EQUIPEMENTS SOLAIRES. Lot N°01 « Instrumentation & équipements de mesures ».',
+        dateOds: '2025-04-17',
+        delay: '',
+        amount: '0',
+        division: 'Division Analytique',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-04-17T12:00:00.000Z',
+        equipmentDetails: 'Lot N°01 « Instrumentation & équipements de mesures »',
+        files: {},
+        articles: [],
+        totals: { ht: 0, tva: 0, ttc: 0 }
     }
 ];
