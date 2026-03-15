@@ -541,5 +541,29 @@ export const INITIAL_ORDERS = [
             { no: '16', ref: '9010-0323', designation: 'Incubateur bactériologique de laboratoire BD-56', qte: 2, pu: 252600.00, total: 505200.00, marque: 'Binder' }
         ],
         totals: { ht: 24596803.72, tva: 4673392.71, ttc: 29270196.43 }
+    },
+    {
+        id: 'init-tlemcen-20-25',
+        client: 'UNIVERSITE ABOU BEKR BELKAID - TLEMCEN -',
+        refOds: 'Marché N° 20/VRDPO/2025',
+        refContract: 'Marché N° 20/VRDPO/2025',
+        object: 'Equipement d\'un département de pharmacie industrielle',
+        dateOds: '2025-03-15',
+        delay: '120',
+        amount: '34452453.50',
+        division: 'Division Analytique',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-03-15T12:00:00.000Z',
+        equipmentDetails: 'Lot n°: 06 Analyse de précision (Opération n° : CF 5.621.8.262.113.08.21)',
+        files: {},
+        articles: [
+            { no: '01', ref: '-', designation: 'Chromatographie ionique de laboratoire dédié aux analyses des anions et cations', qte: 1, pu: 19751641.60, total: 19751641.60, marque: '-' },
+            { no: '02', ref: '-', designation: 'Évaporateur sous jet d\'azote automatique : Système automatisé d\'évaporation de solvant 48 positions', qte: 1, pu: 4000000.00, total: 4000000.00, marque: '-' },
+            { no: '03', ref: '-', designation: 'Passeur Automatique Injecteur en mode Head space adapté à GC-FID', qte: 1, pu: 5200000.00, total: 5200000.00, marque: '-' }
+        ],
+        totals: { ht: 28951641.60, tva: 5500811.90, ttc: 34452453.50 }
     }
 ];
