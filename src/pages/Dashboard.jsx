@@ -178,7 +178,7 @@ const Dashboard = () => {
     const hasUnread = notifications.some(n => !n.readBy.includes(currentUser?.email));
 
     const filteredOrders = useMemo(() => {
-        return orders.filter(o => {
+        const result = orders.filter(o => {
             // First check access
             if (!auth.canViewOrder(o)) return false;
 
@@ -195,6 +195,24 @@ const Dashboard = () => {
             }
 
             return matchesSearch;
+        });
+
+        return result.sort((a, b) => {
+            const getRank = (order) => {
+                if (order.deliveryDate) return 1; // Livré
+                if (order.authorization === 'Oui') return 2; // Autorisation confirmée
+                return 3; // Autorisation en attente
+            };
+
+            const rankA = getRank(a);
+            const rankB = getRank(b);
+
+            if (rankA !== rankB) {
+                return rankA - rankB;
+            }
+
+            // Same rank: keep most recent first
+            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
         });
     }, [orders, searchTerm, auth, authFilter]);
 
