@@ -565,5 +565,28 @@ export const INITIAL_ORDERS = [
             { no: '03', ref: '-', designation: 'Passeur Automatique Injecteur en mode Head space adapté à GC-FID', qte: 1, pu: 5200000.00, total: 5200000.00, marque: '-' }
         ],
         totals: { ht: 28951641.60, tva: 5500811.90, ttc: 34452453.50 }
+    },
+    {
+        id: 'init-bouira-01-25',
+        client: 'Université de Bouira',
+        refOds: 'MARCHÉ',
+        refContract: 'N° de l\'opération : E 050 25 02/12/MESRS/25 01',
+        object: 'Acquisition, installation et mise en service des équipements scientifiques pour laboratoire de recherche Gestion et Valorisation des ressources naturelles et assurances qualité de l\'université de Bouira',
+        dateOds: '2025-03-15',
+        delay: '120',
+        amount: '12740070.00',
+        division: 'Division Analytique',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-03-15T23:00:00.000Z',
+        equipmentDetails: 'Lot N°01 : Acquisition, installation et mise en service d\'un Spectrophotomètre d\'absorption Atomique flamme et four pour le laboratoire de recherche GERVERNAQ',
+        files: {},
+        articles: [
+            { no: '1.1', ref: '-', designation: 'Spectrophotomètre d\'Absorption Atomique flamme et four', qte: 1, pu: 12590070.00, total: 12590070.00, marque: '-' },
+            { no: '1.2', ref: '-', designation: 'Dispositif de filtration', qte: 1, pu: 150000.00, total: 150000.00, marque: '-' }
+        ],
+        totals: { ht: 12740070.00, tva: 0, ttc: 12740070.00 }
     }
 ];
