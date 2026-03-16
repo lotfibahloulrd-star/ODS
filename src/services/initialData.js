@@ -608,5 +608,28 @@ export const INITIAL_ORDERS = [
         files: {},
         articles: [],
         totals: { ht: 0, tva: 0, ttc: 0 }
+    },
+    {
+        id: 'init-bejaia-17-25',
+        client: 'Université Abderrahmane Mira de Bejaia',
+        refOds: 'MARCHÉ N° 17 / 2025',
+        refContract: 'N° : E050 2501 009/DGRSDT/2025 05',
+        object: 'Acquisition d\'Equipements pour le Laboratoire de Mécanique, Matériaux et Energétique au profit de l\'Université de Bejaia',
+        dateOds: '2025-03-16',
+        delay: '120',
+        amount: '15202187.66',
+        division: 'Division Analytique',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-03-16T10:30:00.000Z',
+        equipmentDetails: 'Lot n° 2 : Electrochimie',
+        files: {},
+        articles: [
+            { no: '1', ref: '-', designation: 'Pententiotats / Galvanostat', qte: 1, pu: 10524947.61, total: 10524947.61, marque: '-' },
+            { no: '2', ref: '-', designation: 'Presse pour élaboration des pastilles à partir de poudres métalliques', qte: 1, pu: 2250000.00, total: 2250000.00, marque: '-' }
+        ],
+        totals: { ht: 12774947.61, tva: 2427240.05, ttc: 15202187.66 }
     }
 ];
