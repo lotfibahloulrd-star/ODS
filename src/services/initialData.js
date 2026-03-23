@@ -521,6 +521,9 @@ export const INITIAL_ORDERS = [
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
         createdAt: '2025-03-12T13:45:00.000Z',
+        hasStopRequest: 'Oui',
+        stopDate: '2025-10-09',
+        resumeDate: null,
         files: {},
         articles: [
             { no: '01', ref: '321-62900-23', designation: 'Balance analytique (Shimadzu AUW320)', qte: 2, pu: 398151.86, total: 796303.72, marque: 'Shimadzu' },
@@ -631,5 +634,26 @@ export const INITIAL_ORDERS = [
             { no: '2', ref: '-', designation: 'Presse pour élaboration des pastilles à partir de poudres métalliques', qte: 1, pu: 2250000.00, total: 2250000.00, marque: '-' }
         ],
         totals: { ht: 12774947.61, tva: 2427240.05, ttc: 15202187.66 }
+    },
+    {
+        id: 'init-sonelgaz-adrar-04-26',
+        client: 'SOCIÉTÉ ALGÉRIENNE DE L\'ÉLECTRICITÉ ET DU GAZ - SPE - UNITÉ DE PRODUCTION D\'ADRAR',
+        refOds: 'Marché N°04/2026',
+        refContract: 'Marché N° 04/S-PE/PP AN/DRP HM/ADRAR/2026',
+        object: 'ACQUISITION D\'APPAREILS D\'ANALYSE DES GAZ D\'ÉCHAPPEMENT POUR LES CENTRALES ÉLECTRIQUES RATTACHÉES À L\'UNITÉ D\'ADRAR',
+        dateOds: '2026-01-28',
+        delay: '180',
+        amount: '15003758',
+        division: 'Division Analytique',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2026-01-28T14:30:00.000Z',
+        files: {},
+        articles: [
+            { no: '01', ref: '-', designation: 'FOURNITURE APPAREILS DE CONTROLE DE REJET ATMOSPHERIQUE AVEC ACCESSOIRES', qte: 4, pu: 3152050.00, total: 12608200.00, marque: '-' }
+        ],
+        totals: { ht: 12608200, tva: 2395558, ttc: 15003758 }
     }
 ];

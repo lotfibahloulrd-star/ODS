@@ -296,10 +296,12 @@ const OrderDetails = () => {
                     date.setDate(date.getDate() + add);
                     if (order.stopDate) {
                         const stop = new Date(order.stopDate);
+                        // Si pas de date de reprise, on utilise aujourd'hui pour calculer le décalage, ce qui "fige" le délai
                         const resume = order.resumeDate ? new Date(order.resumeDate) : new Date();
                         if (!isNaN(stop.getTime())) {
                             const effectiveResume = !isNaN(resume.getTime()) ? resume : new Date();
                             if (effectiveResume > stop) {
+                                // On ajoute le nombre de jours de suspension à la date d'échéance
                                 date.setDate(date.getDate() + Math.ceil((effectiveResume - stop) / (1000 * 60 * 60 * 24)));
                             }
                         }
@@ -610,6 +612,11 @@ const OrderDetails = () => {
                             <div className="flex items-baseline gap-3">
                                 <span className={`text-2xl font-black ${remainingInfo?.isOverdue ? 'text-red-600' : 'text-slate-400'}`}>
                                     {(() => {
+                                        // Si l'ODS est à l'arrêt (pas de date de reprise), on ne calcule pas de pénalités (neutralisation)
+                                        if (order.hasStopRequest === 'Oui' && !order.resumeDate) {
+                                            return "0 DA (Suspendu)";
+                                        }
+
                                         if (remainingInfo?.isOverdue) {
                                             const delayDays = Math.abs(remainingInfo.days);
                                             const amount = parseFloat((order.amount || "0").toString().replace(/[^\d.,]/g, '').replace(',', '.'));
