@@ -1077,19 +1077,19 @@ const OrderDetails = () => {
                                     {order.totals && (
                                         <tfoot className="bg-slate-50">
                                             <tr>
-                                                <td colSpan="6" className="px-6 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">Total HT</td>
+                                                <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">Total HT</td>
                                                 <td className="px-6 py-4 text-right text-xs font-black text-slate-900">{formatAmount(order.totals.ht)}</td>
-                                                <td></td>
+                                                <td colSpan="4"></td>
                                             </tr>
                                             <tr>
-                                                <td colSpan="6" className="px-6 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">TVA 19%</td>
+                                                <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">TVA 19%</td>
                                                 <td className="px-6 py-4 text-right text-xs font-black text-slate-900">{formatAmount(order.totals.tva)}</td>
-                                                <td></td>
+                                                <td colSpan="4"></td>
                                             </tr>
                                             <tr className="bg-indigo-50/50">
-                                                <td colSpan="6" className="px-6 py-4 text-right text-[10px] font-black uppercase text-indigo-600 tracking-[0.2em]">Total TTC</td>
+                                                <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-indigo-600 tracking-[0.2em]">Total TTC</td>
                                                 <td className="px-6 py-4 text-right text-sm font-black text-indigo-600">{formatAmount(order.totals.ttc)}</td>
-                                                <td className="bg-white"></td>
+                                                <td colSpan="4" className="bg-white"></td>
                                             </tr>
                                         </tfoot>
                                     )}
