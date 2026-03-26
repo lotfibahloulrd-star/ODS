@@ -357,19 +357,23 @@ export const INITIAL_ORDERS = [
     },
     {
         id: 'init-annaba-25',
-        client: 'Université Annaba',
+        client: 'université ANNABA faculté des sciences de la terre',
         refOds: '-',
         object: 'Acquisition d\'équipements de laboratory',
         dateOds: '2025-03-02',
         delay: '120',
-        amount: '0',
+        amount: '2499000.00',
         division: 'Division Laboratoire',
         status: 'En cours',
         importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
         stockStatus: { reception: 'Aucune', receivedAt: '' },
         isReadyForDelivery: false,
         createdAt: '2025-03-02T10:00:00.000Z',
-        files: {}
+        files: {},
+        articles: [
+            { no: '01', ref: '-', designation: 'UV-Visible Spectrophotomètre Hach DR6000', qte: 1, pu: 2100000.00, total: 2100000.00, marque: 'HACH' }
+        ],
+        totals: { ht: 2100000.00, tva: 399000.00, ttc: 2499000.00 }
     },
     {
         id: 'init-incc-069-206',
@@ -386,6 +390,27 @@ export const INITIAL_ORDERS = [
         isReadyForDelivery: false,
         createdAt: '2025-03-02T10:00:00.000Z',
         files: {}
+    },
+    {
+        id: 'init-incc-062-378',
+        client: 'INCC MDN',
+        refOds: '062/378',
+        object: 'Acquisition d\'une Machine de traction des aciers ronds de béton armé et Formation',
+        dateOds: '2025-03-26',
+        delay: '120',
+        amount: '34084575.00',
+        division: 'Division Analytique',
+        status: 'En cours',
+        importStatus: { authImport: null, importLaunched: false, estCustomsDate: '', domiciliationDate: '', clearedAt: '' },
+        stockStatus: { reception: 'Aucune', receivedAt: '' },
+        isReadyForDelivery: false,
+        createdAt: '2025-03-26T11:24:00.000Z',
+        files: {},
+        articles: [
+            { no: '01', ref: '-', designation: 'Machine de traction des aciers ronds de béton armé (Fourniture, installation et mise en service)', qte: 1, pu: 28500000.00, total: 28500000.00, marque: '-' },
+            { no: '02', ref: '-', designation: 'Formation', qte: 1, pu: 142500.00, total: 142500.00, marque: '-' }
+        ],
+        totals: { ht: 28642500.00, tva: 5442075.00, ttc: 34084575.00 }
     },
     {
         id: 'init-cgn-3637',
