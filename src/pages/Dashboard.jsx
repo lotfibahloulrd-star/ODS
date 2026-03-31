@@ -358,8 +358,15 @@ const Dashboard = () => {
             return days !== null && days < 0;
         }).length;
 
-        return { total, totalAmount, pendingAuth, overdue };
-    }, [filteredOrders]);
+        const byStatus = {
+            'En attente de paiement': orders.filter(o => o.status === 'En attente de paiement').length,
+            'En cours': orders.filter(o => o.status === 'En cours' || !o.status).length,
+            'En attente d\'ODS': orders.filter(o => o.status === 'En attente d\'ODS').length,
+            'Attribution en attente': orders.filter(o => o.status === 'Attribution en attente').length
+        };
+
+        return { total, totalAmount, pendingAuth, overdue, byStatus };
+    }, [filteredOrders, orders]);
 
     return (
         <div className="min-h-screen bg-slate-50/50 pb-12">
@@ -571,6 +578,32 @@ const Dashboard = () => {
                 </div>
             ) : (
                 <div className="flex flex-col gap-10">
+                    {/* Status Filter Buttons */}
+                    <div className="flex flex-wrap items-center gap-3 mb-2 px-2 scrollbar-hide">
+                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-4">Filtrer par Statut</div>
+                        {[
+                            { label: 'En attente de paiement', color: 'bg-amber-600', light: 'bg-amber-50', text: 'text-amber-700' },
+                            { label: 'En cours', color: 'bg-blue-600', light: 'bg-blue-50', text: 'text-blue-700' },
+                            { label: 'En attente d\'ODS', color: 'bg-indigo-600', light: 'bg-indigo-50', text: 'text-indigo-700' },
+                            { label: 'Attribution en attente', color: 'bg-slate-600', light: 'bg-slate-50', text: 'text-slate-700' }
+                        ].map(status => (
+                            <button
+                                key={status.label}
+                                onClick={() => setActiveStatusFilter(activeStatusFilter === status.label ? null : status.label)}
+                                className={`group px-5 py-3 rounded-2xl flex items-center gap-3 transition-all border shadow-sm active:scale-95 ${activeStatusFilter === status.label
+                                    ? `${status.color} text-white border-transparent ring-4 ring-offset-2 ring-slate-100`
+                                    : `bg-white border-slate-200 hover:border-slate-300 text-slate-600`
+                                    }`}
+                            >
+                                <div className={`w-2.5 h-2.5 rounded-full ${activeStatusFilter === status.label ? 'bg-white' : status.color} group-hover:scale-125 transition-transform`}></div>
+                                <span className="text-xs font-black uppercase tracking-tight">{status.label}</span>
+                                <div className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${activeStatusFilter === status.label ? 'bg-white/20' : 'bg-slate-50 text-slate-400'}`}>
+                                    {stats.byStatus[status.label] || 0}
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+
                     {groupedOrders.map(group => group.orders.length > 0 && (
                         <div key={group.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className="flex items-center gap-4 mb-4 px-2">
