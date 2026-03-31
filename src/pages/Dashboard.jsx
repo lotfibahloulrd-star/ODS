@@ -202,7 +202,8 @@ const Dashboard = () => {
             }
 
             if (activeStatusFilter) {
-                if (o.status !== activeStatusFilter) return false;
+                const effectiveStatus = o.status || 'En cours';
+                if (effectiveStatus !== activeStatusFilter) return false;
             }
 
             return matchesSearch;
