@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Dashboard from './pages/Dashboard';
+import Home from './pages/Home';
 import NewOrder from './pages/NewOrder';
 import UsersPage from './pages/Users';
 import Login from './pages/Login';
@@ -14,6 +15,11 @@ function AppContent() {
     const { currentUser, logout, changePassword, isAdmin, isSuperAdmin, canCreateOds } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    
+    // Extract query params
+    const searchParams = new URL(window.location.href).searchParams;
+    const statusParam = searchParams.get('status');
+    const authParam = searchParams.get('auth');
 
     if (!currentUser) {
         return <Login />;
@@ -30,7 +36,8 @@ function AppContent() {
     };
 
     const getActiveTab = () => {
-        if (location.pathname === '/') return 'dashboard';
+        if (location.pathname === '/' || location.pathname === '/home') return 'home';
+        if (location.pathname === '/dashboard') return 'dashboard';
         if (location.pathname === '/ods/new') return 'new';
         if (location.pathname === '/users') return 'users';
         return '';
@@ -54,6 +61,13 @@ function AppContent() {
                         <nav className="flex items-center bg-slate-100/50 p-1.5 rounded-2xl border border-slate-100 overflow-x-auto no-scrollbar">
                             <button
                                 onClick={() => navigate('/')}
+                                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-black transition-all whitespace-nowrap ${activeTab === 'home' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                            >
+                                <LayoutDashboard size={18} />
+                                <span className="hidden sm:inline">Accueil</span>
+                            </button>
+                            <button
+                                onClick={() => navigate('/dashboard')}
                                 className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-black transition-all whitespace-nowrap ${activeTab === 'dashboard' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                             >
                                 <LayoutDashboard size={18} />
@@ -104,8 +118,10 @@ function AppContent() {
             <main className="max-w-[1600px] mx-auto px-6 py-10">
                 <div className="animate-fade-in min-h-[400px]">
                     <Routes>
-                        <Route path="/" element={<Dashboard />} />
-                        <Route path="/ods/new" element={canCreateOds() ? <NewOrder onSave={() => navigate('/')} /> : <div className="text-center py-20 text-slate-400">Accès restreint</div>} />
+                        <Route path="/" element={<Home />} />
+                        <Route path="/home" element={<Home />} />
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/ods/new" element={canCreateOds() ? <NewOrder onSave={() => navigate('/dashboard')} /> : <div className="text-center py-20 text-slate-400">Accès restreint</div>} />
                         <Route path="/users" element={isSuperAdmin() ? <UsersPage /> : <div className="text-center py-20 text-slate-400">Accès restreint</div>} />
                         <Route path="/order/:id" element={<OrderDetails />} />
                     </Routes>

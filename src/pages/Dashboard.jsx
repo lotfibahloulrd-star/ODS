@@ -28,11 +28,16 @@ import {
     Plus,
     Trash2
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Dashboard = () => {
-    const auth = useAuth();
+     const auth = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    
+    // Get search params for initial filtering
+    const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    
     const canCreate = auth?.canCreateOds();
     const isSuperAdmin = auth?.isSuperAdmin;
     const currentUser = auth?.currentUser;
@@ -40,10 +45,18 @@ const Dashboard = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
-    const [syncStatus, setSyncStatus] = useState(""); // Nouveau : statut de migration
-    const [authFilter, setAuthFilter] = useState(false); // Nouveau : filtre pour les autorisations en attente
-    const [overdueFilter, setOverdueFilter] = useState(false); // Nouveau : filtre pour les retards
-    const [activeStatusFilter, setActiveStatusFilter] = useState(null); // Nouveau : filtre par statut global
+    const [syncStatus, setSyncStatus] = useState("");
+    const [authFilter, setAuthFilter] = useState(searchParams.get('auth') === 'true');
+    const [overdueFilter, setOverdueFilter] = useState(false);
+    const [activeStatusFilter, setActiveStatusFilter] = useState(searchParams.get('status'));
+
+    // Update filters if URL changes
+    useEffect(() => {
+        const status = searchParams.get('status');
+        const auth = searchParams.get('auth') === 'true';
+        if (status !== undefined) setActiveStatusFilter(status);
+        setAuthFilter(auth);
+    }, [searchParams]);
 
     const handleDirectUpload = (e, orderId, type) => {
         const file = e.target.files[0];
