@@ -11,7 +11,9 @@ import {
     UserCheck,
     AlertTriangle,
     LayoutDashboard,
-    Zap
+    Zap,
+    Search,
+    ChevronRight
 } from 'lucide-react';
 
 const Home = () => {
@@ -19,6 +21,7 @@ const Home = () => {
     const auth = useAuth();
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
         const loadCounts = async () => {
@@ -125,21 +128,54 @@ const Home = () => {
         if (status) params.append('status', status);
         if (authFilter) params.append('auth', 'true');
         if (overdueFilter) params.append('overdue', 'true');
+        if (searchQuery) params.append('search', searchQuery);
         
         const queryString = params.toString();
         navigate(queryString ? `${path}?${queryString}` : path);
     };
 
+    const handleQuickSearch = (e) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            handleNavigation();
+        }
+    };
+
     return (
         <div className="max-w-[1200px] mx-auto py-12 px-6">
-            <header className="text-center mb-16 animate-in fade-in slide-in-from-top-8 duration-700">
+            <header className="text-center mb-12 animate-in fade-in slide-in-from-top-8 duration-700">
                 <h1 className="text-5xl font-black text-slate-900 tracking-tight mb-4 uppercase">
                     Portail de Gestion <span className="text-blue-600">ODS</span>
                 </h1>
                 <p className="text-lg text-slate-500 font-bold max-w-2xl mx-auto leading-relaxed">
-                    Sélectionnez une catégorie pour accéder au suivi détaillé des engagements et piloter vos projets en temps réel.
+                    Accédez instantanément à vos dossiers et pilotez vos projets en temps réel.
                 </p>
             </header>
+
+            {/* Search Panel */}
+            <div className="max-w-3xl mx-auto mb-16 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
+                <form onSubmit={handleQuickSearch} className="group relative">
+                    <div className="absolute inset-0 bg-blue-600/5 rounded-[2.5rem] blur-2xl group-focus-within:bg-blue-600/10 transition-all duration-500"></div>
+                    <div className="relative flex items-center bg-white/80 backdrop-blur-xl border-2 border-white shadow-2xl rounded-[2.5rem] p-2 focus-within:border-blue-100 transition-all duration-300">
+                        <div className="pl-6 pr-4 text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                            <Search size={28} strokeWidth={2.5} />
+                        </div>
+                        <input 
+                            type="text" 
+                            placeholder="Rechercher un ODS, un client ou une référence..."
+                            className="flex-1 bg-transparent border-none focus:ring-0 text-xl font-bold text-slate-800 placeholder:text-slate-300 placeholder:font-bold py-5"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                        <button 
+                            type="submit"
+                            className="bg-slate-900 hover:bg-blue-600 text-white px-8 py-5 rounded-[2.2rem] font-black uppercase text-sm tracking-widest transition-all shadow-lg active:scale-95 flex items-center gap-2"
+                        >
+                            Chercher <ChevronRight size={18} />
+                        </button>
+                    </div>
+                </form>
+            </div>
 
             {/* Quick Summary Row */}
             <div className="flex justify-center gap-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 flex-wrap">

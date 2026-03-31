@@ -42,7 +42,7 @@ const Dashboard = () => {
     const isSuperAdmin = auth?.isSuperAdmin;
     const currentUser = auth?.currentUser;
     const [orders, setOrders] = useState([]);
-    const [searchTerm, setSearchTerm] = useState("");
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || "");
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [syncStatus, setSyncStatus] = useState("");
@@ -55,7 +55,10 @@ const Dashboard = () => {
         const status = searchParams.get('status');
         const auth = searchParams.get('auth') === 'true';
         const overdue = searchParams.get('overdue') === 'true';
-        if (status !== undefined) setActiveStatusFilter(status);
+        const search = searchParams.get('search');
+        
+        if (status !== null) setActiveStatusFilter(status);
+        if (search !== null) setSearchTerm(search);
         setAuthFilter(auth);
         setOverdueFilter(overdue);
     }, [searchParams]);
