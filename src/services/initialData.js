@@ -4842,11 +4842,11 @@ export const INITIAL_ORDERS = [
         "client": "INCC",
         "refContract": "62/378",
         "refOds": "491/2025/TA6",
-        "object": "5 %+Q221+B220:S221+B221:K221+Q221+B220:B221:L221",
+        "object": "ACQUISITION ET MISE EN SERVICE D'UNE MACHINE DE TRACTION DES ACIERS RONDS DE BETON ARME",
         "status": "En cours",
         "dateOds": "",
         "delay": "120",
-        "amount": "0",
+        "amount": "34084575",
         "division": "Division Laboratoire",
         "importStatus": {
             "authImport": null,
@@ -4862,7 +4862,29 @@ export const INITIAL_ORDERS = [
         "isReadyForDelivery": false,
         "createdAt": "2025-03-30T10:00:00.000Z",
         "files": {},
-        "articles": []
+        "articles": [
+            {
+                "no": "02",
+                "designation": "Machine de traction des aciers ronds de béton armé",
+                "prestation": "Fourniture, installation, et mise en service",
+                "qte": 1,
+                "pu": 28500000,
+                "total": 28500000
+            },
+            {
+                "no": "02.1",
+                "designation": "Formation",
+                "prestation": "Formation",
+                "qte": 1,
+                "pu": 142500,
+                "total": 142500
+            }
+        ],
+        "totals": {
+            "ht": 28642500,
+            "tva": 5442075,
+            "ttc": 34084575
+        }
     },
     {
         "id": "init-univ-tizi-ouzou-08-ummto-vrdpo-",
