@@ -47,15 +47,17 @@ const Dashboard = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [syncStatus, setSyncStatus] = useState("");
     const [authFilter, setAuthFilter] = useState(searchParams.get('auth') === 'true');
-    const [overdueFilter, setOverdueFilter] = useState(false);
+    const [overdueFilter, setOverdueFilter] = useState(searchParams.get('overdue') === 'true');
     const [activeStatusFilter, setActiveStatusFilter] = useState(searchParams.get('status'));
 
     // Update filters if URL changes
     useEffect(() => {
         const status = searchParams.get('status');
         const auth = searchParams.get('auth') === 'true';
+        const overdue = searchParams.get('overdue') === 'true';
         if (status !== undefined) setActiveStatusFilter(status);
         setAuthFilter(auth);
+        setOverdueFilter(overdue);
     }, [searchParams]);
 
     const handleDirectUpload = (e, orderId, type) => {

@@ -44,8 +44,38 @@ const Home = () => {
         
         const total = orders.length;
         const pendingAuth = orders.filter(o => o.authorization !== 'Oui').length;
+        const overdue = orders.filter(order => {
+            const start = order.startDate || order.dateOds;
+            const delay = order.delay;
+            let endDate = order.endDate;
+
+            if (!endDate && start && delay) {
+                const date = new Date(start);
+                const daysToAdd = parseInt(delay);
+                if (!isNaN(date.getTime()) && !isNaN(daysToAdd)) {
+                    date.setDate(date.getDate() + daysToAdd);
+                    if (order.stopDate) {
+                        const stop = new Date(order.stopDate);
+                        const resume = order.resumeDate ? new Date(order.resumeDate) : new Date();
+                        if (!isNaN(stop.getTime())) {
+                            const effectiveResume = !isNaN(resume.getTime()) ? resume : new Date();
+                            if (effectiveResume > stop) {
+                                date.setDate(date.getDate() + Math.ceil((effectiveResume - stop) / (1000 * 60 * 60 * 24)));
+                            }
+                        }
+                    }
+                    endDate = date.toISOString().split('T')[0];
+                }
+            }
+            if (!endDate) return false;
+            const target = new Date(endDate);
+            const today = order.deliveryDate ? new Date(order.deliveryDate) : new Date();
+            today.setHours(0, 0, 0, 0);
+            target.setHours(0, 0, 0, 0);
+            return !isNaN(target.getTime()) && target < today;
+        }).length;
         
-        return { byStatus, total, pendingAuth };
+        return { byStatus, total, pendingAuth, overdue };
     }, [orders]);
 
     const filterButtons = [
@@ -85,14 +115,16 @@ const Home = () => {
 
     const quickFilters = [
         { label: 'Tous les ODS', type: 'all', icon: <LayoutDashboard size={20} />, count: stats.total, color: 'text-blue-600 bg-blue-50' },
-        { label: 'Attente Autorisation', type: 'auth', icon: <Zap size={20} />, count: stats.pendingAuth, color: 'text-amber-600 bg-amber-50' }
+        { label: 'Attente Autorisation', type: 'auth', icon: <Zap size={20} />, count: stats.pendingAuth, color: 'text-amber-600 bg-amber-50' },
+        { label: 'Engagements Hors Délai', type: 'overdue', icon: <AlertTriangle size={20} />, count: stats.overdue, color: 'text-red-600 bg-red-50' }
     ];
 
-    const handleNavigation = (status = null, authFilter = false) => {
+    const handleNavigation = (status = null, authFilter = false, overdueFilter = false) => {
         let path = '/dashboard';
         const params = new URLSearchParams();
         if (status) params.append('status', status);
         if (authFilter) params.append('auth', 'true');
+        if (overdueFilter) params.append('overdue', 'true');
         
         const queryString = params.toString();
         navigate(queryString ? `${path}?${queryString}` : path);
@@ -110,11 +142,11 @@ const Home = () => {
             </header>
 
             {/* Quick Summary Row */}
-            <div className="flex justify-center gap-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+            <div className="flex justify-center gap-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 flex-wrap">
                 {quickFilters.map((q, idx) => (
                     <button
                         key={idx}
-                        onClick={() => handleNavigation(null, q.type === 'auth')}
+                        onClick={() => handleNavigation(null, q.type === 'auth', q.type === 'overdue')}
                         className={`flex items-center gap-3 px-6 py-3 rounded-2xl border border-transparent shadow-sm hover:shadow-md transition-all active:scale-95 ${q.color} font-black uppercase text-xs`}
                     >
                         {q.icon}
