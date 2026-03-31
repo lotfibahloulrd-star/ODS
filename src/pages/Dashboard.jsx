@@ -735,9 +735,23 @@ const Dashboard = () => {
                                                                                 loadOrders();
                                                                             }
                                                                         }}
-                                                                        className="px-2 py-1 bg-emerald-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-colors shadow-sm"
+                                                                        className="px-2 py-1 bg-emerald-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-colors shadow-sm mb-1"
                                                                     >
                                                                         Attribué
+                                                                    </button>
+                                                                )}
+                                                                {order.status === "En attente d'ODS" && (
+                                                                    <button
+                                                                        onClick={async (e) => {
+                                                                            e.stopPropagation();
+                                                                            if (window.confirm("Confirmer la réception de l'ODS ?")) {
+                                                                                await orderService.updateOrder(order.id, { status: "En cours" }, currentUser.firstName);
+                                                                                loadOrders();
+                                                                            }
+                                                                        }}
+                                                                        className="px-2 py-1 bg-blue-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-blue-700 transition-colors shadow-sm mb-1"
+                                                                    >
+                                                                        ODS Reçu
                                                                     </button>
                                                                 )}
                                                                 {order.files?.storage_auth && (
