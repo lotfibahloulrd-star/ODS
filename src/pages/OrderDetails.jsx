@@ -48,6 +48,8 @@ const OrderDetails = () => {
     const [tempDeliveryDate, setTempDeliveryDate] = useState("");
     const [isEditingProgress, setIsEditingProgress] = useState(false);
     const [tempProgress, setTempProgress] = useState("");
+    const [editingArticleIndex, setEditingArticleIndex] = useState(null);
+    const [editingArticleData, setEditingArticleData] = useState(null);
     const [isAddingArticle, setIsAddingArticle] = useState(false);
     const [newArticle, setNewArticle] = useState({ no: "", ref: "", designation: "", qte: "", pu: "", marque: "", site: "" });
 
@@ -261,6 +263,30 @@ const OrderDetails = () => {
             loadOrder();
         } catch (e) {
             alert("Erreur lors de l'ajout de l'article.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleUpdateArticle = async (index) => {
+        setIsSaving(true);
+        try {
+            const newArticles = [...localArticles];
+            const updatedArt = { 
+                ...editingArticleData, 
+                total: (parseFloat(editingArticleData.qte) || 0) * (parseFloat(editingArticleData.pu) || 0) 
+            };
+            newArticles[index] = updatedArt;
+            
+            await orderService.updateOrder(order.id, { articles: newArticles }, currentUser.firstName);
+            
+            setLocalArticles(newArticles);
+            setEditingArticleIndex(null);
+            setEditingArticleData(null);
+            loadOrder();
+            alert("Article mis à jour !");
+        } catch (e) {
+            alert("Erreur lors de la mise à jour.");
         } finally {
             setIsSaving(false);
         }
@@ -995,40 +1021,61 @@ const OrderDetails = () => {
                                             };
 
                                             return (
-                                                <tr key={idx} className={`hover:bg-slate-50/50 transition-colors ${hasStage('cleared') ? 'bg-emerald-50/30' : (hasStage('ordered') ? 'bg-blue-50/20' : '')}`}>
-                                                    <td className="px-6 py-4 text-[11px] font-black text-slate-400">{art.no}</td>
-                                                    <td className="px-6 py-4 text-[11px] font-bold text-blue-600">{art.ref}</td>
-                                                    <td className="px-6 py-4 text-[11px] font-medium text-slate-600 leading-relaxed max-w-md">{art.designation}</td>
-                                                    <td className="px-6 py-4 text-[11px] font-black text-slate-900 text-center">{art.qte}</td>
-                                                    <td className="px-6 py-4 text-[11px] font-bold text-slate-700 text-right">{formatAmount(art.pu)}</td>
-                                                    <td className="px-6 py-4 text-[11px] font-black text-slate-900 text-right">{formatAmount(art.total)}</td>
-                                                    <td className="px-6 py-4 text-center">
-                                                        <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[9px] font-black uppercase italic">{art.marque}</span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-center">
-                                                        <span className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded text-[9px] font-black uppercase tracking-widest">{art.site || "-"}</span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-center">
-                                                        <button
-                                                            onClick={async (e) => {
-                                                                e.stopPropagation();
-                                                                const newArticles = [...localArticles];
-                                                                newArticles[idx] = { ...newArticles[idx], available: !newArticles[idx].available };
-                                                                setLocalArticles(newArticles);
-                                                                // Auto-save pour mise à jour immédiate de l'avancement
-                                                                try {
-                                                                    await orderService.updateOrder(order.id, { articles: newArticles }, currentUser.firstName);
-                                                                } catch (err) {
-                                                                    console.error("Erreur auto-save disponibilité:", err);
-                                                                }
-                                                            }}
-                                                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${art.available ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'}`}
-                                                        >
-                                                            <CheckCircle2 size={20} />
-                                                        </button>
-                                                    </td>
+                                                <tr key={idx} className={`hover:bg-slate-50/50 transition-colors group/row ${hasStage('cleared') ? 'bg-emerald-50/30' : (hasStage('ordered') ? 'bg-blue-50/20' : '')}`}>
+                                                    {editingArticleIndex === idx ? (
+                                                        <>
+                                                            <td className="px-4 py-4 text-[10px]"><input type="text" className="w-10 p-1 border rounded" value={editingArticleData.no} onChange={e => setEditingArticleData({...editingArticleData, no: e.target.value})} /></td>
+                                                            <td className="px-4 py-4 text-[10px]"><input type="text" className="w-full p-1 border rounded" value={editingArticleData.ref} onChange={e => setEditingArticleData({...editingArticleData, ref: e.target.value})} /></td>
+                                                            <td className="px-4 py-4 text-[10px]"><textarea className="w-full p-1 border rounded resize-none" rows={2} value={editingArticleData.designation} onChange={e => setEditingArticleData({...editingArticleData, designation: e.target.value})} /></td>
+                                                            <td className="px-4 py-4 text-[10px]"><input type="number" className="w-12 p-1 border rounded text-center" value={editingArticleData.qte} onChange={e => setEditingArticleData({...editingArticleData, qte: e.target.value})} /></td>
+                                                            <td className="px-4 py-4 text-[10px]"><input type="number" className="w-24 p-1 border rounded text-right" value={editingArticleData.pu} onChange={e => setEditingArticleData({...editingArticleData, pu: e.target.value})} /></td>
+                                                            <td className="px-4 py-4 text-[10px] font-black text-right">{formatAmount((parseFloat(editingArticleData.qte) || 0) * (parseFloat(editingArticleData.pu) || 0))}</td>
+                                                            <td className="px-4 py-4 text-[10px]"><input type="text" className="w-full p-1 border rounded text-center" value={editingArticleData.marque} onChange={e => setEditingArticleData({...editingArticleData, marque: e.target.value})} /></td>
+                                                            <td className="px-4 py-4 text-[10px]"><input type="text" className="w-full p-1 border rounded text-center" value={editingArticleData.site} onChange={e => setEditingArticleData({...editingArticleData, site: e.target.value})} /></td>
+                                                            <td className="px-4 py-4 text-center">
+                                                                <div className="flex gap-1 justify-center">
+                                                                    <button onClick={() => handleUpdateArticle(idx)} className="p-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all"><FileCheck size={14} /></button>
+                                                                    <button onClick={() => setEditingArticleIndex(null)} className="p-1.5 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300 transition-all"><ArrowLeft size={14} /></button>
+                                                                </div>
+                                                            </td>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <td className="px-6 py-4 text-[11px] font-black text-slate-400">{art.no}</td>
+                                                            <td className="px-6 py-4 text-[11px] font-bold text-blue-600">{art.ref}</td>
+                                                            <td className="px-6 py-4 text-[11px] font-medium text-slate-600 leading-relaxed max-w-md">{art.designation}</td>
+                                                            <td className="px-6 py-4 text-[11px] font-black text-slate-900 text-center">{art.qte}</td>
+                                                            <td className="px-6 py-4 text-[11px] font-bold text-slate-700 text-right">{formatAmount(art.pu)}</td>
+                                                            <td className="px-6 py-4 text-[11px] font-black text-slate-900 text-right">{formatAmount(art.total)}</td>
+                                                            <td className="px-6 py-4 text-center">
+                                                                <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[9px] font-black uppercase italic">{art.marque}</span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-center">
+                                                                <span className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded text-[9px] font-black uppercase tracking-widest">{art.site || "-"}</span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-center">
+                                                                <button
+                                                                    onClick={async (e) => {
+                                                                        e.stopPropagation();
+                                                                        const newArticles = [...localArticles];
+                                                                        newArticles[idx] = { ...newArticles[idx], available: !newArticles[idx].available };
+                                                                        setLocalArticles(newArticles);
+                                                                        // Auto-save pour mise à jour immédiate de l'avancement
+                                                                        try {
+                                                                            await orderService.updateOrder(order.id, { articles: newArticles }, currentUser.firstName);
+                                                                        } catch (err) {
+                                                                            console.error("Erreur auto-save disponibilité:", err);
+                                                                        }
+                                                                    }}
+                                                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${art.available ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'}`}
+                                                                >
+                                                                    <CheckCircle2 size={20} />
+                                                                </button>
+                                                            </td>
+                                                        </>
+                                                    )}
                                                     <td className="px-6 py-4">
-                                                        <div className="flex items-center justify-center gap-1 bg-slate-50 p-1.5 rounded-2xl border border-slate-100 w-fit mx-auto">
+                                                        <div className="flex items-center justify-center gap-1 bg-slate-50 p-1.5 rounded-2xl border border-slate-100 w-fit mx-auto relative group-actions:flex">
                                                             {[
                                                                 { key: 'ordered', label: 'Commande', emoji: '🛒', color: 'bg-blue-600', shadow: 'shadow-blue-100', text: 'text-blue-200' },
                                                                 { key: 'shipped', label: 'Expé.', emoji: '🚢', color: 'bg-indigo-600', shadow: 'shadow-indigo-100', text: 'text-indigo-200' },
@@ -1059,15 +1106,30 @@ const OrderDetails = () => {
                                                                     )}
                                                                 </React.Fragment>
                                                             ))}
-                                                            {isSuperAdmin() && (
-                                                                <button
-                                                                    onClick={() => handleDeleteArticle(idx)}
-                                                                    className="absolute -right-8 opacity-0 group-hover/actions:opacity-100 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                                                    title="Supprimer l'article"
-                                                                >
-                                                                    <Trash2 size={13} />
-                                                                </button>
-                                                            )}
+                                                            
+                                                            <div className="flex items-center gap-1 ml-4 border-l border-slate-200 pl-4 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                                                                {editingArticleIndex === null && isSuperAdmin() && (
+                                                                    <>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setEditingArticleIndex(idx);
+                                                                                setEditingArticleData(art);
+                                                                            }}
+                                                                            className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                                            title="Modifier l'article"
+                                                                        >
+                                                                            <FileText size={13} />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleDeleteArticle(idx)}
+                                                                            className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                                            title="Supprimer l'article"
+                                                                        >
+                                                                            <Trash2 size={13} />
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </td>
                                                 </tr>
