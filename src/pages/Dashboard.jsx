@@ -216,6 +216,37 @@ const Dashboard = () => {
         });
     }, [orders, searchTerm, auth, authFilter]);
 
+    const groupedOrders = useMemo(() => {
+        const sections = [
+            { id: 'payment', label: 'En attente de paiement', color: 'bg-amber-600' },
+            { id: 'ongoing', label: 'En cours', color: 'bg-blue-600' },
+            { id: 'waiting_ods', label: 'En attente d\'ODS', color: 'bg-indigo-600' },
+            { id: 'attribution', label: 'Attribution en attente', color: 'bg-slate-600' }
+        ];
+
+        const grouped = {
+            'En attente de paiement': [],
+            'En cours': [],
+            'En attente d\'ODS': [],
+            'Attribution en attente': []
+        };
+
+        filteredOrders.forEach(o => {
+            const status = o.status || 'En cours';
+            if (grouped[status]) {
+                grouped[status].push(o);
+            } else {
+                // Default fallback
+                grouped['En cours'].push(o);
+            }
+        });
+
+        return sections.map(s => ({
+            ...s,
+            orders: grouped[s.label]
+        }));
+    }, [filteredOrders]);
+
     const openPdf = (orderId, storageKey) => {
         // En mode partagé, on pointe vers l'API qui sert le fichier
         const baseUrl = import.meta.env.BASE_URL || '/';
@@ -502,256 +533,267 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[1200px]">
-                        <thead>
-                            <tr className="bg-slate-50 border-b border-slate-100">
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Client / Maître d'Ouvrage</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-emerald-600 text-center">Autorisation</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Objet</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-slate-400">Valeur</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Réf. ODS</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">Réf. Contrat</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-emerald-600">Avancement</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-red-600 text-center">Suspension</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-amber-600">Domiciliation</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-red-600 text-center">Pénalités (DA)</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Poursuites</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-slate-400">Logistique</th>
-                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-right text-slate-400">Détails</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {isLoading ? (
-                                <tr>
-                                    <td colSpan="9" className="px-6 py-20 text-center">
-                                        <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-                                        <p className="text-slate-500 font-bold tracking-tight">Analyse des données en cours...</p>
-                                    </td>
-                                </tr>
-                            ) : filteredOrders.length === 0 ? (
-                                <tr>
-                                    <td colSpan="9" className="px-6 py-20 text-center">
-                                        <Package className="mx-auto text-slate-300 mb-6" size={64} />
-                                        <p className="text-slate-500 font-black text-lg">Aucun engagement trouvé</p>
-                                        <p className="text-slate-400 text-sm mt-1">Ajustez vos filtres ou créez un nouvel ODS</p>
-                                    </td>
-                                </tr>
-                            ) : (
-                                filteredOrders.map(order => {
-                                    const isStopping = order.hasStopRequest === 'Oui' || !!(order.files?.storage_stops_req) || !!(order.files?.storage_stops_res);
-                                    const hasOds = !!(order.files?.storage_ods);
-                                    const hasContract = !!(order.files?.storage_contracts);
-
-                                    const isImportLaunched = order.importStatus?.importLaunched;
-                                    const isImportCleared = !!order.importStatus?.clearedAt;
-                                    const isStockReceived = order.stockStatus?.reception === 'Totale';
-
-                                    // Calcul de l'avancement "Dispo"
-                                    const totalHt = order.totals?.ht || order.articles?.reduce((sum, a) => sum + (a.total || 0), 0) || 0;
-                                    const availableHt = order.articles?.reduce((sum, a) => sum + (a.available ? (a.total || 0) : 0), 0) || 0;
-                                    const calculatedProgress = totalHt > 0 ? Math.round((availableHt / totalHt) * 100) : 0;
-                                    const progress = (order.manualProgress !== undefined && order.manualProgress !== null && order.manualProgress !== "")
-                                        ? parseInt(order.manualProgress)
-                                        : calculatedProgress;
-
-                                    return (
-                                        <tr
-                                            key={order.id || Math.random()}
-                                            onClick={() => navigate(`/order/${order.id}`)}
-                                            className={`group transition-all cursor-pointer border-b border-slate-50 last:border-0 ${(order.importStatus?.orderPlaced || order.articles?.some(a => a.ordered))
-                                                ? 'bg-emerald-50/80 hover:bg-emerald-100/80'
-                                                : 'hover:bg-blue-50/50'
-                                                }`}
-                                        >
-                                            <td className="px-6 py-7">
-                                                <div className="font-black text-slate-900 uppercase text-[11px] min-w-[200px] tracking-tight" title={order.client}>
-                                                    {order.client || "-"}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-7 text-center">
-                                                <div className="flex flex-col items-center gap-2">
-                                                    <button
-                                                        onClick={async (e) => {
-                                                            e.stopPropagation();
-                                                            if (isSuperAdmin && isSuperAdmin()) {
-                                                                await orderService.updateOrder(order.id, {
-                                                                    authorization: order.authorization === 'Oui' ? 'Non' : 'Oui'
-                                                                }, currentUser.firstName);
-                                                                loadOrders();
-                                                            }
-                                                        }}
-                                                        className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${order.authorization === 'Oui' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}
-                                                    >
-                                                        {order.authorization === 'Oui' ? 'Autorisation confirmée' : 'Attente Autorisation'}
-                                                    </button>
-                                                    {order.files?.storage_auth && (
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); openPdf(order.id, 'storage_auth'); }}
-                                                            className="text-[8px] font-black text-blue-500 uppercase hover:underline"
-                                                        >
-                                                            Voir PDF
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-7">
-                                                <div className="text-[11px] font-bold text-slate-600 line-clamp-1 max-w-[250px] leading-relaxed" title={order.object}>
-                                                    {order.object || "-"}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-7 text-center">
-                                                <span className="text-xs font-black text-slate-900 whitespace-nowrap bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 italic">{formatAmount(order.amount)}</span>
-                                            </td>
-                                            <td className="px-6 py-7">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="group/ref relative flex items-center gap-1.5">
-                                                        <div className="text-[11px] font-black text-blue-600 tracking-tight">{order.refOds || order.ref || "-"}</div>
-                                                        {(!order.refOds && !order.ref) && (
-                                                            <div className="text-[8px] bg-blue-50 text-blue-400 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">À saisir</div>
-                                                        )}
-                                                        <Plus size={10} className="text-blue-300 opacity-0 group-hover/ref:opacity-100 transition-opacity" />
-                                                    </div>
-                                                    {hasOds && (
-                                                        <button onClick={e => { e.stopPropagation(); openPdf(order.id, 'storage_ods'); }} className="w-6 h-6 flex items-center justify-center text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all">
-                                                            <FileText size={12} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-7">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="group/ref relative flex items-center gap-1.5">
-                                                        <div className="text-[11px] font-bold text-indigo-600 tracking-tight">{order.refContract || "-"}</div>
-                                                        {!order.refContract && (
-                                                            <div className="text-[8px] bg-indigo-50 text-indigo-400 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">À saisir</div>
-                                                        )}
-                                                        <Plus size={10} className="text-indigo-300 opacity-0 group-hover/ref:opacity-100 transition-opacity" />
-                                                    </div>
-                                                    {hasContract && (
-                                                        <button onClick={e => { e.stopPropagation(); openPdf(order.id, 'storage_contracts'); }} className="w-6 h-6 flex items-center justify-center text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-600 hover:text-white transition-all">
-                                                            <FileCheck size={12} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-7 text-center">
-                                                <div className="flex flex-col items-center gap-1.5 min-w-[100px]">
-                                                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/50">
-                                                        <div
-                                                            className={`h-full transition-all duration-1000 ${progress >= 100 ? 'bg-emerald-500' : progress > 50 ? 'bg-blue-500' : 'bg-amber-500'}`}
-                                                            style={{ width: `${progress}%` }}
-                                                        ></div>
-                                                    </div>
-                                                    <span className={`text-[10px] font-black ${progress >= 100 ? 'text-emerald-600' : 'text-slate-600'}`}>
-                                                        {progress}% <span className="text-[8px] opacity-40">DISPO</span>
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-7 text-center">
-                                                {isStopping ? (
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="px-2.5 py-1 bg-red-100 text-red-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-red-200">
-                                                                ARRÊTÉ
-                                                            </div>
-                                                            {order.files?.storage_stops_res && (
-                                                                <button onClick={e => { e.stopPropagation(); openPdf(order.id, 'storage_stops_res'); }} className="w-6 h-6 flex items-center justify-center text-red-600 bg-red-50 rounded-lg hover:bg-red-600 hover:text-white transition-all">
-                                                                    <FileText size={12} />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                        <div className="flex flex-col text-[8px] font-bold text-red-400">
-                                                            <span>Arrêt: {formatDate(order.stopDate)}</span>
-                                                            {order.resumeDate && <span className="text-emerald-500">Reprise: {formatDate(order.resumeDate)}</span>}
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-slate-200 text-[10px] font-black uppercase tracking-widest">RAS</span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-7">
-                                                <div className="text-[10px] font-bold text-slate-600 uppercase tracking-tight">
-                                                    {order.bankDomiciliation || "-"}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-7 text-center">
-                                                {(() => {
-                                                    const days = getRemainingDays(order);
-                                                    if (order.deliveryDate) {
-                                                        if (days !== null && days >= 0) {
-                                                            return <div className="px-2.5 py-1 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest border border-blue-700 shadow-lg shadow-blue-100 flex items-center gap-1 justify-center"><Package size={10} /> LIVRÉ</div>;
-                                                        } else if (days !== null && days < 0) {
-                                                            const delayDays = Math.abs(days);
-                                                            const amountStr = (order.amount || "0").toString().replace(/[^\d.,]/g, '').replace(',', '.');
-                                                            const amount = parseFloat(amountStr);
-                                                            const penalty = Math.round(amount * 0.001 * delayDays);
-                                                            return <div className="flex flex-col items-center gap-1">
-                                                                <div className="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest">LIVRÉ TARD</div>
-                                                                <span className="text-[10px] font-black text-red-600">-{new Intl.NumberFormat('fr-FR').format(penalty)}</span>
-                                                            </div>;
-                                                        }
-                                                    }
-                                                    if (days !== null && days < 0) {
-                                                        const delayDays = Math.abs(days);
-                                                        const amountStr = (order.amount || "0").toString().replace(/[^\d.,]/g, '').replace(',', '.');
-                                                        const amount = parseFloat(amountStr);
-                                                        const penalty = Math.round(amount * 0.001 * delayDays);
-                                                        return <span className="text-xs font-black text-red-600 bg-red-50 px-2 py-1 rounded-lg border border-red-100">{new Intl.NumberFormat('fr-FR').format(penalty)}</span>;
-                                                    }
-                                                    return <span className="text-slate-200 text-[10px] font-black uppercase">0</span>;
-                                                })()}
-                                            </td>
-                                            <td className="px-6 py-7">
-                                                <div className="text-[10px] font-medium text-slate-500 line-clamp-1 max-w-[150px]" title={order.judicialProceedings}>
-                                                    {order.judicialProceedings || "-"}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-7">
-                                                <div className="flex items-center justify-center gap-1.5">
-                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isImportLaunched ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-300'}`} title="Import Lancé">
-                                                        <Plane size={14} />
-                                                    </div>
-                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isImportCleared ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-300'}`} title="Dédouané">
-                                                        <Anchor size={14} />
-                                                    </div>
-                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isStockReceived ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-300'}`} title="Réceptionné">
-                                                        <Box size={14} />
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-7 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    {isSuperAdmin && isSuperAdmin() && (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                if (window.confirm(`⚠️ Supprimer l'ODS "${order.client}" ?\n\nCette action est irréversible.`)) {
-                                                                    orderService.deleteOrder(order.id).then(() => {
-                                                                        setOrders(prev => prev.filter(o => o.id !== order.id));
-                                                                    }).catch(err => alert('Erreur: ' + err.message));
-                                                                }
-                                                            }}
-                                                            className="w-9 h-9 bg-red-50 text-red-400 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 hover:text-white active:scale-90"
-                                                            title="Supprimer cet ODS"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    )}
-                                                    <div className="w-9 h-9 bg-slate-900 text-white rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg active:scale-90">
-                                                        <ArrowRight size={16} />
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
+            {isLoading ? (
+                <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl p-20 text-center">
+                    <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p className="text-slate-500 font-bold tracking-tight">Analyse des données en cours...</p>
                 </div>
-            </div>
+            ) : filteredOrders.length === 0 ? (
+                <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl p-20 text-center">
+                    <Package className="mx-auto text-slate-300 mb-6" size={64} />
+                    <p className="text-slate-500 font-black text-lg">Aucun engagement trouvé</p>
+                    <p className="text-slate-400 text-sm mt-1">Ajustez vos filtres ou créez un nouvel ODS</p>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-10">
+                    {groupedOrders.map(group => group.orders.length > 0 && (
+                        <div key={group.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="flex items-center gap-4 mb-4 px-2">
+                                <div className={`w-3 h-8 ${group.color} rounded-full`}></div>
+                                <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">
+                                    {group.label} 
+                                    <span className="ml-3 text-sm font-bold text-slate-400 px-3 py-1 bg-white border border-slate-100 rounded-full">
+                                        {group.orders.length} ODS
+                                    </span>
+                                </h3>
+                            </div>
+                            
+                            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse min-w-[1200px]">
+                                        <thead>
+                                            <tr className="bg-slate-50 border-b border-slate-100">
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Client / Maître d'Ouvrage</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-emerald-600 text-center">Autorisation</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Objet</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-slate-400">Valeur</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Réf. ODS</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">Réf. Contrat</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-emerald-600">Avancement</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-red-600 text-center">Suspension</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-amber-600">Domiciliation</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-red-600 text-center">Pénalités (DA)</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Poursuites</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-center text-slate-400">Logistique</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-right text-slate-400">Détails</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {group.orders.map(order => {
+                                                const isStopping = order.hasStopRequest === 'Oui' || !!(order.files?.storage_stops_req) || !!(order.files?.storage_stops_res);
+                                                const hasOds = !!(order.files?.storage_ods);
+                                                const hasContract = !!(order.files?.storage_contracts);
+
+                                                const isImportLaunched = order.importStatus?.importLaunched;
+                                                const isImportCleared = !!order.importStatus?.clearedAt;
+                                                const isStockReceived = order.stockStatus?.reception === 'Totale';
+
+                                                const totalHt = order.totals?.ht || order.articles?.reduce((sum, a) => sum + (a.total || 0), 0) || 0;
+                                                const availableHt = order.articles?.reduce((sum, a) => sum + (a.available ? (a.total || 0) : 0), 0) || 0;
+                                                const calculatedProgress = totalHt > 0 ? Math.round((availableHt / totalHt) * 100) : 0;
+                                                const progress = (order.manualProgress !== undefined && order.manualProgress !== null && order.manualProgress !== "")
+                                                    ? parseInt(order.manualProgress)
+                                                    : calculatedProgress;
+
+                                                return (
+                                                    <tr
+                                                        key={order.id || Math.random()}
+                                                        onClick={() => navigate(`/order/${order.id}`)}
+                                                        className={`group transition-all cursor-pointer border-b border-slate-50 last:border-0 ${(order.importStatus?.orderPlaced || order.articles?.some(a => a.ordered))
+                                                            ? 'bg-emerald-50/80 hover:bg-emerald-100/80'
+                                                            : 'hover:bg-blue-50/50'
+                                                            }`}
+                                                    >
+                                                        <td className="px-6 py-7">
+                                                            <div className="font-black text-slate-900 uppercase text-[11px] min-w-[200px] tracking-tight" title={order.client}>
+                                                                {order.client || "-"}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-7 text-center">
+                                                            <div className="flex flex-col items-center gap-2">
+                                                                <button
+                                                                    onClick={async (e) => {
+                                                                        e.stopPropagation();
+                                                                        if (isSuperAdmin && isSuperAdmin()) {
+                                                                            await orderService.updateOrder(order.id, {
+                                                                                authorization: order.authorization === 'Oui' ? 'Non' : 'Oui'
+                                                                            }, currentUser.firstName);
+                                                                            loadOrders();
+                                                                        }
+                                                                    }}
+                                                                    className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${order.authorization === 'Oui' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}
+                                                                >
+                                                                    {order.authorization === 'Oui' ? 'Autorisation confirmée' : 'Attente Autorisation'}
+                                                                </button>
+                                                                {order.files?.storage_auth && (
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); openPdf(order.id, 'storage_auth'); }}
+                                                                        className="text-[8px] font-black text-blue-500 uppercase hover:underline"
+                                                                    >
+                                                                        Voir PDF
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-7">
+                                                            <div className="text-[11px] font-bold text-slate-600 line-clamp-1 max-w-[250px] leading-relaxed" title={order.object}>
+                                                                {order.object || "-"}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-7 text-center">
+                                                            <span className="text-xs font-black text-slate-900 whitespace-nowrap bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 italic">{formatAmount(order.amount)}</span>
+                                                        </td>
+                                                        <td className="px-6 py-7">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="group/ref relative flex items-center gap-1.5">
+                                                                    <div className="text-[11px] font-black text-blue-600 tracking-tight">{order.refOds || order.ref || "-"}</div>
+                                                                    {(!order.refOds && !order.ref) && (
+                                                                        <div className="text-[8px] bg-blue-50 text-blue-400 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">À saisir</div>
+                                                                    )}
+                                                                    <Plus size={10} className="text-blue-300 opacity-0 group-hover/ref:opacity-100 transition-opacity" />
+                                                                </div>
+                                                                {hasOds && (
+                                                                    <button onClick={e => { e.stopPropagation(); openPdf(order.id, 'storage_ods'); }} className="w-6 h-6 flex items-center justify-center text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all">
+                                                                        <FileText size={12} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-7">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="group/ref relative flex items-center gap-1.5">
+                                                                    <div className="text-[11px] font-bold text-indigo-600 tracking-tight">{order.refContract || "-"}</div>
+                                                                    {!order.refContract && (
+                                                                        <div className="text-[8px] bg-indigo-50 text-indigo-400 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">À saisir</div>
+                                                                    )}
+                                                                    <Plus size={10} className="text-indigo-300 opacity-0 group-hover/ref:opacity-100 transition-opacity" />
+                                                                </div>
+                                                                {hasContract && (
+                                                                    <button onClick={e => { e.stopPropagation(); openPdf(order.id, 'storage_contracts'); }} className="w-6 h-6 flex items-center justify-center text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-600 hover:text-white transition-all">
+                                                                        <FileCheck size={12} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-7 text-center">
+                                                            <div className="flex flex-col items-center gap-1.5 min-w-[100px]">
+                                                                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/50">
+                                                                    <div
+                                                                        className={`h-full transition-all duration-1000 ${progress >= 100 ? 'bg-emerald-500' : progress > 50 ? 'bg-blue-500' : 'bg-amber-500'}`}
+                                                                        style={{ width: `${progress}%` }}
+                                                                    ></div>
+                                                                </div>
+                                                                <span className={`text-[10px] font-black ${progress >= 100 ? 'text-emerald-600' : 'text-slate-600'}`}>
+                                                                    {progress}% <span className="text-[8px] opacity-40">DISPO</span>
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-7 text-center">
+                                                            {isStopping ? (
+                                                                <div className="flex flex-col items-center gap-1">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="px-2.5 py-1 bg-red-100 text-red-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-red-200">
+                                                                            ARRÊTÉ
+                                                                        </div>
+                                                                        {order.files?.storage_stops_res && (
+                                                                            <button onClick={e => { e.stopPropagation(); openPdf(order.id, 'storage_stops_res'); }} className="w-6 h-6 flex items-center justify-center text-red-600 bg-red-50 rounded-lg hover:bg-red-600 hover:text-white transition-all">
+                                                                                <FileText size={12} />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex flex-col text-[8px] font-bold text-red-400">
+                                                                        <span>Arrêt: {formatDate(order.stopDate)}</span>
+                                                                        {order.resumeDate && <span className="text-emerald-500">Reprise: {formatDate(order.resumeDate)}</span>}
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-slate-200 text-[10px] font-black uppercase tracking-widest">RAS</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-7">
+                                                            <div className="text-[10px] font-bold text-slate-600 uppercase tracking-tight">
+                                                                {order.bankDomiciliation || "-"}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-7 text-center">
+                                                            {(() => {
+                                                                const days = getRemainingDays(order);
+                                                                if (order.deliveryDate) {
+                                                                    if (days !== null && days >= 0) {
+                                                                        return <div className="px-2.5 py-1 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest border border-blue-700 shadow-lg shadow-blue-100 flex items-center gap-1 justify-center"><Package size={10} /> LIVRÉ</div>;
+                                                                    } else if (days !== null && days < 0) {
+                                                                        const delayDays = Math.abs(days);
+                                                                        const amountStr = (order.amount || "0").toString().replace(/[^\d.,]/g, '').replace(',', '.');
+                                                                        const amount = parseFloat(amountStr);
+                                                                        const penalty = Math.round(amount * 0.001 * delayDays);
+                                                                        return <div className="flex flex-col items-center gap-1">
+                                                                            <div className="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest">LIVRÉ TARD</div>
+                                                                            <span className="text-[10px] font-black text-red-600">-{new Intl.NumberFormat('fr-FR').format(penalty)}</span>
+                                                                        </div>;
+                                                                    }
+                                                                }
+                                                                if (days !== null && days < 0) {
+                                                                    const delayDays = Math.abs(days);
+                                                                    const amountStr = (order.amount || "0").toString().replace(/[^\d.,]/g, '').replace(',', '.');
+                                                                    const amount = parseFloat(amountStr);
+                                                                    const penalty = Math.round(amount * 0.001 * delayDays);
+                                                                    return <span className="text-xs font-black text-red-600 bg-red-50 px-2 py-1 rounded-lg border border-red-100">{new Intl.NumberFormat('fr-FR').format(penalty)}</span>;
+                                                                }
+                                                                return <span className="text-slate-200 text-[10px] font-black uppercase">0</span>;
+                                                            })()}
+                                                        </td>
+                                                        <td className="px-6 py-7">
+                                                            <div className="text-[10px] font-medium text-slate-500 line-clamp-1 max-w-[150px]" title={order.judicialProceedings}>
+                                                                {order.judicialProceedings || "-"}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-7">
+                                                            <div className="flex items-center justify-center gap-1.5">
+                                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isImportLaunched ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-300'}`} title="Import Lancé">
+                                                                    <Plane size={14} />
+                                                                </div>
+                                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isImportCleared ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-300'}`} title="Dédouané">
+                                                                    <Anchor size={14} />
+                                                                </div>
+                                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isStockReceived ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-300'}`} title="Réceptionné">
+                                                                    <Box size={14} />
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-7 text-right">
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                {isSuperAdmin && isSuperAdmin() && (
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            if (window.confirm(`⚠️ Supprimer l'ODS "${order.client}" ?\n\nCette action est irréversible.`)) {
+                                                                                orderService.deleteOrder(order.id).then(() => {
+                                                                                    setOrders(prev => prev.filter(o => o.id !== order.id));
+                                                                                }).catch(err => alert('Erreur: ' + err.message));
+                                                                            }
+                                                                        }}
+                                                                        className="w-9 h-9 bg-red-50 text-red-400 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 hover:text-white active:scale-90"
+                                                                        title="Supprimer cet ODS"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                )}
+                                                                <div className="w-9 h-9 bg-slate-900 text-white rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg active:scale-90">
+                                                                    <ArrowRight size={16} />
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Modal removed in favor of standalone page */}
         </div>
