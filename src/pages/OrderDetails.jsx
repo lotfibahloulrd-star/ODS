@@ -1166,7 +1166,7 @@ const OrderDetails = () => {
                                                                 const tva = Math.round(ht * 0.19 * 100) / 100;
                                                                 const ttc = Math.round((ht + tva) * 100) / 100;
                                                                 setTempHt(ht); setTempTva(tva); setTempAmount(ttc.toString());
-                                                            }} className="w-32 p-1 border rounded text-right font-black" />
+                                                            }} className="w-full p-1 border rounded text-right font-black" />
                                                         </td>
                                                         <td colSpan="4"></td>
                                                     </tr>
@@ -1177,19 +1177,19 @@ const OrderDetails = () => {
                                                                 const tva = parseFloat(e.target.value) || 0;
                                                                 const ttc = Math.round((parseFloat(tempHt) || 0 + tva) * 100) / 100;
                                                                 setTempTva(tva); setTempAmount(ttc.toString());
-                                                            }} className="w-32 p-1 border rounded text-right font-black" />
+                                                            }} className="w-full p-1 border rounded text-right font-black" />
                                                         </td>
                                                         <td colSpan="4"></td>
                                                     </tr>
                                                     <tr className="bg-indigo-50/50">
                                                         <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-indigo-600 tracking-[0.2em]">Total TTC</td>
                                                         <td className="px-6 py-4 text-right">
-                                                            <input type="text" value={tempAmount} onChange={e => setTempAmount(e.target.value)} className="w-40 p-1 border rounded text-right font-black text-indigo-600" />
+                                                            <input type="text" value={tempAmount} onChange={e => setTempAmount(e.target.value)} className="w-full p-1 border rounded text-right font-black text-indigo-600" />
                                                         </td>
                                                         <td colSpan="4" className="text-center p-2">
                                                             <div className="flex gap-2 justify-center">
-                                                                <button onClick={handleSaveAmount} className="bg-emerald-500 text-white p-1 rounded"><FileCheck size={14}/></button>
-                                                                <button onClick={() => setIsEditingFooter(false)} className="bg-slate-300 text-slate-700 p-1 rounded"><ArrowLeft size={14}/></button>
+                                                                <button onClick={handleSaveAmount} className="bg-emerald-500 text-white p-1 rounded hover:bg-emerald-600 transition-all shadow-sm"><FileCheck size={14}/></button>
+                                                                <button onClick={() => setIsEditingFooter(false)} className="bg-slate-300 text-slate-700 p-1 rounded hover:bg-slate-400 transition-all shadow-sm"><ArrowLeft size={14}/></button>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -1197,28 +1197,30 @@ const OrderDetails = () => {
                                             ) : (
                                                 <>
                                                     <tr>
-                                                        <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center justify-end gap-2">
+                                                        <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest relative">
                                                             {isSuperAdmin() && (
                                                                 <button onClick={() => {
                                                                     const ht = order.totals?.ht || (order.articles || []).reduce((sum, a) => sum + (parseFloat(a.total) || 0), 0) || 0;
                                                                     const tva = order.totals?.tva !== undefined ? order.totals.tva : Math.round(ht * 0.19 * 100) / 100;
                                                                     setTempHt(ht); setTempTva(tva); setTempAmount(order.amount);
                                                                     setIsEditingFooter(true);
-                                                                }} className="p-1 hover:bg-slate-200 rounded text-slate-300 hover:text-slate-600 transition-all"><Plus size={12} /></button>
+                                                                }} className="absolute left-6 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-200 rounded text-slate-300 hover:text-slate-600 transition-all">
+                                                                    <Plus size={12} />
+                                                                </button>
                                                             )}
                                                             Total HT
                                                         </td>
-                                                        <td className="px-6 py-4 text-right text-xs font-black text-slate-900">{formatAmount(order.totals?.ht || (order.articles || []).reduce((sum, a) => sum + (parseFloat(a.total) || 0), 0))}</td>
+                                                        <td className="px-6 py-4 text-right text-xs font-black text-slate-900 border-l border-slate-100">{formatAmount(order.totals?.ht || (order.articles || []).reduce((sum, a) => sum + (parseFloat(a.total) || 0), 0))}</td>
                                                         <td colSpan="4"></td>
                                                     </tr>
                                                     <tr>
                                                         <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">TVA 19%</td>
-                                                        <td className="px-6 py-4 text-right text-xs font-black text-slate-900">{formatAmount(order.totals?.tva !== undefined ? order.totals?.tva : (Math.round((order.articles || []).reduce((sum, a) => sum + (parseFloat(a.total) || 0), 0) * 0.19 * 100) / 100))}</td>
+                                                        <td className="px-6 py-4 text-right text-xs font-black text-slate-900 border-l border-slate-100">{formatAmount(order.totals?.tva !== undefined ? order.totals?.tva : (Math.round((order.articles || []).reduce((sum, a) => sum + (parseFloat(a.total) || 0), 0) * 0.19 * 100) / 100))}</td>
                                                         <td colSpan="4"></td>
                                                     </tr>
                                                     <tr className="bg-indigo-50/50">
                                                         <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-indigo-600 tracking-[0.2em]">Total TTC</td>
-                                                        <td className="px-6 py-4 text-right text-sm font-black text-indigo-600">{formatAmount(order.amount)}</td>
+                                                        <td className="px-6 py-4 text-right text-sm font-black text-indigo-600 border-l border-indigo-100">{formatAmount(order.amount)}</td>
                                                         <td colSpan="4" className="bg-white"></td>
                                                     </tr>
                                                 </>
