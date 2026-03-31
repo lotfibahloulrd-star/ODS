@@ -45,8 +45,8 @@ const NewOrder = ({ onSave }) => {
 
     const calculateTotals = (articles) => {
         const ht = articles.reduce((sum, art) => sum + (parseFloat(art.total) || 0), 0);
-        const tva = Math.round(ht * 0.19 * 100) / 100; // 19% TVA standard
-        const ttc = Math.round((ht + tva) * 100) / 100;
+        const tva = ht * 0.19; // 19% TVA standard
+        const ttc = ht + tva;
         return { ht, tva, ttc };
     };
 
@@ -632,39 +632,12 @@ const NewOrder = ({ onSave }) => {
                             {/* Section 3: Financier & Délais */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                                 <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-100 group hover:border-blue-200 transition-all">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3 text-center">Total HT (DA)</label>
-                                    <input
-                                        type="number"
-                                        className="w-full p-4 bg-white border-2 border-slate-200 rounded-2xl text-center font-black text-slate-900 outline-none focus:border-blue-500"
-                                        value={formData.totals.ht}
-                                        onChange={e => {
-                                            const ht = parseFloat(e.target.value) || 0;
-                                            const tva = Math.round(ht * 0.19 * 100) / 100;
-                                            const ttc = Math.round((ht + tva) * 100) / 100;
-                                            setFormData({ ...formData, amount: ttc.toString(), totals: { ht, tva, ttc } });
-                                        }}
-                                    />
-                                </div>
-                                <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-100 group hover:border-blue-200 transition-all">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3 text-center">TVA (19%)</label>
-                                    <input
-                                        type="number"
-                                        className="w-full p-4 bg-white border-2 border-slate-200 rounded-2xl text-center font-black text-slate-900 outline-none focus:border-blue-500"
-                                        value={formData.totals.tva}
-                                        onChange={e => {
-                                            const tva = parseFloat(e.target.value) || 0;
-                                            const ttc = Math.round((formData.totals.ht + tva) * 100) / 100;
-                                            setFormData({ ...formData, amount: ttc.toString(), totals: { ...formData.totals, tva, ttc } });
-                                        }}
-                                    />
-                                </div>
-                                <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-100 group hover:border-emerald-200 transition-all">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3 text-center">Montant TTC (DA)</label>
                                     <input
                                         type="text"
                                         className="w-full p-4 bg-white border-2 border-slate-200 rounded-2xl text-center font-black text-blue-700 outline-none focus:border-blue-500 text-xl"
                                         value={formData.amount}
-                                        onChange={e => setFormData({ ...formData, amount: e.target.value, totals: { ...formData.totals, ttc: parseFloat(e.target.value) || 0 } })}
+                                        onChange={e => setFormData({ ...formData, amount: e.target.value })}
                                     />
                                 </div>
                                 <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-100 group hover:border-amber-200 transition-all">
