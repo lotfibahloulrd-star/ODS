@@ -70,6 +70,11 @@ const Dashboard = () => {
             try {
                 if (type === 'ods') {
                     await orderService.saveOdsFile(orderId, reader.result, file.name);
+                    // Automatique: En attente d'ODS -> En cours lors de l'upload
+                    const order = orders.find(o => o.id === orderId);
+                    if (order && order.status === "En attente d'ODS") {
+                        await orderService.updateOrder(orderId, { status: 'En cours' }, currentUser.firstName);
+                    }
                 } else if (type === 'auth') {
                     await orderService.saveAuthFile(orderId, reader.result, file.name);
                     // Mise à jour automatique du statut lors de l'upload
@@ -181,9 +186,31 @@ const Dashboard = () => {
             if (currentSync > 0) {
                 setSyncStatus("Synchronisation terminée !");
                 setTimeout(() => setSyncStatus(""), 3000);
-                loadOrders(); // Rafraîchir tout à la fin
+                loadOrders();
             } else {
                 setSyncStatus("");
+                
+                // Automatique: En cours -> En attente de paiement si 100%
+                const transitioningOrders = orders.filter(o => {
+                    if (o.status !== 'En cours') return false;
+                    
+                    // Calcul progress
+                    const totalHt = o.totals?.ht || o.articles?.reduce((sum, a) => sum + (a.total || 0), 0) || 0;
+                    const availableHt = o.articles?.reduce((sum, a) => sum + (a.available ? (a.total || 0) : 0), 0) || 0;
+                    const calculatedProgress = totalHt > 0 ? Math.round((availableHt / totalHt) * 100) : 0;
+                    const progress = (o.manualProgress !== undefined && o.manualProgress !== null && o.manualProgress !== "")
+                        ? parseInt(o.manualProgress)
+                        : calculatedProgress;
+                        
+                    return progress >= 100;
+                });
+                
+                if (transitioningOrders.length > 0) {
+                    console.log(`Auto-transitioning ${transitioningOrders.length} orders to payment...`);
+                    Promise.all(transitioningOrders.map(o => 
+                        orderService.updateOrder(o.id, { status: 'En attente de paiement' }, 'Système')
+                    )).then(() => loadOrders());
+                }
             }
         };
 
@@ -699,6 +726,20 @@ const Dashboard = () => {
                                                                 >
                                                                     {order.authorization === 'Oui' ? 'Autorisation confirmée' : 'Attente Autorisation'}
                                                                 </button>
+                                                                {order.status === 'Attribution en attente' && (
+                                                                    <button
+                                                                        onClick={async (e) => {
+                                                                            e.stopPropagation();
+                                                                            if (window.confirm("Confirmer l'attribution de ce marché ?")) {
+                                                                                await orderService.updateOrder(order.id, { status: "En attente d'ODS" }, currentUser.firstName);
+                                                                                loadOrders();
+                                                                            }
+                                                                        }}
+                                                                        className="px-2 py-1 bg-emerald-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-colors shadow-sm"
+                                                                    >
+                                                                        Attribué
+                                                                    </button>
+                                                                )}
                                                                 {order.files?.storage_auth && (
                                                                     <button
                                                                         onClick={(e) => { e.stopPropagation(); openPdf(order.id, 'storage_auth'); }}
