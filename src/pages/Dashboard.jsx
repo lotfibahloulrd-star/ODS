@@ -42,6 +42,8 @@ const Dashboard = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [syncStatus, setSyncStatus] = useState(""); // Nouveau : statut de migration
     const [authFilter, setAuthFilter] = useState(false); // Nouveau : filtre pour les autorisations en attente
+    const [overdueFilter, setOverdueFilter] = useState(false); // Nouveau : filtre pour les retards
+    const [activeStatusFilter, setActiveStatusFilter] = useState(null); // Nouveau : filtre par statut global
 
     const handleDirectUpload = (e, orderId, type) => {
         const file = e.target.files[0];
@@ -191,7 +193,16 @@ const Dashboard = () => {
             );
 
             if (authFilter) {
-                return matchesSearch && o.authorization !== 'Oui';
+                if (o.authorization === 'Oui') return false;
+            }
+
+            if (overdueFilter) {
+                const days = getRemainingDays(o);
+                if (days === null || days >= 0) return false;
+            }
+
+            if (activeStatusFilter) {
+                if (o.status !== activeStatusFilter) return false;
             }
 
             return matchesSearch;
@@ -483,14 +494,23 @@ const Dashboard = () => {
 
             {/* Statistics Section */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden group hover:border-blue-300 transition-all cursor-default">
+                <div 
+                    onClick={() => {
+                        setAuthFilter(false);
+                        setOverdueFilter(false);
+                        setActiveStatusFilter(null);
+                    }}
+                    className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden group hover:border-blue-300 transition-all cursor-pointer"
+                >
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
                         <Package size={80} className="text-blue-600" />
                     </div>
                     <div className="relative z-10 text-slate-500 font-black text-[10px] uppercase tracking-widest mb-2">Total Engagements</div>
                     <div className="relative z-10 text-3xl font-black text-slate-900">{stats.total}</div>
                     <div className="relative z-10 flex items-center gap-2 mt-4">
-                        <span className="text-[10px] px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full font-black uppercase">ODS Actifs</span>
+                        <span className="text-[10px] px-3 py-1.5 bg-blue-50 text-blue-700 rounded-xl font-black uppercase border border-blue-100/50 shadow-sm">
+                            Tout Afficher
+                        </span>
                     </div>
                 </div>
 
@@ -504,20 +524,25 @@ const Dashboard = () => {
                     <div className="relative z-10 text-slate-500 font-black text-[10px] uppercase tracking-widest mb-2">Attente Autorisation</div>
                     <div className="relative z-10 text-3xl font-black text-slate-900">{stats.pendingAuth}</div>
                     <div className="relative z-10 flex items-center gap-2 mt-4">
-                        <span className={`text-[10px] px-2.5 py-1 rounded-full font-black uppercase ${authFilter ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700'}`}>
-                            {authFilter ? 'Filtre Actif' : 'Validation Requise'}
+                        <span className={`text-[10px] px-3 py-1.5 rounded-xl font-black uppercase border shadow-sm ${authFilter ? 'bg-amber-600 text-white border-amber-500' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
+                            {authFilter ? 'Filtre Actif' : 'Filtre Attente'}
                         </span>
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden group hover:border-red-300 transition-all cursor-default">
+                <div 
+                    onClick={() => setOverdueFilter(!overdueFilter)}
+                    className={`p-6 rounded-[2rem] border shadow-sm relative overflow-hidden group transition-all cursor-pointer ${overdueFilter ? 'bg-red-50 border-red-400 ring-2 ring-red-400 ring-offset-2' : 'bg-white border-slate-200 hover:border-red-300'}`}
+                >
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
                         <AlertTriangle size={80} className="text-red-600" />
                     </div>
                     <div className="relative z-10 text-slate-500 font-black text-[10px] uppercase tracking-widest mb-2">Engagements Hors Délai</div>
                     <div className="relative z-10 text-3xl font-black text-red-600">{stats.overdue}</div>
                     <div className="relative z-10 flex items-center gap-2 mt-4">
-                        <span className="text-[10px] px-2.5 py-1 bg-red-50 text-red-700 rounded-full font-black uppercase">Attention Retard</span>
+                        <span className={`text-[10px] px-3 py-1.5 rounded-xl font-black uppercase border shadow-sm ${overdueFilter ? 'bg-red-600 text-white border-red-500' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                            {overdueFilter ? 'Filtre Actif' : 'Filtre Retard'}
+                        </span>
                     </div>
                 </div>
 
@@ -528,7 +553,7 @@ const Dashboard = () => {
                     <div className="relative z-10 text-slate-500 font-black text-[10px] uppercase tracking-widest mb-2">Montant global</div>
                     <div className="relative z-10 text-3xl font-black text-slate-900 tracking-tight">{formatAmount(stats.totalAmount)}</div>
                     <div className="relative z-10 flex items-center gap-2 mt-4">
-                        <span className="text-[10px] px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full font-black uppercase">Valeur Totale</span>
+                        <span className="text-[10px] px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl font-black uppercase border border-emerald-100/50 shadow-sm">Valeur Totale</span>
                     </div>
                 </div>
             </div>
