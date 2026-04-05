@@ -19,7 +19,10 @@ const FULL_ACCESS_EMAILS = [
     'katia.amkhoukh@esclab-algerie.com',
     'l.mayout@esclab-algerie.com',
     'b.rekkad@esclab-algerie.com',
-    'e.saci@esclab-algerie.com'
+    'e.saci@esclab-algerie.com',
+    'mazouz.sonia@esclab-algerie.com',
+    'belateche.taklit@esclab-algerie.com',
+    'n.bouras@esclab-algerie.com'
 ];
 
 export const AuthProvider = ({ children }) => {
@@ -44,7 +47,10 @@ export const AuthProvider = ({ children }) => {
             { id: 8, firstName: 'Bellal', lastName: 'Rekkad', email: 'b.rekkad@esclab-algerie.com', division: 'Responsable stock division laboratoire', role: 'Utilisateur', password: 'user123' },
             { id: 9, firstName: 'El Yazid', lastName: 'Saci', email: 'e.saci@esclab-algerie.com', division: 'Responsable stock division analytique', role: 'Utilisateur', password: 'user123' },
             { id: 10, firstName: 'Tarek', lastName: 'Ait El Hocine', email: 't.aitelhocine@esclab-algerie.com', division: 'Division Analytique', role: 'Administrateur', password: 'user123' },
-            { id: 11, firstName: 'Farid', lastName: 'Taazibt', email: 'f.taazibt@esclab-algerie.com', division: 'Division Laboratoire', role: 'Administrateur', password: 'user123' }
+            { id: 11, firstName: 'Farid', lastName: 'Taazibt', email: 'f.taazibt@esclab-algerie.com', division: 'Division Laboratoire', role: 'Administrateur', password: 'user123' },
+            { id: 12, firstName: 'Sonia', lastName: 'Mazouz', email: 'mazouz.sonia@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
+            { id: 13, firstName: 'Taklit', lastName: 'Belateche', email: 'belateche.taklit@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
+            { id: 14, firstName: 'N.', lastName: 'Bouras', email: 'n.bouras@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' }
         ];
 
         let hasChanges = false;
@@ -77,7 +83,10 @@ export const AuthProvider = ({ children }) => {
                 { id: 8, firstName: 'Bellal', lastName: 'Rekkad', email: 'b.rekkad@esclab-algerie.com', division: 'Responsable stock division laboratoire', role: 'Utilisateur', password: 'user123' },
                 { id: 9, firstName: 'El Yazid', lastName: 'Saci', email: 'e.saci@esclab-algerie.com', division: 'Responsable stock division analytique', role: 'Utilisateur', password: 'user123' },
                 { id: 10, firstName: 'Tarek', lastName: 'Ait El Hocine', email: 't.aitelhocine@esclab-algerie.com', division: 'Division Analytique', role: 'Administrateur', password: 'user123' },
-                { id: 11, firstName: 'Farid', lastName: 'Taazibt', email: 'f.taazibt@esclab-algerie.com', division: 'Division Laboratoire', role: 'Administrateur', password: 'user123' }
+                { id: 11, firstName: 'Farid', lastName: 'Taazibt', email: 'f.taazibt@esclab-algerie.com', division: 'Division Laboratoire', role: 'Administrateur', password: 'user123' },
+                { id: 12, firstName: 'Sonia', lastName: 'Mazouz', email: 'mazouz.sonia@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
+                { id: 13, firstName: 'Taklit', lastName: 'Belateche', email: 'belateche.taklit@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
+                { id: 14, firstName: 'N.', lastName: 'Bouras', email: 'n.bouras@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' }
             ];
             localStorage.setItem('ods_users_v7', JSON.stringify(defaultUsers));
             usersStr = JSON.stringify(defaultUsers);
@@ -167,7 +176,10 @@ export const AuthProvider = ({ children }) => {
             'l.bahloul@esclab-algerie.com',
             'w.boukacem@esclab-algerie.com',
             's.boukacem@esclab-algerie.com',
-            'brikh.hamza@esclab-algerie.com'
+            'brikh.hamza@esclab-algerie.com',
+            'mazouz.sonia@esclab-algerie.com',
+            'belateche.taklit@esclab-algerie.com',
+            'n.bouras@esclab-algerie.com'
         ];
         return isSuperAdmin() || authorizedEmails.includes(currentUser?.email);
     };
@@ -177,7 +189,10 @@ export const AuthProvider = ({ children }) => {
             'l.bahloul@esclab-algerie.com',
             'w.boukacem@esclab-algerie.com',
             's.boukacem@esclab-algerie.com',
-            'brikh.hamza@esclab-algerie.com'
+            'brikh.hamza@esclab-algerie.com',
+            'mazouz.sonia@esclab-algerie.com',
+            'belateche.taklit@esclab-algerie.com',
+            'n.bouras@esclab-algerie.com'
         ];
         return isSuperAdmin() || authorizedEmails.includes(currentUser?.email);
     };

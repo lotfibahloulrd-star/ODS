@@ -11,7 +11,7 @@ const ROLES = {
 const UsersPage = () => {
     const { resetUserPassword, isSuperAdmin } = useAuth();
     const [users, setUsers] = useState(() => {
-        const saved = localStorage.getItem('ods_users_v6');
+        const saved = localStorage.getItem('ods_users_v7');
         return saved ? JSON.parse(saved) : [
             { id: 1, firstName: 'Lotfi', lastName: 'Bahloul', email: 'l.bahloul@esclab-algerie.com', division: 'Super-Administrateur', role: ROLES.SUPER_ADMIN, password: 'user123' },
             { id: 2, firstName: 'Ali', lastName: 'Ouali', email: 'a.ouali@esclab-algerie.com', division: 'Administrateur', role: ROLES.ADMIN, password: 'user123' },
@@ -23,7 +23,10 @@ const UsersPage = () => {
             { id: 8, firstName: 'Bellal', lastName: 'Rekkad', email: 'b.rekkad@esclab-algerie.com', division: 'Responsable stock division laboratoire', role: ROLES.USER, password: 'user123' },
             { id: 9, firstName: 'El Yazid', lastName: 'Saci', email: 'e.saci@esclab-algerie.com', division: 'Responsable stock division analytique', role: ROLES.USER, password: 'user123' },
             { id: 10, firstName: 'Tarek', lastName: 'Ait El Hocine', email: 't.aitelhocine@esclab-algerie.com', division: 'Division Analytique', role: ROLES.ADMIN, password: 'user123' },
-            { id: 11, firstName: 'Farid', lastName: 'Taazibt', email: 'f.taazibt@esclab-algerie.com', division: 'Division Laboratoire', role: ROLES.ADMIN, password: 'user123' }
+            { id: 11, firstName: 'Farid', lastName: 'Taazibt', email: 'f.taazibt@esclab-algerie.com', division: 'Division Laboratoire', role: ROLES.ADMIN, password: 'user123' },
+            { id: 12, firstName: 'Sonia', lastName: 'Mazouz', email: 'mazouz.sonia@esclab-algerie.com', division: 'Administrateur', role: ROLES.ADMIN, password: 'user123' },
+            { id: 13, firstName: 'Taklit', lastName: 'Belateche', email: 'belateche.taklit@esclab-algerie.com', division: 'Administrateur', role: ROLES.ADMIN, password: 'user123' },
+            { id: 14, firstName: 'N.', lastName: 'Bouras', email: 'n.bouras@esclab-algerie.com', division: 'Administrateur', role: ROLES.ADMIN, password: 'user123' }
         ];
     });
 
@@ -40,7 +43,7 @@ const UsersPage = () => {
     });
 
     useEffect(() => {
-        localStorage.setItem('ods_users_v6', JSON.stringify(users));
+        localStorage.setItem('ods_users_v7', JSON.stringify(users));
     }, [users]);
 
     const filteredUsers = users.filter(u =>
@@ -260,7 +263,7 @@ const UsersPage = () => {
                                                             if (newPass && newPass.length >= 4) {
                                                                 if (resetUserPassword(user.email, newPass)) {
                                                                     alert("Mot de passe mis à jour avec succès !");
-                                                                    setUsers(JSON.parse(localStorage.getItem('ods_users_v6')) || users);
+                                                                    setUsers(JSON.parse(localStorage.getItem('ods_users_v7')) || users);
                                                                 }
                                                             }
                                                         }}
