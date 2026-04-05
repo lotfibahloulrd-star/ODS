@@ -528,26 +528,26 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                             <div className="flex gap-4">
                                 {hasStopRequest && (
                                     <button onClick={() => openPdf(order.id, 'storage_stops_req')} className="px-6 py-3 bg-white border border-red-200 text-red-600 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-red-50 transition-colors flex items-center gap-2 shadow-sm">
-                                        <FileText size={16} /> Demande PDF
+                                        <FileText size={16} /> ODS d'arrêt PDF
                                     </button>
                                 )}
                                 {canCreate && (
                                     <label className="px-6 py-3 bg-white border border-dashed border-red-200 text-red-400 hover:text-red-600 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2">
                                         {isUploading ? <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div> : <Upload size={14} />}
-                                        {hasStopRequest ? "Mettre à jour Demande" : "Attacher Demande"}
+                                        {hasStopRequest ? "Mettre à jour ODS d'arrêt" : "Attacher ODS d'arrêt"}
                                         <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'stop_request')} />
                                     </label>
                                 )}
 
                                 {hasStopResponse && (
-                                    <button onClick={() => openPdf(order.id, 'storage_stops_res')} className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-red-700 transition-colors flex items-center gap-2 shadow-lg shadow-red-200">
-                                        <FileCheck size={16} /> Accord PDF
+                                    <button onClick={() => openPdf(order.id, 'storage_stops_res')} className="px-6 py-3 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-red-700 transition-all flex items-center gap-2 shadow-lg shadow-red-200">
+                                        <FileCheck size={16} /> ODS de Reprise PDF
                                     </button>
                                 )}
                                 {canCreate && (
                                     <label className="px-6 py-3 bg-red-50 border border-dashed border-red-300 text-red-600 hover:bg-red-100 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2">
                                         {isUploading ? <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div> : <Plus size={14} />}
-                                        {hasStopResponse ? "Mettre à jour Accord" : "Attacher Accord"}
+                                        {hasStopResponse ? "Mettre à jour ODS de Reprise" : "Attacher ODS de Reprise"}
                                         <input type="file" className="hidden" accept=".pdf" onClick={e => e.target.value = null} onChange={e => handleDirectUpload(e, order.id, 'stop_response')} />
                                     </label>
                                 )}

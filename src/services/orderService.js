@@ -133,7 +133,7 @@ export const orderService = {
             notificationService.addNotification(`Autorisation confirmée pour ${orders[index].client}`, 'success', ['all'], id);
         }
         if (updates.hasStopRequest === 'Oui') {
-            notificationService.addNotification(`ODS STOP : Prestation arrêtée pour ${orders[index].client}`, 'error', ['all'], id);
+            notificationService.addNotification(`ODS d'arrêt : Prestation arrêtée pour ${orders[index].client}`, 'error', ['all'], id);
         }
         if (updates.deliveryDate) {
             notificationService.addNotification(`LIVRAISON CONFIRMÉE : ${orders[index].client} est livré !`, 'success', ['all'], id);

@@ -787,7 +787,7 @@ const OrderDetails = () => {
                                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${order.files?.storage_stops_req ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-300'}`}>
                                                     <AlertCircle size={16} />
                                                 </div>
-                                                <span className="text-xs font-black text-slate-700 uppercase">Demande d'Arrêt (PDF)</span>
+                                                <span className="text-xs font-black text-slate-700 uppercase">ODS d'arrêt (PDF)</span>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6 text-right">
@@ -795,7 +795,7 @@ const OrderDetails = () => {
                                                 {order.files?.storage_stops_req ? (
                                                     <>
                                                         <button onClick={() => openPdf(order.id, 'storage_stops_req')} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-red-100 hover:bg-red-700 transition-all">
-                                                            <ExternalLink size={14} /> Voir Demande
+                                                            <ExternalLink size={14} /> Voir ODS d'arrêt
                                                         </button>
                                                         <label className="p-2 bg-slate-100 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer" title="Remplacer le document">
                                                             <RotateCcw size={16} />
@@ -820,7 +820,7 @@ const OrderDetails = () => {
                                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${order.files?.storage_stops_res ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-300'}`}>
                                                     <CheckCircle2 size={16} />
                                                 </div>
-                                                <span className="text-xs font-black text-slate-700 uppercase">Reprise / Arrêt Officiel (PDF)</span>
+                                                <span className="text-xs font-black text-slate-700 uppercase">ODS de Reprise (PDF)</span>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6 text-right">
@@ -828,7 +828,7 @@ const OrderDetails = () => {
                                                 {order.files?.storage_stops_res ? (
                                                     <>
                                                         <button onClick={() => openPdf(order.id, 'storage_stops_res')} className="px-4 py-2 bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-amber-100 hover:bg-amber-700 transition-all">
-                                                            <ExternalLink size={14} /> Voir Officiel
+                                                            <ExternalLink size={14} /> Voir ODS de Reprise
                                                         </button>
                                                         <label className="p-2 bg-slate-100 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all cursor-pointer" title="Remplacer le document">
                                                             <RotateCcw size={16} />
@@ -1382,8 +1382,8 @@ const OrderDetails = () => {
                                         </div>
                                     </div>
                                     <div className="flex gap-4">
-                                        {order.files?.storage_stops_req && <button onClick={() => openPdf(order.id, 'storage_stops_req')} className="px-6 py-3 bg-white border border-red-100 text-red-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-100 transition-all flex items-center gap-2">Demande PDF</button>}
-                                        {order.files?.storage_stops_res && <button onClick={() => openPdf(order.id, 'storage_stops_res')} className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-100 flex items-center gap-2">Accord PDF</button>}
+                                        {order.files?.storage_stops_req && <button onClick={() => openPdf(order.id, 'storage_stops_req')} className="px-6 py-3 bg-white border border-red-100 text-red-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-100 transition-all flex items-center gap-2">ODS d'arrêt PDF</button>}
+                                        {order.files?.storage_stops_res && <button onClick={() => openPdf(order.id, 'storage_stops_res')} className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-100 flex items-center gap-2">ODS de Reprise PDF</button>}
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-8 relative z-10">

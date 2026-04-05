@@ -760,11 +760,11 @@ const NewOrder = ({ onSave }) => {
                                             />
                                         </div>
                                         <div className="space-y-3">
-                                            <label className="text-[10px] font-black text-red-400 uppercase tracking-widest block px-1">DOC Arrêt (PDF)</label>
+                                            <label className="text-[10px] font-black text-red-400 uppercase tracking-widest block px-1">DOC ODS d'arrêt (PDF)</label>
                                             <input type="file" className="text-[10px] font-black text-red-400 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-red-600 file:text-white transition-all bg-white p-3 rounded-2xl border-2 border-dashed border-red-200 w-full" onChange={e => setStopRequestFile(e.target.files[0])} />
                                         </div>
                                         <div className="space-y-3">
-                                            <label className="text-[10px] font-black text-red-400 uppercase tracking-widest block px-1">DOC Reprise (PDF)</label>
+                                            <label className="text-[10px] font-black text-red-400 uppercase tracking-widest block px-1">DOC ODS de Reprise (PDF)</label>
                                             <input type="file" className="text-[10px] font-black text-red-400 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-red-600 file:text-white transition-all bg-white p-3 rounded-2xl border-2 border-dashed border-red-200 w-full" onChange={e => setStopResponseFile(e.target.files[0])} />
                                         </div>
                                     </div>
