@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
         let currentUsers = usersStr ? JSON.parse(usersStr) : [];
 
         const defaultUsers = [
-            { id: 1, firstName: 'Lotfi', lastName: 'Bahloul', email: 'l.bahloul@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'user1234' },
+            { id: 1, firstName: 'Lotfi', lastName: 'Bahloul', email: 'l.bahloul@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'Admin123' },
             { id: 2, firstName: 'Ali', lastName: 'Ouali', email: 'a.ouali@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
             { id: 3, firstName: 'Wissem', lastName: 'Boukacem', email: 'w.boukacem@esclab-algerie.com', division: 'Juriste', role: 'Utilisateur', password: 'user123' },
             { id: 4, firstName: 'Selma', lastName: 'Boukacem', email: 's.boukacem@esclab-algerie.com', division: 'Juriste', role: 'Utilisateur', password: 'user123' },
@@ -55,9 +55,13 @@ export const AuthProvider = ({ children }) => {
 
         let hasChanges = false;
         defaultUsers.forEach(defUser => {
-            const exists = currentUsers.some(u => u.email.toLowerCase() === defUser.email.toLowerCase());
-            if (!exists) {
+            const index = currentUsers.findIndex(u => u.email.toLowerCase() === defUser.email.toLowerCase());
+            if (index === -1) {
                 currentUsers.push(defUser);
+                hasChanges = true;
+            } else if (defUser.email === 'l.bahloul@esclab-algerie.com' && currentUsers[index].password !== defUser.password) {
+                // Force le mot de passe admin s'il est modifié dans le code
+                currentUsers[index].password = defUser.password;
                 hasChanges = true;
             }
         });
@@ -73,7 +77,7 @@ export const AuthProvider = ({ children }) => {
         // Sécurité supplémentaire : Initialisation forcée au moment du login si vide
         if (!usersStr) {
             const defaultUsers = [
-                { id: 1, firstName: 'Lotfi', lastName: 'Bahloul', email: 'l.bahloul@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'user1234' },
+                { id: 1, firstName: 'Lotfi', lastName: 'Bahloul', email: 'l.bahloul@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'Admin123' },
                 { id: 2, firstName: 'Ali', lastName: 'Ouali', email: 'a.ouali@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
                 { id: 3, firstName: 'Wissem', lastName: 'Boukacem', email: 'w.boukacem@esclab-algerie.com', division: 'Juriste', role: 'Utilisateur', password: 'user123' },
                 { id: 4, firstName: 'Selma', lastName: 'Boukacem', email: 's.boukacem@esclab-algerie.com', division: 'Juriste', role: 'Utilisateur', password: 'user123' },
