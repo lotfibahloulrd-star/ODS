@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 const OrderDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { currentUser, isImport, isStock, canCreateOds, canEditAmount, isSuperAdmin } = useAuth();
+    const { currentUser, isImport, isStock, canCreateOds, canEditAmount, isSuperAdmin, canEditAdminFields } = useAuth();
 
     const [order, setOrder] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -441,7 +441,7 @@ const OrderDetails = () => {
                     Retour au tableau
                 </button>
                 <div className="flex items-center gap-3">
-                    {isSuperAdmin() && (
+                    {canEditAdminFields() && (
                         <button
                             onClick={() => handleSaveAdminFields('hasStopRequest', order.hasStopRequest === 'Oui' ? 'Non' : 'Oui', () => { }, () => { }, 'Statut d\'arrêt')}
                             className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${order.hasStopRequest === 'Oui' ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600'}`}
@@ -451,17 +451,17 @@ const OrderDetails = () => {
                     )}
                     <button
                         onClick={() => {
-                            if (isSuperAdmin()) {
+                            if (canEditAdminFields()) {
                                 handleSaveAdminFields('authorization', order.authorization === 'Oui' ? 'Non' : 'Oui', () => { }, () => { }, 'Autorisation');
                             }
                         }}
                         className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${order.authorization === 'Oui' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}
-                        title={isSuperAdmin() ? "Cliquer pour changer le statut" : "Statut de l'autorisation"}
+                        title={canEditAdminFields() ? "Cliquer pour changer le statut" : "Statut de l'autorisation"}
                     >
                         {order.authorization === 'Oui' ? 'Autorisation confirmée' : 'Attente Autorisation'}
                     </button>
 
-                    {isSuperAdmin() && (
+                    {canEditAdminFields() && (
                         <div className="flex items-center gap-2">
                             {isEditingDeliveryDate ? (
                                 <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm p-1.5 rounded-2xl border border-blue-200 shadow-xl animate-in zoom-in-95 duration-200">
@@ -566,7 +566,7 @@ const OrderDetails = () => {
                         ) : (
                             <div className="group flex items-center gap-4">
                                 <p className="text-slate-400 font-medium max-w-3xl text-lg leading-relaxed">{order.object}</p>
-                                {isSuperAdmin() && <button onClick={() => { setTempObject(order.object); setIsEditingObject(true); }} className="opacity-0 group-hover:opacity-100 p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all"><Plus size={16} /></button>}
+                                {canEditAdminFields() && <button onClick={() => { setTempObject(order.object); setIsEditingObject(true); }} className="opacity-0 group-hover:opacity-100 p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all"><Plus size={16} /></button>}
                             </div>
                         )}
                     </div>
@@ -585,7 +585,7 @@ const OrderDetails = () => {
                             ) : (
                                 <div className="flex items-center gap-3">
                                     <span className="text-xl font-black text-slate-900 uppercase block">{order.client}</span>
-                                    {isSuperAdmin() && <button onClick={() => { setTempClient(order.client); setIsEditingClient(true); }} className="p-2 hover:bg-white text-blue-500 rounded-lg transition-all border border-blue-100 bg-blue-50/50"><Plus size={14} /></button>}
+                                    {canEditAdminFields() && <button onClick={() => { setTempClient(order.client); setIsEditingClient(true); }} className="p-2 hover:bg-white text-blue-500 rounded-lg transition-all border border-blue-100 bg-blue-50/50"><Plus size={14} /></button>}
                                 </div>
                             )}
                         </div>
@@ -647,7 +647,7 @@ const OrderDetails = () => {
                             ) : (
                                 <div className="flex items-center gap-3">
                                     <span className="text-xl font-black text-slate-900 uppercase block">{order.bankDomiciliation || "NON DOMICILIÉ"}</span>
-                                    {isSuperAdmin() && <button onClick={() => { setTempBankDomiciliation(order.bankDomiciliation); setIsEditingBankDomiciliation(true); }} className="p-2 hover:bg-white text-blue-500 rounded-lg transition-all border border-blue-100 bg-blue-50/50"><Plus size={14} /></button>}
+                                    {canEditAdminFields() && <button onClick={() => { setTempBankDomiciliation(order.bankDomiciliation); setIsEditingBankDomiciliation(true); }} className="p-2 hover:bg-white text-blue-500 rounded-lg transition-all border border-blue-100 bg-blue-50/50"><Plus size={14} /></button>}
                                 </div>
                             )}
                         </div>
@@ -685,7 +685,7 @@ const OrderDetails = () => {
                             ) : (
                                 <div className="flex items-center justify-between">
                                     <p className="text-slate-600 font-medium leading-relaxed truncate max-w-[200px]">{order.judicialProceedings || "Aucune."}</p>
-                                    {isSuperAdmin() && <button onClick={() => { setTempJudicialProceedings(order.judicialProceedings); setIsEditingJudicialProceedings(true); }} className="p-2 hover:bg-white text-blue-500 rounded-lg transition-all border border-blue-100 bg-blue-50/50"><Plus size={14} /></button>}
+                                    {canEditAdminFields() && <button onClick={() => { setTempJudicialProceedings(order.judicialProceedings); setIsEditingJudicialProceedings(true); }} className="p-2 hover:bg-white text-blue-500 rounded-lg transition-all border border-blue-100 bg-blue-50/50"><Plus size={14} /></button>}
                                 </div>
                             )}
                         </div>
@@ -904,7 +904,7 @@ const OrderDetails = () => {
                                             ) : (
                                                 <div className="flex items-center justify-between">
                                                     <span>{order.equipmentDetails || "-"}</span>
-                                                    {isSuperAdmin() && <button onClick={() => { setTempEquipment(order.equipmentDetails || ""); setIsEditingEquipment(true); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-100 rounded-lg"><Plus size={12} /></button>}
+                                                    {canEditAdminFields() && <button onClick={() => { setTempEquipment(order.equipmentDetails || ""); setIsEditingEquipment(true); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-100 rounded-lg"><Plus size={12} /></button>}
                                                 </div>
                                             )}
                                         </td>
@@ -920,7 +920,7 @@ const OrderDetails = () => {
                                             ) : (
                                                 <div className="flex items-center justify-between">
                                                     <span>{order.reagentDetails || "-"}</span>
-                                                    {isSuperAdmin() && <button onClick={() => { setTempReagent(order.reagentDetails || ""); setIsEditingReagent(true); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-100 rounded-lg"><Plus size={12} /></button>}
+                                                    {canEditAdminFields() && <button onClick={() => { setTempReagent(order.reagentDetails || ""); setIsEditingReagent(true); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-100 rounded-lg"><Plus size={12} /></button>}
                                                 </div>
                                             )}
                                         </td>
@@ -936,7 +936,7 @@ const OrderDetails = () => {
                                             ) : (
                                                 <div className="flex items-center justify-between">
                                                     <span>{order.consumableDetails || "-"}</span>
-                                                    {isSuperAdmin() && <button onClick={() => { setTempConsumable(order.consumableDetails || ""); setIsEditingConsumable(true); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-100 rounded-lg"><Plus size={12} /></button>}
+                                                    {canEditAdminFields() && <button onClick={() => { setTempConsumable(order.consumableDetails || ""); setIsEditingConsumable(true); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-100 rounded-lg"><Plus size={12} /></button>}
                                                 </div>
                                             )}
                                         </td>
@@ -947,12 +947,12 @@ const OrderDetails = () => {
                     </div>
 
                     {/* Articles Section (BPU / DQE) always accessible for superAdmin to add articles */}
-                    {((order.articles && order.articles.length > 0) || isSuperAdmin()) && (
+                    {((order.articles && order.articles.length > 0) || canEditAdminFields()) && (
                         <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
                             <div className="bg-slate-50 px-8 py-5 border-b border-slate-100 flex justify-between items-center">
                                 <div className="flex items-center gap-4">
                                     <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">Détail Quantitatif et Estimatif (DQE)</h4>
-                                    {isSuperAdmin() && !isAddingArticle && (
+                                    {canEditAdminFields() && !isAddingArticle && (
                                         <button
                                             onClick={() => setIsAddingArticle(true)}
                                             className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center gap-2"
@@ -1006,7 +1006,7 @@ const OrderDetails = () => {
                                             const getStageData = (stage) => art.stages && art.stages[stage];
 
                                             const toggleStage = async (stage) => {
-                                                if (!isImport() && !isSuperAdmin()) return;
+                                                if (!isImport() && !canEditAdminFields()) return;
                                                 // La commande ne peut être lancée que si l'autorisation est confirmée
                                                 if (stage === 'ordered' && !isAuthOk && !hasStage('ordered')) {
                                                     alert("L'autorisation d'importation doit être 'Confirmée' pour lancer la commande.");
@@ -1127,7 +1127,7 @@ const OrderDetails = () => {
                                                             ))}
                                                             
                                                             <div className="flex items-center gap-1 ml-4 border-l border-slate-200 pl-4 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                                                                {editingArticleIndex === null && isSuperAdmin() && (
+                                                                {editingArticleIndex === null && canEditAdminFields() && (
                                                                     <>
                                                                         <button
                                                                             onClick={() => {
@@ -1198,7 +1198,7 @@ const OrderDetails = () => {
                                                 <>
                                                     <tr>
                                                         <td colSpan="5" className="px-6 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest relative">
-                                                            {isSuperAdmin() && (
+                                                            {canEditAmount() && (
                                                                 <button onClick={() => {
                                                                     const ht = order.totals?.ht || (order.articles || []).reduce((sum, a) => sum + (parseFloat(a.total) || 0), 0) || 0;
                                                                     const tva = order.totals?.tva !== undefined ? order.totals.tva : Math.round(ht * 0.19 * 100) / 100;
@@ -1246,7 +1246,7 @@ const OrderDetails = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">Autorisation</label>
-                                        <select disabled={!isImport() && !isSuperAdmin()} value={importData.authImport || ''} onChange={e => setImportData({ ...importData, authImport: e.target.value })} className="w-full text-xs font-black uppercase border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all">
+                                        <select disabled={!isImport() && !canEditAdminFields()} value={importData.authImport || ''} onChange={e => setImportData({ ...importData, authImport: e.target.value })} className="w-full text-xs font-black uppercase border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all">
                                             <option value="">Attente Autorisation</option>
                                             <option value="Confirmée">Confirmée</option>
                                             <option value="Non disponible">Non disponible</option>
@@ -1255,13 +1255,13 @@ const OrderDetails = () => {
                                     {importData.authImport === 'Confirmée' && (
                                         <div className="animate-in fade-in slide-in-from-left-4 duration-300">
                                             <label className="text-[10px] font-black text-blue-400 uppercase mb-3 block">Date de Confirmation</label>
-                                            <input type="date" disabled={!isImport() && !isSuperAdmin()} value={importData.authDate || ''} onChange={e => setImportData({ ...importData, authDate: e.target.value })} className="w-full text-xs font-black border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all" />
+                                            <input type="date" disabled={!isImport() && !canEditAdminFields()} value={importData.authDate || ''} onChange={e => setImportData({ ...importData, authDate: e.target.value })} className="w-full text-xs font-black border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all" />
                                         </div>
                                     )}
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">Date Dédouanement</label>
-                                    <input type="date" disabled={!isImport() && !isSuperAdmin()} value={importData.clearedAt || ''} onChange={e => setImportData({ ...importData, clearedAt: e.target.value })} className="w-full text-xs font-black border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all" />
+                                    <input type="date" disabled={!isImport() && !canEditAdminFields()} value={importData.clearedAt || ''} onChange={e => setImportData({ ...importData, clearedAt: e.target.value })} className="w-full text-xs font-black border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-blue-200 outline-none transition-all" />
                                 </div>
                             </div>
                         </div>
@@ -1278,7 +1278,7 @@ const OrderDetails = () => {
                             <div className="p-8 space-y-6">
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">État Réception</label>
-                                    <select disabled={!isStock() && !isSuperAdmin()} value={stockData.reception || 'Aucune'} onChange={e => setStockData({ ...stockData, reception: e.target.value })} className="w-full text-xs font-black uppercase border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-emerald-200 outline-none transition-all">
+                                    <select disabled={!isStock() && !canEditAdminFields()} value={stockData.reception || 'Aucune'} onChange={e => setStockData({ ...stockData, reception: e.target.value })} className="w-full text-xs font-black uppercase border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-emerald-200 outline-none transition-all">
                                         <option value="Aucune">Aucune</option>
                                         <option value="Partielle">Partielle</option>
                                         <option value="Totale">Totale</option>
@@ -1286,14 +1286,14 @@ const OrderDetails = () => {
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block">Date Réception Magasin</label>
-                                    <input type="date" disabled={!isStock() && !isSuperAdmin()} value={stockData.receivedAt || ''} onChange={e => setStockData({ ...stockData, receivedAt: e.target.value })} className="w-full text-xs font-black border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-emerald-200 outline-none transition-all" />
+                                    <input type="date" disabled={!isStock() && !canEditAdminFields()} value={stockData.receivedAt || ''} onChange={e => setStockData({ ...stockData, receivedAt: e.target.value })} className="w-full text-xs font-black border-2 border-slate-50 bg-slate-50 p-3 rounded-xl focus:border-emerald-200 outline-none transition-all" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Operational Save Button */}
-                    {(isImport() || isStock() || isSuperAdmin()) && (
+                    {(isImport() || isStock() || canEditAdminFields()) && (
                         <div className="flex justify-center pt-4">
                             <button onClick={handleSaveWorkflow} disabled={isSaving} className="px-12 py-5 bg-slate-900 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-slate-200 hover:bg-black hover:-translate-y-1 transition-all disabled:opacity-50 disabled:translate-y-0 active:scale-95 flex items-center gap-4">
                                 {isSaving ? "Synchronisation..." : "Valider les étapes opérationnelles"}
@@ -1321,7 +1321,7 @@ const OrderDetails = () => {
                                     ) : (
                                         <div className="flex items-center gap-3 justify-center">
                                             <div className="text-3xl font-black">{formatDate(order.startDate || order.dateOds)}</div>
-                                            {isSuperAdmin() && <button onClick={() => { setTempDateOds(order.startDate || order.dateOds || ""); setIsEditingDateOds(true); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-800 rounded-lg text-slate-400"><Plus size={14} /></button>}
+                                            {canEditAdminFields() && <button onClick={() => { setTempDateOds(order.startDate || order.dateOds || ""); setIsEditingDateOds(true); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-800 rounded-lg text-slate-400"><Plus size={14} /></button>}
                                         </div>
                                     )}
                                 </div>
@@ -1335,7 +1335,7 @@ const OrderDetails = () => {
                                         ) : (
                                             <>
                                                 Délai: {order.delay} JOURS
-                                                {isSuperAdmin() && <button onClick={() => { setTempDelay(order.delay || ""); setIsEditingDelay(true); }} className="opacity-0 group-hover:opacity-100 hover:text-white transition-all"><Plus size={10} /></button>}
+                                                {canEditAdminFields() && <button onClick={() => { setTempDelay(order.delay || ""); setIsEditingDelay(true); }} className="opacity-0 group-hover:opacity-100 hover:text-white transition-all"><Plus size={10} /></button>}
                                             </>
                                         )}
                                     </div>
@@ -1348,7 +1348,7 @@ const OrderDetails = () => {
                                         <div className={`text-3xl font-black ${remainingInfo?.isDelivered ? 'text-blue-500' : (remainingInfo?.isOverdue ? 'text-red-500' : 'text-emerald-500')}`}>
                                             {remainingInfo?.isDelivered ? formatDate(remainingInfo.deliveryDate) : remainingInfo?.formattedDate}
                                         </div>
-                                        {isSuperAdmin() && (
+                                        {canEditAdminFields() && (
                                             <button
                                                 onClick={() => {
                                                     setTempDeliveryDate(order.deliveryDate || new Date().toISOString().split('T')[0]);
@@ -1397,7 +1397,7 @@ const OrderDetails = () => {
                                         ) : (
                                             <div className="flex items-center gap-3">
                                                 <span className="text-2xl font-black text-slate-900">{formatDate(order.stopDate)}</span>
-                                                {isSuperAdmin() && <button onClick={() => { setTempStopDate(order.stopDate || ""); setIsEditingStopDate(true); }} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-all border border-red-100 bg-red-50/50"><Plus size={14} /></button>}
+                                                {canEditAdminFields() && <button onClick={() => { setTempStopDate(order.stopDate || ""); setIsEditingStopDate(true); }} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-all border border-red-100 bg-red-50/50"><Plus size={14} /></button>}
                                             </div>
                                         )}
                                     </div>
@@ -1411,7 +1411,7 @@ const OrderDetails = () => {
                                         ) : (
                                             <div className="flex items-center gap-3">
                                                 <span className="text-2xl font-black text-slate-900">{formatDate(order.resumeDate) || "EN COURS"}</span>
-                                                {isSuperAdmin() && <button onClick={() => { setTempResumeDate(order.resumeDate || ""); setIsEditingResumeDate(true); }} className="p-2 hover:bg-emerald-50 text-emerald-500 rounded-lg transition-all border border-emerald-100 bg-emerald-50/50"><Plus size={14} /></button>}
+                                                {canEditAdminFields() && <button onClick={() => { setTempResumeDate(order.resumeDate || ""); setIsEditingResumeDate(true); }} className="p-2 hover:bg-emerald-50 text-emerald-500 rounded-lg transition-all border border-emerald-100 bg-emerald-50/50"><Plus size={14} /></button>}
                                             </div>
                                         )}
                                     </div>

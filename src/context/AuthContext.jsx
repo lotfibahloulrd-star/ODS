@@ -202,8 +202,19 @@ export const AuthProvider = ({ children }) => {
         return order.division === currentUser?.division;
     };
 
+    const canEditAdminFields = () => {
+        const authorizedEmails = [
+            'l.bahloul@esclab-algerie.com',
+            'brikh.hamza@esclab-algerie.com',
+            'mazouz.sonia@esclab-algerie.com',
+            'belateche.taklit@esclab-algerie.com',
+            'n.bouras@esclab-algerie.com'
+        ];
+        return isSuperAdmin() || authorizedEmails.includes(currentUser?.email);
+    };
+
     return (
-        <AuthContext.Provider value={{ currentUser, login, logout, isAdmin, isSuperAdmin, hasFullAccess, canViewOrder, canCreateOds, canEditAmount, changePassword, resetUserPassword, isJuridique, isImport, isStock }}>
+        <AuthContext.Provider value={{ currentUser, login, logout, isAdmin, isSuperAdmin, hasFullAccess, canViewOrder, canCreateOds, canEditAmount, canEditAdminFields, changePassword, resetUserPassword, isJuridique, isImport, isStock }}>
             {children}
         </AuthContext.Provider>
     );
