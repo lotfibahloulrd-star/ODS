@@ -108,6 +108,8 @@ const OrderDetails = () => {
                 setTempDivision(found.division || "");
                 const finData = found.financial || {
                     paymentStatus: 'Aucun',
+                    paymentAmount: '',
+                    paymentDate: '',
                     executionDeposit: { amount: '', payDate: '', recoveryDate: '' },
                     warrantyDeposit: { amount: '', payDate: '', recoveryDate: '' }
                 };
@@ -1639,6 +1641,25 @@ const OrderDetails = () => {
                                                 <option value="Total">Paiement Total</option>
                                             </select>
                                         </div>
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Montant Versé (DA)</label>
+                                            <input 
+                                                type="text" 
+                                                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-black text-slate-900 outline-none focus:ring-2 focus:ring-blue-100 transition-all"
+                                                value={tempFinancial.paymentAmount || ''}
+                                                onChange={e => setTempFinancial({...tempFinancial, paymentAmount: e.target.value})}
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Date du Versement</label>
+                                            <input 
+                                                type="date" 
+                                                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-black text-slate-900 outline-none focus:ring-2 focus:ring-blue-100 transition-all"
+                                                value={tempFinancial.paymentDate || ''}
+                                                onChange={e => setTempFinancial({...tempFinancial, paymentDate: e.target.value})}
+                                            />
+                                        </div>
                                     </div>
 
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -1707,6 +1728,12 @@ const OrderDetails = () => {
                                         }`}>
                                             {tempFinancial.paymentStatus === 'Aucun' ? 'En attente' : `Paiement ${tempFinancial.paymentStatus}`}
                                         </span>
+                                        {tempFinancial.paymentAmount && (
+                                            <div className="mt-4 pt-4 border-t border-slate-100 w-full">
+                                                <div className="text-[11px] font-black text-slate-900">{new Intl.NumberFormat('fr-FR').format(tempFinancial.paymentAmount.replace(/[^\d.,]/g, '').replace(',', '.'))} DA</div>
+                                                <div className="text-[9px] font-bold text-slate-400 uppercase mt-1">{tempFinancial.paymentDate ? new Date(tempFinancial.paymentDate).toLocaleDateString() : '-'}</div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Caution Exécution */}
