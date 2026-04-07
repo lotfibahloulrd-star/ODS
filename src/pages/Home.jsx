@@ -81,7 +81,7 @@ const Home = () => {
             return !isNaN(target.getTime()) && target < today;
         }).length;
         
-        const financialTracking = orders.filter(o => o.financial?.paymentStatus !== 'Total').length;
+        const financialTracking = orders.filter(o => o.status === 'En attente de paiement' && o.financial?.paymentStatus !== 'Total').length;
         
         return { byStatus, total, pendingAuth, overdue, financialTracking };
     }, [orders]);
@@ -138,8 +138,14 @@ const Home = () => {
     const handleNavigation = (status = null, authFilter = false, overdueFilter = false, financialFilter = false) => {
         let path = '/dashboard';
         const params = new URLSearchParams();
-        if (status && status !== 'financial') params.append('status', status);
-        if (financialFilter || status === 'financial') params.append('financial', 'true');
+        
+        if (status === 'financial' || financialFilter) {
+            params.append('status', 'En attente de paiement');
+            params.append('financial', 'true');
+        } else if (status) {
+            params.append('status', status);
+        }
+        
         if (authFilter) params.append('auth', 'true');
         if (overdueFilter) params.append('overdue', 'true');
         if (searchQuery) params.append('search', searchQuery);

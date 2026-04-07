@@ -49,6 +49,7 @@ const Dashboard = () => {
     const [syncStatus, setSyncStatus] = useState("");
     const [authFilter, setAuthFilter] = useState(searchParams.get('auth') === 'true');
     const [overdueFilter, setOverdueFilter] = useState(searchParams.get('overdue') === 'true');
+    const [financialFilter, setFinancialFilter] = useState(searchParams.get('financial') === 'true');
     const [activeStatusFilter, setActiveStatusFilter] = useState(searchParams.get('status'));
 
     // Update filters if URL changes
@@ -62,6 +63,7 @@ const Dashboard = () => {
         if (search !== null) setSearchTerm(search);
         setAuthFilter(auth);
         setOverdueFilter(overdue);
+        setFinancialFilter(searchParams.get('financial') === 'true');
     }, [searchParams]);
 
     const handleDirectUpload = (e, orderId, type) => {
@@ -250,6 +252,10 @@ const Dashboard = () => {
             if (activeStatusFilter) {
                 const effectiveStatus = o.status || 'En cours';
                 if (effectiveStatus !== activeStatusFilter) return false;
+            }
+
+            if (financialFilter) {
+                if (o.financial?.paymentStatus === 'Total') return false;
             }
 
             return matchesSearch;
