@@ -22,7 +22,8 @@ const FULL_ACCESS_EMAILS = [
     'e.saci@esclab-algerie.com',
     'mazouz.sonia@esclab-algerie.com',
     'belateche.taklit@esclab-algerie.com',
-    'n.bouras@esclab-algerie.com'
+    'n.bouras@esclab-algerie.com',
+    'm.aidli@esclab-algerie.com'
 ];
 
 export const AuthProvider = ({ children }) => {
@@ -50,7 +51,8 @@ export const AuthProvider = ({ children }) => {
             { id: 11, firstName: 'Farid', lastName: 'Taazibt', email: 'f.taazibt@esclab-algerie.com', division: 'Division Laboratoire', role: 'Administrateur', password: 'user123' },
             { id: 12, firstName: 'Sonia', lastName: 'Mazouz', email: 'mazouz.sonia@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
             { id: 13, firstName: 'Taklit', lastName: 'Belateche', email: 'belateche.taklit@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
-            { id: 14, firstName: 'N.', lastName: 'Bouras', email: 'n.bouras@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' }
+            { id: 14, firstName: 'N.', lastName: 'Bouras', email: 'n.bouras@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
+            { id: 15, firstName: 'Melissa', lastName: 'Aidli', email: 'm.aidli@esclab-algerie.com', division: 'Recouvrement', role: 'Utilisateur', password: 'user123' }
         ];
 
         let hasChanges = false;
@@ -90,7 +92,8 @@ export const AuthProvider = ({ children }) => {
                 { id: 11, firstName: 'Farid', lastName: 'Taazibt', email: 'f.taazibt@esclab-algerie.com', division: 'Division Laboratoire', role: 'Administrateur', password: 'user123' },
                 { id: 12, firstName: 'Sonia', lastName: 'Mazouz', email: 'mazouz.sonia@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
                 { id: 13, firstName: 'Taklit', lastName: 'Belateche', email: 'belateche.taklit@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
-                { id: 14, firstName: 'N.', lastName: 'Bouras', email: 'n.bouras@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' }
+                { id: 14, firstName: 'N.', lastName: 'Bouras', email: 'n.bouras@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
+                { id: 15, firstName: 'Melissa', lastName: 'Aidli', email: 'm.aidli@esclab-algerie.com', division: 'Recouvrement', role: 'Utilisateur', password: 'user123' }
             ];
             localStorage.setItem('ods_users_v7', JSON.stringify(defaultUsers));
             usersStr = JSON.stringify(defaultUsers);
@@ -175,6 +178,11 @@ export const AuthProvider = ({ children }) => {
         return isSuperAdmin() || emails.includes(currentUser?.email);
     };
 
+    const isRecovery = () => {
+        const emails = ['m.aidli@esclab-algerie.com'];
+        return isSuperAdmin() || emails.includes(currentUser?.email);
+    };
+
     const canCreateOds = () => {
         const authorizedEmails = [
             'l.bahloul@esclab-algerie.com',
@@ -226,7 +234,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ currentUser, login, logout, isAdmin, isSuperAdmin, hasFullAccess, canViewOrder, canCreateOds, canEditAmount, canEditAdminFields, canExportData, changePassword, resetUserPassword, isJuridique, isImport, isStock }}>
+        <AuthContext.Provider value={{ currentUser, login, logout, isAdmin, isSuperAdmin, hasFullAccess, canViewOrder, canCreateOds, canEditAmount, canEditAdminFields, canExportData, changePassword, resetUserPassword, isJuridique, isImport, isStock, isRecovery }}>
             {children}
         </AuthContext.Provider>
     );
