@@ -13,7 +13,10 @@ import {
     LayoutDashboard,
     Zap,
     Search,
-    ChevronRight
+    ChevronRight,
+    ShieldCheck,
+    Landmark,
+    DollarSign
 } from 'lucide-react';
 
 const Home = () => {
@@ -78,7 +81,9 @@ const Home = () => {
             return !isNaN(target.getTime()) && target < today;
         }).length;
         
-        return { byStatus, total, pendingAuth, overdue };
+        const financialTracking = orders.filter(o => o.financial?.paymentStatus !== 'Total').length;
+        
+        return { byStatus, total, pendingAuth, overdue, financialTracking };
     }, [orders]);
 
     const filterButtons = [
@@ -113,6 +118,14 @@ const Home = () => {
             color: 'from-slate-600 to-slate-800', 
             shadow: 'shadow-slate-300',
             description: 'Consultations en cours de validation finale'
+        },
+        {
+            label: 'Suivi Financier',
+            status: 'financial',
+            icon: <ShieldCheck size={32} />,
+            color: 'from-emerald-500 to-teal-600',
+            shadow: 'shadow-emerald-200',
+            description: 'Gestion des paiements, cautions et garanties bancaires'
         }
     ];
 
@@ -122,10 +135,11 @@ const Home = () => {
         { label: 'Engagements Hors Délai', type: 'overdue', icon: <AlertTriangle size={20} />, count: stats.overdue, color: 'text-red-600 bg-red-50' }
     ];
 
-    const handleNavigation = (status = null, authFilter = false, overdueFilter = false) => {
+    const handleNavigation = (status = null, authFilter = false, overdueFilter = false, financialFilter = false) => {
         let path = '/dashboard';
         const params = new URLSearchParams();
-        if (status) params.append('status', status);
+        if (status && status !== 'financial') params.append('status', status);
+        if (financialFilter || status === 'financial') params.append('financial', 'true');
         if (authFilter) params.append('auth', 'true');
         if (overdueFilter) params.append('overdue', 'true');
         if (searchQuery) params.append('search', searchQuery);
@@ -193,7 +207,7 @@ const Home = () => {
             </div>
 
             {/* Main Status Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filterButtons.map((btn, idx) => (
                     <button
                         key={btn.label}
@@ -221,7 +235,7 @@ const Home = () => {
                         <div className="mt-auto flex items-center justify-between w-full">
                             <div className="flex items-center gap-2">
                                 <span className={`text-4xl font-black ${btn.color.split(' ')[0].replace('from-', 'text-')}`}>
-                                    {isLoading ? '...' : stats.byStatus[btn.status] || 0}
+                                {isLoading ? '...' : (btn.status === 'financial' ? stats.financialTracking : (stats.byStatus[btn.status] || 0))}
                                 </span>
                                 <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-2 px-3 py-1 border border-slate-100 rounded-full">Dossiers</span>
                             </div>
