@@ -90,20 +90,12 @@ const Home = () => {
 
     const filterButtons = [
         { 
-            label: 'En attente de paiement', 
-            status: 'En attente de paiement',
-            icon: <CreditCard size={32} />, 
-            color: 'from-amber-500 to-orange-600', 
-            shadow: 'shadow-orange-200',
-            description: 'Engagements validés en attente de règlement'
-        },
-        { 
-            label: 'En cours', 
-            status: 'En cours',
-            icon: <PlayCircle size={32} />, 
-            color: 'from-blue-500 to-indigo-600', 
-            shadow: 'shadow-blue-200',
-            description: 'Projets actifs et livraisons programmées'
+            label: 'Attribution en attente', 
+            status: 'Attribution en attente',
+            icon: <UserCheck size={32} />, 
+            color: 'from-slate-600 to-slate-800', 
+            shadow: 'shadow-slate-300',
+            description: 'Consultations en cours de validation finale'
         },
         { 
             label: 'En attente d\'ODS', 
@@ -114,12 +106,20 @@ const Home = () => {
             description: 'Contrats signés en attente de l\'ordre de service'
         },
         { 
-            label: 'Attribution en attente', 
-            status: 'Attribution en attente',
-            icon: <UserCheck size={32} />, 
-            color: 'from-slate-600 to-slate-800', 
-            shadow: 'shadow-slate-300',
-            description: 'Consultations en cours de validation finale'
+            label: 'En cours', 
+            status: 'En cours',
+            icon: <PlayCircle size={32} />, 
+            color: 'from-blue-500 to-indigo-600', 
+            shadow: 'shadow-blue-200',
+            description: 'Projets actifs et livraisons programmées'
+        },
+        { 
+            label: 'En attente de paiement', 
+            status: 'En attente de paiement',
+            icon: <CreditCard size={32} />, 
+            color: 'from-amber-500 to-orange-600', 
+            shadow: 'shadow-orange-200',
+            description: 'Engagements validés en attente de règlement'
         },
         {
             label: 'Suivi Financier',
