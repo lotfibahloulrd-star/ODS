@@ -255,6 +255,9 @@ const Dashboard = () => {
             }
 
             if (financialFilter) {
+                const isRestricted = currentUser?.email === 'm.aidli@esclab-algerie.com';
+                if (isRestricted && o.status !== 'En attente de paiement') return false;
+                
                 if (o.financial?.paymentStatus === 'Total') return false;
             }
 
@@ -278,7 +281,7 @@ const Dashboard = () => {
             // Same rank: keep most recent first
             return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
         });
-    }, [orders, searchTerm, auth, authFilter]);
+    }, [orders, searchTerm, auth, authFilter, overdueFilter, activeStatusFilter, financialFilter, currentUser]);
 
     const groupedOrders = useMemo(() => {
         const sections = [
@@ -337,22 +340,22 @@ const Dashboard = () => {
     };
 
     const formatDate = (dateStr) => {
-        if (!dateStr) return "-";
+        if (!dateStr || typeof dateStr === 'object') return "-";
         try {
             const date = new Date(dateStr);
-            if (isNaN(date.getTime())) return dateStr;
+            if (isNaN(date.getTime())) return String(dateStr);
             return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }).format(date);
         } catch (e) { return "-"; }
     };
 
     const formatAmount = (amount) => {
-        if (!amount) return "-";
+        if (amount === undefined || amount === null || typeof amount === 'object') return "-";
         try {
             const cleanAmount = amount.toString().replace(/[^\d.,]/g, '').replace(',', '.');
             const num = parseFloat(cleanAmount);
-            if (isNaN(num)) return amount;
+            if (isNaN(num)) return String(amount);
             return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(num) + " DA";
-        } catch (e) { return amount; }
+        } catch (e) { return String(amount); }
     };
 
     const handleExportExcel = () => {
