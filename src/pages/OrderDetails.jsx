@@ -869,161 +869,6 @@ const OrderDetails = () => {
                         </div>
                     </div>
 
-                    {/* Section Suivi Financier & Cautions - Nouveauté Service Recouvrement */}
-                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/10 overflow-hidden mb-10 group/fin">
-                        <div className="bg-slate-900 px-10 py-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white shadow-lg backdrop-blur-md border border-white/20">
-                                    <DollarSign size={20} />
-                                </div>
-                                <div>
-                                    <h4 className="text-lg font-black uppercase tracking-widest text-white">Suivi Financier & Cautions</h4>
-                                    <p className="font-bold text-slate-400 text-[10px] uppercase tracking-widest opacity-80 italic">Gestion des règlements et garanties bancaires</p>
-                                </div>
-                            </div>
-                            {(isSuperAdmin() || canEditAdminFields() || isRecovery()) && !isEditingFinancial && (
-                                <button
-                                    onClick={() => setIsEditingFinancial(true)}
-                                    className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2"
-                                >
-                                    Modifier les Données
-                                </button>
-                            )}
-                        </div>
-
-                        <div className="p-10">
-                            {isEditingFinancial ? (
-                                <div className="space-y-10 animate-in slide-in-from-top duration-500">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                        <div className="space-y-4">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">État du Paiement</label>
-                                            <select 
-                                                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-black text-slate-900 outline-none focus:ring-2 focus:ring-blue-100 transition-all"
-                                                value={tempFinancial.paymentStatus}
-                                                onChange={e => setTempFinancial({...tempFinancial, paymentStatus: e.target.value})}
-                                            >
-                                                <option value="Aucun">Aucun paiement</option>
-                                                <option value="Partiel">Paiement Partiel</option>
-                                                <option value="Total">Paiement Total</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                        <div className="p-8 bg-blue-50/50 rounded-[2.5rem] border border-blue-100 space-y-6">
-                                            <h5 className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
-                                                <ShieldCheck size={14} /> Caution d'Exécution
-                                            </h5>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Montant (DA)</label>
-                                                    <input type="text" className="w-full p-3 bg-white border border-blue-100 rounded-xl text-xs font-bold" value={tempFinancial.executionDeposit.amount} onChange={e => setTempFinancial({...tempFinancial, executionDeposit: {...tempFinancial.executionDeposit, amount: e.target.value}})} placeholder="0.00" />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Date Versement</label>
-                                                    <input type="date" className="w-full p-3 bg-white border border-blue-100 rounded-xl text-xs font-bold" value={tempFinancial.executionDeposit.payDate} onChange={e => setTempFinancial({...tempFinancial, executionDeposit: {...tempFinancial.executionDeposit, payDate: e.target.value}})} />
-                                                </div>
-                                                <div className="space-y-2 md:col-span-2">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Date Récupération</label>
-                                                    <input type="date" className="w-full p-3 bg-white border border-blue-100 rounded-xl text-xs font-bold" value={tempFinancial.executionDeposit.recoveryDate} onChange={e => setTempFinancial({...tempFinancial, executionDeposit: {...tempFinancial.executionDeposit, recoveryDate: e.target.value}})} />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="p-8 bg-amber-50/50 rounded-[2.5rem] border border-amber-100 space-y-6">
-                                            <h5 className="text-[10px] font-black text-amber-600 uppercase tracking-widest flex items-center gap-2">
-                                                <ShieldCheck size={14} /> Caution de Garantie
-                                            </h5>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Montant (DA)</label>
-                                                    <input type="text" className="w-full p-3 bg-white border border-amber-100 rounded-xl text-xs font-bold" value={tempFinancial.warrantyDeposit.amount} onChange={e => setTempFinancial({...tempFinancial, warrantyDeposit: {...tempFinancial.warrantyDeposit, amount: e.target.value}})} placeholder="0.00" />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Date Versement</label>
-                                                    <input type="date" className="w-full p-3 bg-white border border-amber-100 rounded-xl text-xs font-bold" value={tempFinancial.warrantyDeposit.payDate} onChange={e => setTempFinancial({...tempFinancial, warrantyDeposit: {...tempFinancial.warrantyDeposit, payDate: e.target.value}})} />
-                                                </div>
-                                                <div className="space-y-2 md:col-span-2">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Date Récupération</label>
-                                                    <input type="date" className="w-full p-3 bg-white border border-amber-100 rounded-xl text-xs font-bold" value={tempFinancial.warrantyDeposit.recoveryDate} onChange={e => setTempFinancial({...tempFinancial, warrantyDeposit: {...tempFinancial.warrantyDeposit, recoveryDate: e.target.value}})} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-4 pt-6">
-                                        <button onClick={handleSaveFinancial} className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl">Enregistrer Suivi Financier</button>
-                                        <button onClick={() => setIsEditingFinancial(false)} className="px-10 py-4 bg-white border border-slate-200 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all">Annuler</button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                                    {/* Statut Paiement */}
-                                    <div className="bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100 flex flex-col items-center justify-center text-center">
-                                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${
-                                            tempFinancial.paymentStatus === 'Total' ? 'bg-emerald-100 text-emerald-600' :
-                                            tempFinancial.paymentStatus === 'Partiel' ? 'bg-amber-100 text-amber-600' :
-                                            'bg-slate-200 text-slate-400'
-                                        }`}>
-                                            <CheckCircle2 size={32} />
-                                        </div>
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Règlement Client</span>
-                                        <span className={`text-lg font-black uppercase ${
-                                            tempFinancial.paymentStatus === 'Total' ? 'text-emerald-600' :
-                                            tempFinancial.paymentStatus === 'Partiel' ? 'text-amber-600' :
-                                            'text-slate-400'
-                                        }`}>
-                                            {tempFinancial.paymentStatus === 'Aucun' ? 'En attente' : `Paiement ${tempFinancial.paymentStatus}`}
-                                        </span>
-                                    </div>
-
-                                    {/* Caution Exécution */}
-                                    <div className="bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100">
-                                        <div className="flex items-center gap-3 mb-6">
-                                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center"><ShieldCheck size={20} /></div>
-                                            <h5 className="text-[11px] font-black uppercase tracking-widest text-slate-900">Caution d'Exécution</h5>
-                                        </div>
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between items-baseline">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Montant:</span>
-                                                <span className="font-black text-slate-700">{tempFinancial.executionDeposit.amount || "0.00"} DA</span>
-                                            </div>
-                                            <div className="flex justify-between items-baseline">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Versement:</span>
-                                                <span className="text-xs font-bold text-slate-600">{tempFinancial.executionDeposit.payDate ? new Date(tempFinancial.executionDeposit.payDate).toLocaleDateString() : "-"}</span>
-                                            </div>
-                                            <div className="flex justify-between items-baseline">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Récupération:</span>
-                                                <span className="text-xs font-bold text-slate-600">{tempFinancial.executionDeposit.recoveryDate ? new Date(tempFinancial.executionDeposit.recoveryDate).toLocaleDateString() : "-"}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Caution Garantie */}
-                                    <div className="bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100">
-                                        <div className="flex items-center gap-3 mb-6">
-                                            <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center"><ShieldCheck size={20} /></div>
-                                            <h5 className="text-[11px] font-black uppercase tracking-widest text-slate-900">Caution de Garantie</h5>
-                                        </div>
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between items-baseline">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Montant:</span>
-                                                <span className="font-black text-slate-700">{tempFinancial.warrantyDeposit.amount || "0.00"} DA</span>
-                                            </div>
-                                            <div className="flex justify-between items-baseline">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Versement:</span>
-                                                <span className="text-xs font-bold text-slate-600">{tempFinancial.warrantyDeposit.payDate ? new Date(tempFinancial.warrantyDeposit.payDate).toLocaleDateString() : "-"}</span>
-                                            </div>
-                                            <div className="flex justify-between items-baseline">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Récupération:</span>
-                                                <span className="text-xs font-bold text-slate-600">{tempFinancial.warrantyDeposit.recoveryDate ? new Date(tempFinancial.warrantyDeposit.recoveryDate).toLocaleDateString() : "-"}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
 
                     {/* Tables grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -1754,6 +1599,163 @@ const OrderDetails = () => {
                         </div>
                     )}
                 </div>
+
+
+                    {/* Section Suivi Financier & Cautions - Nouveauté Service Recouvrement */}
+                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/10 overflow-hidden mb-10 group/fin">
+                        <div className="bg-slate-900 px-10 py-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white shadow-lg backdrop-blur-md border border-white/20">
+                                    <DollarSign size={20} />
+                                </div>
+                                <div>
+                                    <h4 className="text-lg font-black uppercase tracking-widest text-white">Suivi Financier & Cautions</h4>
+                                    <p className="font-bold text-slate-400 text-[10px] uppercase tracking-widest opacity-80 italic">Gestion des règlements et garanties bancaires</p>
+                                </div>
+                            </div>
+                            {(isSuperAdmin() || canEditAdminFields() || isRecovery()) && !isEditingFinancial && (
+                                <button
+                                    onClick={() => setIsEditingFinancial(true)}
+                                    className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2"
+                                >
+                                    Modifier les Données
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="p-10">
+                            {isEditingFinancial ? (
+                                <div className="space-y-10 animate-in slide-in-from-top duration-500">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">État du Paiement</label>
+                                            <select 
+                                                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-black text-slate-900 outline-none focus:ring-2 focus:ring-blue-100 transition-all"
+                                                value={tempFinancial.paymentStatus}
+                                                onChange={e => setTempFinancial({...tempFinancial, paymentStatus: e.target.value})}
+                                            >
+                                                <option value="Aucun">Aucun paiement</option>
+                                                <option value="Partiel">Paiement Partiel</option>
+                                                <option value="Total">Paiement Total</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                        <div className="p-8 bg-blue-50/50 rounded-[2.5rem] border border-blue-100 space-y-6">
+                                            <h5 className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                                                <ShieldCheck size={14} /> Caution d'Exécution
+                                            </h5>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Montant (DA)</label>
+                                                    <input type="text" className="w-full p-3 bg-white border border-blue-100 rounded-xl text-xs font-bold" value={tempFinancial.executionDeposit.amount} onChange={e => setTempFinancial({...tempFinancial, executionDeposit: {...tempFinancial.executionDeposit, amount: e.target.value}})} placeholder="0.00" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Date Versement</label>
+                                                    <input type="date" className="w-full p-3 bg-white border border-blue-100 rounded-xl text-xs font-bold" value={tempFinancial.executionDeposit.payDate} onChange={e => setTempFinancial({...tempFinancial, executionDeposit: {...tempFinancial.executionDeposit, payDate: e.target.value}})} />
+                                                </div>
+                                                <div className="space-y-2 md:col-span-2">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Date Récupération</label>
+                                                    <input type="date" className="w-full p-3 bg-white border border-blue-100 rounded-xl text-xs font-bold" value={tempFinancial.executionDeposit.recoveryDate} onChange={e => setTempFinancial({...tempFinancial, executionDeposit: {...tempFinancial.executionDeposit, recoveryDate: e.target.value}})} />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="p-8 bg-amber-50/50 rounded-[2.5rem] border border-amber-100 space-y-6">
+                                            <h5 className="text-[10px] font-black text-amber-600 uppercase tracking-widest flex items-center gap-2">
+                                                <ShieldCheck size={14} /> Caution de Garantie
+                                            </h5>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Montant (DA)</label>
+                                                    <input type="text" className="w-full p-3 bg-white border border-amber-100 rounded-xl text-xs font-bold" value={tempFinancial.warrantyDeposit.amount} onChange={e => setTempFinancial({...tempFinancial, warrantyDeposit: {...tempFinancial.warrantyDeposit, amount: e.target.value}})} placeholder="0.00" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Date Versement</label>
+                                                    <input type="date" className="w-full p-3 bg-white border border-amber-100 rounded-xl text-xs font-bold" value={tempFinancial.warrantyDeposit.payDate} onChange={e => setTempFinancial({...tempFinancial, warrantyDeposit: {...tempFinancial.warrantyDeposit, payDate: e.target.value}})} />
+                                                </div>
+                                                <div className="space-y-2 md:col-span-2">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Date Récupération</label>
+                                                    <input type="date" className="w-full p-3 bg-white border border-amber-100 rounded-xl text-xs font-bold" value={tempFinancial.warrantyDeposit.recoveryDate} onChange={e => setTempFinancial({...tempFinancial, warrantyDeposit: {...tempFinancial.warrantyDeposit, recoveryDate: e.target.value}})} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-4 pt-6">
+                                        <button onClick={handleSaveFinancial} className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl">Enregistrer Suivi Financier</button>
+                                        <button onClick={() => setIsEditingFinancial(false)} className="px-10 py-4 bg-white border border-slate-200 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all">Annuler</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                                    {/* Statut Paiement */}
+                                    <div className="bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100 flex flex-col items-center justify-center text-center">
+                                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${
+                                            tempFinancial.paymentStatus === 'Total' ? 'bg-emerald-100 text-emerald-600' :
+                                            tempFinancial.paymentStatus === 'Partiel' ? 'bg-amber-100 text-amber-600' :
+                                            'bg-slate-200 text-slate-400'
+                                        }`}>
+                                            <CheckCircle2 size={32} />
+                                        </div>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Règlement Client</span>
+                                        <span className={`text-lg font-black uppercase ${
+                                            tempFinancial.paymentStatus === 'Total' ? 'text-emerald-600' :
+                                            tempFinancial.paymentStatus === 'Partiel' ? 'text-amber-600' :
+                                            'text-slate-400'
+                                        }`}>
+                                            {tempFinancial.paymentStatus === 'Aucun' ? 'En attente' : `Paiement ${tempFinancial.paymentStatus}`}
+                                        </span>
+                                    </div>
+
+                                    {/* Caution Exécution */}
+                                    <div className="bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center"><ShieldCheck size={20} /></div>
+                                            <h5 className="text-[11px] font-black uppercase tracking-widest text-slate-900">Caution d'Exécution</h5>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Montant:</span>
+                                                <span className="font-black text-slate-700">{tempFinancial.executionDeposit.amount || "0.00"} DA</span>
+                                            </div>
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Versement:</span>
+                                                <span className="text-xs font-bold text-slate-600">{tempFinancial.executionDeposit.payDate ? new Date(tempFinancial.executionDeposit.payDate).toLocaleDateString() : "-"}</span>
+                                            </div>
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Récupération:</span>
+                                                <span className="text-xs font-bold text-slate-600">{tempFinancial.executionDeposit.recoveryDate ? new Date(tempFinancial.executionDeposit.recoveryDate).toLocaleDateString() : "-"}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Caution Garantie */}
+                                    <div className="bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center"><ShieldCheck size={20} /></div>
+                                            <h5 className="text-[11px] font-black uppercase tracking-widest text-slate-900">Caution de Garantie</h5>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Montant:</span>
+                                                <span className="font-black text-slate-700">{tempFinancial.warrantyDeposit.amount || "0.00"} DA</span>
+                                            </div>
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Versement:</span>
+                                                <span className="text-xs font-bold text-slate-600">{tempFinancial.warrantyDeposit.payDate ? new Date(tempFinancial.warrantyDeposit.payDate).toLocaleDateString() : "-"}</span>
+                                            </div>
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Récupération:</span>
+                                                <span className="text-xs font-bold text-slate-600">{tempFinancial.warrantyDeposit.recoveryDate ? new Date(tempFinancial.warrantyDeposit.recoveryDate).toLocaleDateString() : "-"}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
 
                 {/* Closing Footer Area */}
                 <div className="p-10 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
