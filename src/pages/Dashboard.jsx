@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import * as XLSX from 'xlsx';
 import { orderService } from '../services/orderService';
 import { useAuth } from '../context/AuthContext';
 import { notificationService } from '../services/notificationService';
@@ -348,6 +349,70 @@ const Dashboard = () => {
         } catch (e) { return amount; }
     };
 
+    const handleExportExcel = () => {
+        if (!auth?.canExportData()) return;
+
+        // Préparation des données pour l'exportation
+        const dataToExport = filteredOrders.map(order => {
+            // Calcul des jours restants si possible
+            const remaining = getRemainingDays(order);
+            const remainingText = remaining === null ? "-" : (remaining < 0 ? `Retard (${Math.abs(remaining)}j)` : `${remaining}j`);
+
+            return {
+                "Référence Contrat": order.contractRef || "-",
+                "Référence ODS": order.odsRef || "-",
+                "Client / Établissement": order.clientName || "-",
+                "Division": order.division || "-",
+                "Date Signature": order.dateOds || "-",
+                "Délai (Jours)": order.delay || "0",
+                "Échéance Prévue": order.endDate || "-",
+                "Montant HT": order.amount || "0",
+                "Statut Actuel": order.status || "En attente",
+                "Autorisation": order.authorization === 'Oui' ? "Confirmée" : "En attente",
+                "Date de Livraison": order.deliveryDate || "-",
+                "Temps Restant": remainingText,
+                "Détails Techniques": (order.items || []).map(i => `${i.description} [${i.quantity} ${i.unit}]`).join(' | '),
+                "Enregistré par": order.createdBy || "Système",
+                "Dernière Modif": formatDate(order.updatedAt)
+            };
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        
+        // Ajustement de la largeur des colonnes
+        const wscols = [
+            { wch: 20 }, // Contrat
+            { wch: 15 }, // ODS
+            { wch: 40 }, // Client
+            { wch: 20 }, // Division
+            { wch: 15 }, // Date
+            { wch: 12 }, // Délai
+            { wch: 15 }, // Échéance
+            { wch: 15 }, // Montant
+            { wch: 15 }, // Statut
+            { wch: 15 }, // Autorisation
+            { wch: 15 }, // Livraison
+            { wch: 15 }, // Temps restant
+            { wch: 60 }, // Détails
+            { wch: 15 }, // Créateur
+            { wch: 15 }  // Modif
+        ];
+        worksheet['!cols'] = wscols;
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Rapport ODS");
+        
+        // Générer le fichier
+        const fileName = `EXPORT_ODS_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(workbook, fileName);
+        
+        notificationService.addNotification(
+            `Export Excel généré : ${fileName}`,
+            'success',
+            currentUser.email
+        );
+    };
+
     const getRemainingDays = (order) => {
         try {
             let endDate = order?.endDate;
@@ -529,6 +594,17 @@ const Dashboard = () => {
                         >
                             <ShieldCheck size={20} />
                         </button>
+
+                        {auth?.canExportData() && (
+                            <button
+                                onClick={handleExportExcel}
+                                title="Extraire la liste (Excel)"
+                                className="px-5 h-11 flex items-center gap-2.5 bg-emerald-600 text-white rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 font-bold text-xs uppercase tracking-widest"
+                            >
+                                <FileCheck size={18} />
+                                <span className="hidden lg:inline">Exporter Excel</span>
+                            </button>
+                        )}
 
                         {currentUser && (
                             <div className="flex items-center gap-3 bg-white p-2.5 pr-5 rounded-2xl border border-slate-200 shadow-sm">

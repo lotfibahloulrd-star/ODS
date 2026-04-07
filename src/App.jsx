@@ -10,11 +10,13 @@ import './index.css';
 
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import OrderDetails from './pages/OrderDetails';
+import ChangePasswordModal from './components/ChangePasswordModal';
 
 function AppContent() {
     const { currentUser, logout, changePassword, isAdmin, isSuperAdmin, canCreateOds } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const [isPassModalOpen, setIsPassModalOpen] = useState(false);
     
     // Extract query params
     const searchParams = new URL(window.location.href).searchParams;
@@ -25,13 +27,12 @@ function AppContent() {
         return <Login />;
     }
 
-    const handleChangePassword = () => {
-        const newPass = prompt("Saisissez votre nouveau mot de passe :");
-        if (newPass && newPass.length >= 4) {
-            if (changePassword(newPass)) alert("Mot de passe mis à jour avec succès !");
-            else alert("Erreur lors de la mise à jour.");
-        } else if (newPass) {
-            alert("Le mot de passe doit faire au moins 4 caractères.");
+    const handleChangePassword = (newPass) => {
+        if (changePassword(newPass)) {
+            alert("Mot de passe mis à jour avec succès !");
+            setIsPassModalOpen(false);
+        } else {
+            alert("Erreur lors de la mise à jour.");
         }
     };
 
@@ -47,6 +48,12 @@ function AppContent() {
 
     return (
         <div className="min-h-screen bg-slate-50">
+            <ChangePasswordModal 
+                isOpen={isPassModalOpen} 
+                onClose={() => setIsPassModalOpen(false)} 
+                onConfirm={handleChangePassword} 
+            />
+
             {/* Modern Premium Header */}
             <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200">
                 <div className="max-w-[1600px] mx-auto px-6 py-4">
@@ -101,7 +108,7 @@ function AppContent() {
                                 <span className="text-[10px] opacity-30 font-black ml-2">V4.5-DEPLOY</span>
                             </div>
                             <div className="flex items-center gap-1">
-                                <button onClick={handleChangePassword} title="Changer de mot de passe" className="w-10 h-10 flex items-center justify-center hover:bg-white hover:text-blue-600 text-slate-400 rounded-xl transition-all">
+                                <button onClick={() => setIsPassModalOpen(true)} title="Changer de mot de passe" className="w-10 h-10 flex items-center justify-center hover:bg-white hover:text-blue-600 text-slate-400 rounded-xl transition-all">
                                     <Key size={18} />
                                 </button>
                                 <button onClick={logout} className="flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-xl transition-all group">
