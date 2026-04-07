@@ -50,6 +50,8 @@ const OrderDetails = () => {
     const [tempDeliveryDate, setTempDeliveryDate] = useState("");
     const [isEditingProgress, setIsEditingProgress] = useState(false);
     const [tempProgress, setTempProgress] = useState("");
+    const [isEditingDivision, setIsEditingDivision] = useState(false);
+    const [tempDivision, setTempDivision] = useState("");
     const [editingArticleIndex, setEditingArticleIndex] = useState(null);
     const [editingArticleData, setEditingArticleData] = useState(null);
     const [isAddingArticle, setIsAddingArticle] = useState(false);
@@ -95,6 +97,7 @@ const OrderDetails = () => {
                 setTempJudicialProceedings(found.judicialProceedings || "");
                 setTempDeliveryDate(found.deliveryDate || "");
                 setTempProgress(found.manualProgress !== undefined ? found.manualProgress : "");
+                setTempDivision(found.division || "");
             }
         } catch (error) {
             console.error("Error loading order:", error);
@@ -586,6 +589,31 @@ const OrderDetails = () => {
                                 <div className="flex items-center gap-3">
                                     <span className="text-xl font-black text-slate-900 uppercase block">{order.client}</span>
                                     {canEditAdminFields() && <button onClick={() => { setTempClient(order.client); setIsEditingClient(true); }} className="p-2 hover:bg-white text-blue-500 rounded-lg transition-all border border-blue-100 bg-blue-50/50"><Plus size={14} /></button>}
+                                </div>
+                            )}
+                        </div>
+                        <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 group hover:border-blue-200 transition-all">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Affiliation / Division</span>
+                            {isEditingDivision ? (
+                                <div className="flex gap-2">
+                                    <select 
+                                        value={tempDivision} 
+                                        onChange={e => setTempDivision(e.target.value)} 
+                                        className="flex-1 p-2 bg-white border-2 border-blue-200 rounded-xl font-black text-slate-900 outline-none text-xs"
+                                        autoFocus
+                                    >
+                                        <option value="Division Laboratoire">Division Laboratoire</option>
+                                        <option value="Division Analytique">Division Analytique</option>
+                                        <option value="Division Analytique et Laboratoire">Division Analytique et Laboratoire (DL/DA)</option>
+                                        <option value="Laboratoire de Métrologie">Laboratoire de Métrologie</option>
+                                        <option value="Direction Maintenance SAV">Direction Maintenance SAV</option>
+                                    </select>
+                                    <button onClick={() => handleSaveAdminFields('division', tempDivision, setTempDivision, setIsEditingDivision, 'Division')} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase">OK</button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xl font-black text-slate-900 uppercase block">{order.division || "NON CLASSÉ"}</span>
+                                    {canEditAdminFields() && <button onClick={() => { setTempDivision(order.division || ""); setIsEditingDivision(true); }} className="p-2 hover:bg-white text-blue-500 rounded-lg transition-all border border-blue-100 bg-blue-50/50"><Plus size={14} /></button>}
                                 </div>
                             )}
                         </div>

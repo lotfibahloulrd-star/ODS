@@ -788,6 +788,9 @@ const Dashboard = () => {
                                                             <div className="font-black text-slate-900 uppercase text-[11px] min-w-[200px] tracking-tight" title={order.client}>
                                                                 {order.client || "-"}
                                                             </div>
+                                                            <div className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">
+                                                                {order.division || "Non classé"}
+                                                            </div>
                                                         </td>
                                                         <td className="px-6 py-7 text-center">
                                                             <div className="flex flex-col items-center gap-2">

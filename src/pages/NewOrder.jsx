@@ -612,8 +612,9 @@ const NewOrder = ({ onSave }) => {
                                         >
                                             <option value="Division Laboratoire">Division Laboratoire</option>
                                             <option value="Division Analytique">Division Analytique</option>
-                                            <option value="DL et DA">DL et DA</option>
-                                            <option value="Direction">Direction</option>
+                                            <option value="Division Analytique et Laboratoire">Division Analytique et Laboratoire (DL/DA)</option>
+                                            <option value="Laboratoire de Métrologie">Laboratoire de Métrologie</option>
+                                            <option value="Direction Maintenance SAV">Direction Maintenance SAV</option>
                                         </select>
                                     </div>
                                 </div>
