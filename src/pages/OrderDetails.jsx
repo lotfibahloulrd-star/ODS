@@ -57,12 +57,14 @@ const OrderDetails = () => {
     const [isAddingArticle, setIsAddingArticle] = useState(false);
     const [isEditingFooter, setIsEditingFooter] = useState(false);
     const [newArticle, setNewArticle] = useState({ no: "", ref: "", designation: "", qte: "", pu: "", marque: "", site: "" });
+    const [isAddingContact, setIsAddingContact] = useState(false);
+    const [newContactData, setNewContactData] = useState({ name: "", position: "", phone: "", email: "" });
 
     const loadOrder = async () => {
         setIsLoading(true);
         try {
             const data = await orderService.getAllOrders();
-            const found = data.find(o => o.id === id);
+            const found = data.find(o => String(o.id) === String(id));
             if (found) {
                 setOrder(found);
                 setImportData(found.importStatus || {});
@@ -240,6 +242,18 @@ const OrderDetails = () => {
             alert("Référence Contrat mise à jour !");
         } catch (e) {
             alert("Erreur lors de la mise à jour de la référence Contrat.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleUpdateContacts = async (newContacts) => {
+        setIsSaving(true);
+        try {
+            await orderService.updateOrder(order.id, { contacts: newContacts }, currentUser.firstName);
+            loadOrder();
+        } catch (e) {
+            alert("Erreur lors de la mise à jour des contacts.");
         } finally {
             setIsSaving(false);
         }
@@ -716,6 +730,116 @@ const OrderDetails = () => {
                                     {canEditAdminFields() && <button onClick={() => { setTempJudicialProceedings(order.judicialProceedings); setIsEditingJudicialProceedings(true); }} className="p-2 hover:bg-white text-blue-500 rounded-lg transition-all border border-blue-100 bg-blue-50/50"><Plus size={14} /></button>}
                                 </div>
                             )}
+                        </div>
+                    </div>
+
+
+                    {/* Section Contacts - Emplacement Revu pour meilleure visibilité */}
+                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/10 overflow-hidden mb-10">
+                        <div className="bg-indigo-600 px-10 py-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white shadow-lg backdrop-blur-md border border-white/20">
+                                    <span className="text-xl">👥</span>
+                                </div>
+                                <div>
+                                    <h4 className="text-lg font-black uppercase tracking-widest text-white">Contacts de l'Organisme</h4>
+                                    <p className="font-bold text-indigo-100 text-[10px] uppercase tracking-widest opacity-80 italic">Interlocuteurs directs rattachés à cet ODS</p>
+                                </div>
+                            </div>
+                            {canEditAdminFields() && !isAddingContact && (
+                                <button
+                                    onClick={() => setIsAddingContact(true)}
+                                    className="px-6 py-3 bg-white text-indigo-600 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-indigo-50 transition-all flex items-center gap-2 shadow-xl shadow-indigo-900/10"
+                                >
+                                    <Plus size={16} /> Nouveau Contact
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="p-10 space-y-8">
+                            {isAddingContact && (
+                                <div className="p-8 bg-indigo-50/50 rounded-[2.5rem] border border-indigo-100 animate-in fade-in zoom-in duration-300">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-1">Nom et Prénom</label>
+                                            <input type="text" className="w-full p-4 bg-white border border-indigo-100 rounded-2xl text-xs font-bold text-slate-700 shadow-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all" value={newContactData.name} onChange={e => setNewContactData({...newContactData, name: e.target.value})} placeholder="Ex: Lotfi Bahloul" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-1">Poste Occupé</label>
+                                            <input type="text" className="w-full p-4 bg-white border border-indigo-100 rounded-2xl text-xs font-bold text-slate-700 shadow-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all" value={newContactData.position} onChange={e => setNewContactData({...newContactData, position: e.target.value})} placeholder="Ex: Responsable Maintenance" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-1">Téléphone</label>
+                                            <input type="text" className="w-full p-4 bg-white border border-indigo-100 rounded-2xl text-xs font-bold text-slate-700 shadow-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all" value={newContactData.phone} onChange={e => setNewContactData({...newContactData, phone: e.target.value})} placeholder="Ex: 0550 XX XX XX" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-1">Adresse Email</label>
+                                            <input type="email" className="w-full p-4 bg-white border border-indigo-100 rounded-2xl text-xs font-bold text-slate-700 shadow-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all" value={newContactData.email} onChange={e => setNewContactData({...newContactData, email: e.target.value})} placeholder="Ex: email@exemple.com" />
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <button 
+                                            onClick={() => {
+                                                const updated = [...(order.contacts || []), newContactData];
+                                                handleUpdateContacts(updated);
+                                                setIsAddingContact(false);
+                                                setNewContactData({ name: "", position: "", phone: "", email: "" });
+                                            }}
+                                            className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
+                                        >
+                                            Enregistrer le Contact
+                                        </button>
+                                        <button onClick={() => setIsAddingContact(false)} className="px-8 py-4 bg-white border border-slate-200 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all">Annuler</button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {(order.contacts || []).map((contact, cIdx) => (
+                                    <div key={cIdx} className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 group hover:border-indigo-200 hover:bg-white transition-all relative">
+                                        <div className="flex items-start justify-between mb-6">
+                                            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-indigo-500 shadow-sm border border-slate-100 group-hover:border-indigo-100">
+                                                <User size={22} />
+                                            </div>
+                                            {canEditAdminFields() && (
+                                                <button 
+                                                    onClick={() => {
+                                                        if (window.confirm("Supprimer ce contact ?")) {
+                                                            const updated = order.contacts.filter((_, i) => i !== cIdx);
+                                                            handleUpdateContacts(updated);
+                                                        }
+                                                    }}
+                                                    className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <h5 className="text-[13px] font-black text-slate-900 uppercase tracking-tight">{contact.name}</h5>
+                                                <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-0.5">{contact.position}</div>
+                                            </div>
+                                            <div className="space-y-2.5 pt-4 border-t border-slate-200/50">
+                                                <div className="flex items-center gap-3 text-slate-600 text-[11px] font-medium">
+                                                    <div className="w-6 h-6 bg-white rounded-lg flex items-center justify-center text-slate-400 shadow-sm border border-slate-100"><Phone size={12} /></div>
+                                                    {contact.phone || "Non renseigné"}
+                                                </div>
+                                                <div className="flex items-center gap-3 text-slate-600 text-[11px] font-medium">
+                                                    <div className="w-6 h-6 bg-white rounded-lg flex items-center justify-center text-slate-400 shadow-sm border border-slate-100"><Mail size={12} /></div>
+                                                    {contact.email || "Non renseigné"}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {(order.contacts || []).length === 0 && !isAddingContact && (
+                                    <div className="lg:col-span-3 py-16 text-center border-4 border-dashed border-slate-50 rounded-[3rem] bg-slate-50/30">
+                                        <div className="text-3xl mb-4 grayscale opacity-30">👥</div>
+                                        <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em] italic">Aucun contact spécifique pour cet organisme</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 
