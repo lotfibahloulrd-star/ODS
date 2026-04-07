@@ -22,8 +22,7 @@ const FULL_ACCESS_EMAILS = [
     'e.saci@esclab-algerie.com',
     'mazouz.sonia@esclab-algerie.com',
     'belateche.taklit@esclab-algerie.com',
-    'n.bouras@esclab-algerie.com',
-    'm.aidli@esclab-algerie.com'
+    'n.bouras@esclab-algerie.com'
 ];
 
 export const AuthProvider = ({ children }) => {
@@ -210,6 +209,9 @@ export const AuthProvider = ({ children }) => {
     };
 
     const canViewOrder = (order) => {
+        if (currentUser?.email === 'm.aidli@esclab-algerie.com') {
+            return order.status === 'En attente de paiement';
+        }
         if (hasFullAccess()) return true;
         return order.division === currentUser?.division;
     };

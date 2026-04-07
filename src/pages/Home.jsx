@@ -41,16 +41,18 @@ const Home = () => {
     }, []);
 
     const stats = useMemo(() => {
+        const allowedOrders = orders.filter(o => auth.canViewOrder(o));
+
         const byStatus = {
-            'En attente de paiement': orders.filter(o => o.status === 'En attente de paiement').length,
-            'En cours': orders.filter(o => o.status === 'En cours' || !o.status).length,
-            'En attente d\'ODS': orders.filter(o => o.status === 'En attente d\'ODS').length,
-            'Attribution en attente': orders.filter(o => o.status === 'Attribution en attente').length
+            'En attente de paiement': allowedOrders.filter(o => o.status === 'En attente de paiement').length,
+            'En cours': allowedOrders.filter(o => o.status === 'En cours' || !o.status).length,
+            'En attente d\'ODS': allowedOrders.filter(o => o.status === 'En attente d\'ODS').length,
+            'Attribution en attente': allowedOrders.filter(o => o.status === 'Attribution en attente').length
         };
         
-        const total = orders.length;
-        const pendingAuth = orders.filter(o => o.authorization !== 'Oui').length;
-        const overdue = orders.filter(order => {
+        const total = allowedOrders.length;
+        const pendingAuth = allowedOrders.filter(o => o.authorization !== 'Oui').length;
+        const overdue = allowedOrders.filter(order => {
             const start = order.startDate || order.dateOds;
             const delay = order.delay;
             let endDate = order.endDate;
