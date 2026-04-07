@@ -791,6 +791,7 @@ const Dashboard = () => {
                                                 const progress = (order.manualProgress !== undefined && order.manualProgress !== null && order.manualProgress !== "")
                                                     ? parseInt(order.manualProgress)
                                                     : calculatedProgress;
+                                                const fin = order.financial || {};
 
                                                 return (
                                                     <tr
