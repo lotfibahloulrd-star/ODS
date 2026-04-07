@@ -40,6 +40,7 @@ const NewOrder = ({ onSave }) => {
         bankDomiciliation: '',
         judicialProceedings: '',
         articles: [],
+        contacts: [],
         totals: { ht: 0, tva: 0, ttc: 0 }
     });
 
@@ -75,6 +76,28 @@ const NewOrder = ({ onSave }) => {
             totals,
             amount: totals.ttc > 0 ? totals.ttc.toFixed(2) : prev.amount
         }));
+    };
+
+    const addContact = () => {
+        setFormData(prev => ({
+            ...prev,
+            contacts: [...(prev.contacts || []), { name: '', position: '', phone: '', email: '' }]
+        }));
+    };
+
+    const removeContact = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            contacts: prev.contacts.filter((_, i) => i !== index)
+        }));
+    };
+
+    const updateContact = (index, field, value) => {
+        setFormData(prev => {
+            const newContacts = [...prev.contacts];
+            newContacts[index] = { ...newContacts[index], [field]: value };
+            return { ...prev, contacts: newContacts };
+        });
     };
 
     const updateArticle = (index, field, value) => {
@@ -715,6 +738,91 @@ const NewOrder = ({ onSave }) => {
                                             });
                                         }}
                                     />
+                                </div>
+                            </div>
+
+                            {/* Section contacts */}
+                            <div className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-sm space-y-8">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-100">
+                                            <span className="text-xl">👥</span>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-lg font-black uppercase tracking-widest text-slate-900">Contacts Associés</h4>
+                                            <p className="font-bold text-slate-400 text-xs">Ajoutez les interlocuteurs pour cet organisme</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={addContact}
+                                        className="px-6 py-3 bg-indigo-50 text-indigo-600 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-2"
+                                    >
+                                        <span className="text-lg">+</span> Ajouter un contact
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {(formData.contacts || []).map((contact, idx) => (
+                                        <div key={idx} className="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 group hover:border-indigo-200 transition-all relative">
+                                            <button
+                                                type="button"
+                                                onClick={() => removeContact(idx)}
+                                                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-white text-red-400 rounded-full shadow-sm hover:bg-red-50 hover:text-red-600 transition-all opacity-0 group-hover:opacity-100"
+                                            >
+                                                ×
+                                            </button>
+                                            <div className="grid grid-cols-1 gap-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Nom et Prénom</label>
+                                                    <input
+                                                        type="text"
+                                                        className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-indigo-500"
+                                                        value={contact.name}
+                                                        onChange={e => updateContact(idx, 'name', e.target.value)}
+                                                        placeholder="M. Lotfi Bahloul"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Poste Occupé</label>
+                                                    <input
+                                                        type="text"
+                                                        className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-indigo-500"
+                                                        value={contact.position}
+                                                        onChange={e => updateContact(idx, 'position', e.target.value)}
+                                                        placeholder="Responsable Maintenance"
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-1">
+                                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Téléphone</label>
+                                                        <input
+                                                            type="text"
+                                                            className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-indigo-500"
+                                                            value={contact.phone}
+                                                            onChange={e => updateContact(idx, 'phone', e.target.value)}
+                                                            placeholder="0561 XX XX XX"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Email</label>
+                                                        <input
+                                                            type="email"
+                                                            className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-indigo-500"
+                                                            value={contact.email}
+                                                            onChange={e => updateContact(idx, 'email', e.target.value)}
+                                                            placeholder="l.bahloul@example.com"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(formData.contacts || []).length === 0 && (
+                                        <div className="md:col-span-2 py-10 text-center border-2 border-dashed border-slate-100 rounded-[2.5rem]">
+                                            <p className="text-slate-300 font-bold text-xs uppercase tracking-widest italic">Aucun contact spécifique ajouté</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
