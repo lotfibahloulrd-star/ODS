@@ -205,7 +205,21 @@ export const orderService = {
     saveContractFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_contracts', orderId, fileData, fileName),
     saveStopRequestFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_stops_req', orderId, fileData, fileName),
     saveStopResponseFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_stops_res', orderId, fileData, fileName),
-    saveAuthFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_auth', orderId, fileData, fileName),
+    deleteFile: async (orderId, storageKey) => {
+        // Remove file entry from local storage for the given storageKey
+        const dataStr = localStorage.getItem(storageKey);
+        if (!dataStr) return false;
+        const files = JSON.parse(dataStr);
+        const filtered = files.filter(f => f.orderId !== orderId);
+        localStorage.setItem(storageKey, JSON.stringify(filtered));
+        // Optionally notify server (if API supports delete)
+        try {
+            await fetch(`${API_URL}?action=delete_file&orderId=${orderId}&storageKey=${storageKey}`, {
+                method: 'POST'
+            });
+        } catch (e) { /* ignore server errors */ }
+        return true;
+    },
 
     _getFile: async (storageKey, orderId) => {
         try {

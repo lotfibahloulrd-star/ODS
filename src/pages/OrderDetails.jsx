@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 const OrderDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { currentUser, isImport, isStock, isRecovery, canCreateOds, canEditAmount, isSuperAdmin, canEditAdminFields } = useAuth();
+    const { currentUser, isImport, isStock, isRecovery, canCreateOds, canEditAmount, isSuperAdmin, canEditAdminFields, canDeleteOds, canEditDQE, canEditProgress } = useAuth();
 
     const [order, setOrder] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -179,6 +179,22 @@ const OrderDetails = () => {
             }
         };
         reader.readAsDataURL(file);
+    };
+
+    const handleDeleteFile = async (orderId, storageKey) => {
+        if (!canDeleteOds()) return;
+        if (!window.confirm("Voulez-vous vraiment supprimer ce fichier ?")) return;
+        setIsSaving(true);
+        try {
+            await orderService.deleteFile(orderId, storageKey);
+            loadOrder();
+            alert(`Fichier supprimé avec succès !`);
+        } catch (error) {
+            console.error("Delete error:", error);
+            alert("Erreur lors de la suppression : " + error.message);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const availabilityInfo = useMemo(() => {
@@ -695,7 +711,7 @@ const OrderDetails = () => {
                                     <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden border border-slate-100">
                                         <div className={`h-full transition-all duration-1000 ${availabilityInfo.percentage === 100 ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${availabilityInfo.percentage}%` }}></div>
                                     </div>
-                                    {isSuperAdmin() && (
+                                    {canEditProgress() && (
                                         <button onClick={() => { setTempProgress(order.manualProgress || ""); setIsEditingProgress(true); }} className="opacity-0 group-hover:opacity-100 p-2 text-emerald-500 hover:bg-white rounded-lg transition-all" title="Saisir l'avancement manuellement">
                                             <Plus size={14} />
                                         </button>
@@ -902,6 +918,18 @@ const OrderDetails = () => {
                                                             <RotateCcw size={16} />
                                                             <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'ods')} />
                                                         </label>
+                                                        {canDeleteOds() && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteFile(order.id, 'storage_ods');
+                                                                }}
+                                                                className="p-2 bg-slate-100 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+                                                                title="Supprimer le document"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )}
                                                     </>
                                                 ) : (
                                                     <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
@@ -937,6 +965,18 @@ const OrderDetails = () => {
                                                                 <RotateCcw size={16} />
                                                                 <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'contract')} />
                                                             </label>
+                                                            {canDeleteOds() && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeleteFile(order.id, 'storage_contracts');
+                                                                    }}
+                                                                    className="p-2 bg-slate-100 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+                                                                    title="Supprimer le document"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            )}
                                                         </>
                                                     ) : (
                                                         <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
@@ -982,6 +1022,18 @@ const OrderDetails = () => {
                                                             <RotateCcw size={16} />
                                                             <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'stop_request')} />
                                                         </label>
+                                                        {canDeleteOds() && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteFile(order.id, 'storage_stops_req');
+                                                                }}
+                                                                className="p-2 bg-slate-100 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+                                                                title="Supprimer le document"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )}
                                                     </>
                                                 ) : (
                                                     <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
@@ -1015,6 +1067,18 @@ const OrderDetails = () => {
                                                             <RotateCcw size={16} />
                                                             <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'stop_response')} />
                                                         </label>
+                                                        {canDeleteOds() && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteFile(order.id, 'storage_stops_res');
+                                                                }}
+                                                                className="p-2 bg-slate-100 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+                                                                title="Supprimer le document"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )}
                                                     </>
                                                 ) : (
                                                     <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
@@ -1048,6 +1112,18 @@ const OrderDetails = () => {
                                                             <RotateCcw size={16} />
                                                             <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'auth')} />
                                                         </label>
+                                                        {canDeleteOds() && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteFile(order.id, 'storage_auth');
+                                                                }}
+                                                                className="p-2 bg-slate-100 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+                                                                title="Supprimer le document"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )}
                                                     </>
                                                 ) : (
                                                     <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
@@ -1128,12 +1204,12 @@ const OrderDetails = () => {
                     </div>
 
                     {/* Articles Section (BPU / DQE) always accessible for superAdmin to add articles */}
-                    {((order.articles && order.articles.length > 0) || canEditAdminFields()) && (
+                    {((order.articles && order.articles.length > 0) || canEditDQE()) && (
                         <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
                             <div className="bg-slate-50 px-8 py-5 border-b border-slate-100 flex justify-between items-center">
                                 <div className="flex items-center gap-4">
                                     <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">Détail Quantitatif et Estimatif (DQE)</h4>
-                                    {canEditAdminFields() && !isAddingArticle && (
+                                    {canEditDQE() && !isAddingArticle && (
                                         <button
                                             onClick={() => setIsAddingArticle(true)}
                                             className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center gap-2"
@@ -1308,7 +1384,7 @@ const OrderDetails = () => {
                                                             ))}
                                                             
                                                             <div className="flex items-center gap-1 ml-4 border-l border-slate-200 pl-4 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                                                                {editingArticleIndex === null && canEditAdminFields() && (
+                                                                {editingArticleIndex === null && canEditDQE() && (
                                                                     <>
                                                                         <button
                                                                             onClick={() => {

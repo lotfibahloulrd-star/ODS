@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { X, FileText, FileCheck, ExternalLink, Calendar, User, Info, Clock, CheckCircle2, Package, Layers, FlaskConical, AlertCircle, PlayCircle, StopCircle, DollarSign, Plane, Truck, Anchor, Box, Ship, Upload, Plus } from 'lucide-react';
+import { X, FileText, FileCheck, ExternalLink, Calendar, User, Info, Clock, CheckCircle2, Package, Layers, FlaskConical, AlertCircle, PlayCircle, StopCircle, DollarSign, Plane, Truck, Anchor, Box, Ship, Upload, Plus, Trash2 } from 'lucide-react';
 import { orderService } from '../services/orderService';
 import { useAuth } from '../context/AuthContext';
 
 const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
-    const { currentUser, isImport, isStock, canCreateOds, canEditAmount, isSuperAdmin } = useAuth();
+    const { currentUser, isImport, isStock, canCreateOds, canEditAmount, canDeleteOds, isSuperAdmin } = useAuth();
     const canCreate = canCreateOds();
     const canEditPrice = canEditAmount();
 
@@ -48,6 +48,24 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
             setIsUploading(false);
         };
         reader.readAsDataURL(file);
+    };
+
+    // Handler to delete a file from a specific storage key
+    const handleDeleteFile = async (orderId, storageKey) => {
+        if (!canDeleteOds()) return;
+        if (!confirm('Êtes-vous sûr de vouloir supprimer ce fichier ?')) return;
+        
+        setIsSaving(true);
+        try {
+            await orderService.deleteFile(orderId, storageKey);
+            if (onUpdate) onUpdate();
+            alert('Fichier supprimé avec succès');
+        } catch (e) {
+            console.error('Delete error:', e);
+            alert('Erreur lors de la suppression du fichier');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleSaveWorkflow = async () => {
@@ -286,6 +304,11 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                                     <td className="px-8 py-6 text-sm font-black text-slate-900">{order.refOds || order.ref || "-"}</td>
                                     <td className="px-8 py-6">
                                         <div className="flex justify-end gap-3">
+                                            {hasOds && canDeleteOds() && (
+                                                <button onClick={() => handleDeleteFile(order.id, 'storage_ods')} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" title="Supprimer le fichier ODS">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
                                             {hasOds && (
                                                 <button onClick={() => openPdf(order.id, 'storage_ods')} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-blue-700 transition-all flex items-center gap-2">
                                                     <ExternalLink size={14} /> Consulter
@@ -311,6 +334,11 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                                     <td className="px-8 py-6 text-sm font-black text-slate-900">{order.refContract || "-"}</td>
                                     <td className="px-8 py-6">
                                         <div className="flex justify-end gap-3">
+                                            {hasContract && canDeleteOds() && (
+                                                <button onClick={() => handleDeleteFile(order.id, 'storage_contracts')} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" title="Supprimer le contrat">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
                                             {hasContract && (
                                                 <button onClick={() => openPdf(order.id, 'storage_contracts')} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-indigo-700 transition-all flex items-center gap-2">
                                                     <ExternalLink size={14} /> Consulter
@@ -526,6 +554,11 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                                 </div>
                             </div>
                             <div className="flex gap-4">
+                                {hasStopRequest && canDeleteOds() && (
+                                    <button onClick={() => handleDeleteFile(order.id, 'storage_stops_req')} className="p-3 text-red-500 hover:bg-red-100 rounded-2xl transition-all" title="Supprimer ODS d'arrêt">
+                                        <Trash2 size={18} />
+                                    </button>
+                                )}
                                 {hasStopRequest && (
                                     <button onClick={() => openPdf(order.id, 'storage_stops_req')} className="px-6 py-3 bg-white border border-red-200 text-red-600 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-red-50 transition-colors flex items-center gap-2 shadow-sm">
                                         <FileText size={16} /> ODS d'arrêt PDF
@@ -539,6 +572,11 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                                     </label>
                                 )}
 
+                                {hasStopResponse && canDeleteOds() && (
+                                    <button onClick={() => handleDeleteFile(order.id, 'storage_stops_res')} className="p-3 text-red-500 hover:bg-red-100 rounded-2xl transition-all" title="Supprimer ODS de reprise">
+                                        <Trash2 size={18} />
+                                    </button>
+                                )}
                                 {hasStopResponse && (
                                     <button onClick={() => openPdf(order.id, 'storage_stops_res')} className="px-6 py-3 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-red-700 transition-all flex items-center gap-2 shadow-lg shadow-red-200">
                                         <FileCheck size={16} /> ODS de Reprise PDF

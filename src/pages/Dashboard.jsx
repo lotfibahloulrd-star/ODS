@@ -1035,7 +1035,7 @@ const Dashboard = () => {
                                                         )}
                                                         <td className="px-6 py-7 text-right">
                                                             <div className="flex items-center justify-end gap-2">
-                                                                {isSuperAdmin && isSuperAdmin() && (
+                                                                {auth.canDeleteOds() && (
                                                                     <button
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
