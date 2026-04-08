@@ -32,9 +32,9 @@ const Login = () => {
             <div className="max-w-md w-full">
                 <div className="text-center mb-10">
                     <div className="w-20 h-20 bg-blue-600 rounded-[2rem] flex items-center justify-center text-white shadow-2xl shadow-blue-200 mx-auto mb-6 transform hover:rotate-12 transition-transform duration-500">
-                        <span className="font-black text-4xl">O</span>
+                        <span className="font-black text-4xl">P</span>
                     </div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">ODS <span className="text-blue-600">PILOT</span></h1>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Portail de Gestion <span className="text-blue-600">des Contrats</span></h1>
                     <p className="text-slate-500 font-medium">Connectez-vous à votre espace de suivi</p>
                 </div>
 
@@ -99,7 +99,7 @@ const Login = () => {
                 </div>
 
                 <p className="text-center mt-8 text-slate-400 font-bold text-sm">
-                    &copy; 2026 ESCLAB ALGERIE - ODS PILOT
+                    &copy; 2026 ESCLAB ALGERIE - Portail de Gestion des Contrats
                 </p>
             </div>
         </div>

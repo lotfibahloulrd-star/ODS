@@ -60,9 +60,9 @@ function AppContent() {
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2 shrink-0 cursor-pointer" onClick={() => navigate('/')}>
                             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
-                                <span className="font-black text-xl">O</span>
+                                <span className="font-black text-xl">P</span>
                             </div>
-                            <h1 className="text-xl font-black text-slate-900 tracking-tight hidden md:block">ODS <span className="text-blue-600">PILOT</span> <span className="text-[10px] font-bold text-slate-400 align-top">v4.5</span></h1>
+                            <h1 className="text-xl font-black text-slate-900 tracking-tight hidden md:block">Portail de Gestion <span className="text-blue-600">des Contrats</span> <span className="text-[10px] font-bold text-slate-400 align-top">v4.5</span></h1>
                         </div>
 
                         <nav className="flex items-center bg-slate-100/50 p-1.5 rounded-2xl border border-slate-100 overflow-x-auto no-scrollbar">
