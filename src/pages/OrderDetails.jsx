@@ -62,8 +62,9 @@ const OrderDetails = () => {
     const [isEditingFinancial, setIsEditingFinancial] = useState(false);
     const [tempFinancial, setTempFinancial] = useState({
         paymentStatus: 'Aucun',
-        executionDeposit: { amount: '', payDate: '', recoveryDate: '' },
-        warrantyDeposit: { amount: '', payDate: '', recoveryDate: '' }
+        paymentAmount: '',
+        paymentDate: '',
+        executionDeposit: { amount: '', payDate: '', recoveryDate: '', reference: '', warrantyPeriod: '' }
     });
 
     const loadOrder = async () => {
@@ -110,8 +111,7 @@ const OrderDetails = () => {
                     paymentStatus: 'Aucun',
                     paymentAmount: '',
                     paymentDate: '',
-                    executionDeposit: { amount: '', payDate: '', recoveryDate: '' },
-                    warrantyDeposit: { amount: '', payDate: '', recoveryDate: '' }
+                    executionDeposit: { amount: '', payDate: '', recoveryDate: '', reference: '', warrantyPeriod: '' }
                 };
                 setTempFinancial(finData);
             }
@@ -1738,43 +1738,31 @@ const OrderDetails = () => {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                    <div className="grid grid-cols-1 gap-10">
                                         <div className="p-8 bg-blue-50/50 rounded-[2.5rem] border border-blue-100 space-y-6">
                                             <h5 className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
-                                                <ShieldCheck size={14} /> Caution d'Exécution
+                                                <ShieldCheck size={14} /> Caution de Bonne Exécution
                                             </h5>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                                 <div className="space-y-2">
                                                     <label className="text-[9px] font-bold text-slate-400 uppercase">Montant (DA)</label>
-                                                    <input type="text" className="w-full p-3 bg-white border border-blue-100 rounded-xl text-xs font-bold" value={tempFinancial.executionDeposit.amount} onChange={e => setTempFinancial({...tempFinancial, executionDeposit: {...tempFinancial.executionDeposit, amount: e.target.value}})} placeholder="0.00" />
+                                                    <input type="text" className="w-full p-3 bg-white border border-blue-100 rounded-xl text-xs font-bold" value={tempFinancial.executionDeposit.amount || ''} onChange={e => setTempFinancial({...tempFinancial, executionDeposit: {...tempFinancial.executionDeposit, amount: e.target.value}})} placeholder="0.00" />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[9px] font-bold text-slate-400 uppercase">Date Versement</label>
-                                                    <input type="date" className="w-full p-3 bg-white border border-blue-100 rounded-xl text-xs font-bold" value={tempFinancial.executionDeposit.payDate} onChange={e => setTempFinancial({...tempFinancial, executionDeposit: {...tempFinancial.executionDeposit, payDate: e.target.value}})} />
-                                                </div>
-                                                <div className="space-y-2 md:col-span-2">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Date Récupération</label>
-                                                    <input type="date" className="w-full p-3 bg-white border border-blue-100 rounded-xl text-xs font-bold" value={tempFinancial.executionDeposit.recoveryDate} onChange={e => setTempFinancial({...tempFinancial, executionDeposit: {...tempFinancial.executionDeposit, recoveryDate: e.target.value}})} />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="p-8 bg-amber-50/50 rounded-[2.5rem] border border-amber-100 space-y-6">
-                                            <h5 className="text-[10px] font-black text-amber-600 uppercase tracking-widest flex items-center gap-2">
-                                                <ShieldCheck size={14} /> Caution de Garantie
-                                            </h5>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Montant (DA)</label>
-                                                    <input type="text" className="w-full p-3 bg-white border border-amber-100 rounded-xl text-xs font-bold" value={tempFinancial.warrantyDeposit.amount} onChange={e => setTempFinancial({...tempFinancial, warrantyDeposit: {...tempFinancial.warrantyDeposit, amount: e.target.value}})} placeholder="0.00" />
+                                                    <input type="date" className="w-full p-3 bg-white border border-blue-100 rounded-xl text-xs font-bold" value={tempFinancial.executionDeposit.payDate || ''} onChange={e => setTempFinancial({...tempFinancial, executionDeposit: {...tempFinancial.executionDeposit, payDate: e.target.value}})} />
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Date Versement</label>
-                                                    <input type="date" className="w-full p-3 bg-white border border-amber-100 rounded-xl text-xs font-bold" value={tempFinancial.warrantyDeposit.payDate} onChange={e => setTempFinancial({...tempFinancial, warrantyDeposit: {...tempFinancial.warrantyDeposit, payDate: e.target.value}})} />
-                                                </div>
-                                                <div className="space-y-2 md:col-span-2">
                                                     <label className="text-[9px] font-bold text-slate-400 uppercase">Date Récupération</label>
-                                                    <input type="date" className="w-full p-3 bg-white border border-amber-100 rounded-xl text-xs font-bold" value={tempFinancial.warrantyDeposit.recoveryDate} onChange={e => setTempFinancial({...tempFinancial, warrantyDeposit: {...tempFinancial.warrantyDeposit, recoveryDate: e.target.value}})} />
+                                                    <input type="date" className="w-full p-3 bg-white border border-blue-100 rounded-xl text-xs font-bold" value={tempFinancial.executionDeposit.recoveryDate || ''} onChange={e => setTempFinancial({...tempFinancial, executionDeposit: {...tempFinancial.executionDeposit, recoveryDate: e.target.value}})} />
+                                                </div>
+                                                <div className="space-y-2 lg:col-span-1 border-t border-blue-100/50 pt-4 mt-2">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Référence ODS / Caution</label>
+                                                    <input type="text" className="w-full p-3 bg-white border border-blue-100 rounded-xl text-xs font-bold" value={tempFinancial.executionDeposit.reference || ''} onChange={e => setTempFinancial({...tempFinancial, executionDeposit: {...tempFinancial.executionDeposit, reference: e.target.value}})} placeholder="Ex: Ref 1234/26" />
+                                                </div>
+                                                <div className="space-y-2 lg:col-span-2 border-t border-blue-100/50 pt-4 mt-2">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Délais de Garantie</label>
+                                                    <input type="text" className="w-full p-3 bg-white border border-blue-100 rounded-xl text-xs font-bold" value={tempFinancial.executionDeposit.warrantyPeriod || ''} onChange={e => setTempFinancial({...tempFinancial, executionDeposit: {...tempFinancial.executionDeposit, warrantyPeriod: e.target.value}})} placeholder="Ex: 12 Mois..." />
                                                 </div>
                                             </div>
                                         </div>
@@ -1812,46 +1800,36 @@ const OrderDetails = () => {
                                         )}
                                     </div>
 
-                                    {/* Caution Exécution */}
-                                    <div className="bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100">
-                                        <div className="flex items-center gap-3 mb-6">
+                                    {/* Caution Bonne Exécution */}
+                                    <div className="bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100 col-span-1 lg:col-span-2">
+                                        <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
                                             <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center"><ShieldCheck size={20} /></div>
-                                            <h5 className="text-[11px] font-black uppercase tracking-widest text-slate-900">Caution d'Exécution</h5>
+                                            <h5 className="text-[11px] font-black uppercase tracking-widest text-slate-900">Caution de Bonne Exécution</h5>
                                         </div>
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between items-baseline">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Montant:</span>
-                                                <span className="font-black text-slate-700">{tempFinancial.executionDeposit.amount || "0.00"} DA</span>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-baseline">
+                                                    <span className="text-[9px] font-bold text-slate-400 uppercase">Montant:</span>
+                                                    <span className="font-black text-slate-700">{tempFinancial.executionDeposit.amount || "0.00"} DA</span>
+                                                </div>
+                                                <div className="flex justify-between items-baseline">
+                                                    <span className="text-[9px] font-bold text-slate-400 uppercase">Versement:</span>
+                                                    <span className="text-xs font-bold text-slate-600">{tempFinancial.executionDeposit.payDate ? new Date(tempFinancial.executionDeposit.payDate).toLocaleDateString() : "-"}</span>
+                                                </div>
+                                                <div className="flex justify-between items-baseline">
+                                                    <span className="text-[9px] font-bold text-slate-400 uppercase">Récupération:</span>
+                                                    <span className="text-xs font-bold text-slate-600">{tempFinancial.executionDeposit.recoveryDate ? new Date(tempFinancial.executionDeposit.recoveryDate).toLocaleDateString() : "-"}</span>
+                                                </div>
                                             </div>
-                                            <div className="flex justify-between items-baseline">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Versement:</span>
-                                                <span className="text-xs font-bold text-slate-600">{tempFinancial.executionDeposit.payDate ? new Date(tempFinancial.executionDeposit.payDate).toLocaleDateString() : "-"}</span>
-                                            </div>
-                                            <div className="flex justify-between items-baseline">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Récupération:</span>
-                                                <span className="text-xs font-bold text-slate-600">{tempFinancial.executionDeposit.recoveryDate ? new Date(tempFinancial.executionDeposit.recoveryDate).toLocaleDateString() : "-"}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Caution Garantie */}
-                                    <div className="bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100">
-                                        <div className="flex items-center gap-3 mb-6">
-                                            <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center"><ShieldCheck size={20} /></div>
-                                            <h5 className="text-[11px] font-black uppercase tracking-widest text-slate-900">Caution de Garantie</h5>
-                                        </div>
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between items-baseline">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Montant:</span>
-                                                <span className="font-black text-slate-700">{tempFinancial.warrantyDeposit.amount || "0.00"} DA</span>
-                                            </div>
-                                            <div className="flex justify-between items-baseline">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Versement:</span>
-                                                <span className="text-xs font-bold text-slate-600">{tempFinancial.warrantyDeposit.payDate ? new Date(tempFinancial.warrantyDeposit.payDate).toLocaleDateString() : "-"}</span>
-                                            </div>
-                                            <div className="flex justify-between items-baseline">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Récupération:</span>
-                                                <span className="text-xs font-bold text-slate-600">{tempFinancial.warrantyDeposit.recoveryDate ? new Date(tempFinancial.warrantyDeposit.recoveryDate).toLocaleDateString() : "-"}</span>
+                                            <div className="space-y-4 md:border-l border-slate-100 md:pl-8">
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-[9px] font-bold text-slate-400 uppercase">Référence:</span>
+                                                    <span className="text-sm font-black text-slate-700">{tempFinancial.executionDeposit.reference || "-"}</span>
+                                                </div>
+                                                <div className="flex flex-col gap-1 mt-4">
+                                                    <span className="text-[9px] font-bold text-slate-400 uppercase">Délais de Garantie:</span>
+                                                    <span className="text-sm font-black text-slate-700">{tempFinancial.executionDeposit.warrantyPeriod || "-"}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

@@ -378,8 +378,9 @@ const Dashboard = () => {
                 "État Paiement": fin.paymentStatus || "Aucun",
                 "Montant Versé": fin.paymentAmount || "0",
                 "Date Versement": fin.paymentDate || "-",
-                "Caution Exécution": fin.executionDeposit?.amount || "0",
-                "Caution Garantie": fin.warrantyDeposit?.amount || "0",
+                "Caution Bonne Exécution": fin.executionDeposit?.amount || "0",
+                "Référence Bonne Exécution": fin.executionDeposit?.reference || "-",
+                "Délais de Garantie": fin.executionDeposit?.warrantyPeriod || "-",
                 "Date Livraison": order.deliveryDate || "-",
                 "Temps Restant": remainingText
             };
@@ -757,8 +758,7 @@ const Dashboard = () => {
                                                         <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-amber-600 text-center">État Règlement</th>
                                                         <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-emerald-600 text-center">Montant Versé</th>
                                                         <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 text-center">Date Versement</th>
-                                                        <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Caution Exécution</th>
-                                                        <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">Caution Garantie</th>
+                                                        <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Caution Bonne Exécution</th>
                                                     </>
                                                 ) : (
                                                     <>
@@ -832,21 +832,14 @@ const Dashboard = () => {
                                                                     {fin.paymentDate ? formatDate(fin.paymentDate) : "-"}
                                                                 </td>
                                                                 <td className="px-6 py-7">
-                                                                    <div className="flex flex-col gap-1">
+                                                                    <div className="flex flex-col gap-1 w-max">
                                                                         <div className="text-xs font-black text-blue-600">{fin.executionDeposit?.amount ? formatAmount(fin.executionDeposit.amount) : "-"}</div>
                                                                         <div className="text-[8px] font-bold text-slate-400 flex gap-2">
                                                                             <span>V: {formatDate(fin.executionDeposit?.payDate)}</span>
                                                                             <span>R: {formatDate(fin.executionDeposit?.recoveryDate)}</span>
                                                                         </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-6 py-7">
-                                                                    <div className="flex flex-col gap-1">
-                                                                        <div className="text-xs font-black text-indigo-600">{fin.warrantyDeposit?.amount ? formatAmount(fin.warrantyDeposit.amount) : "-"}</div>
-                                                                        <div className="text-[8px] font-bold text-slate-400 flex gap-2">
-                                                                            <span>V: {formatDate(fin.warrantyDeposit?.payDate)}</span>
-                                                                            <span>R: {formatDate(fin.warrantyDeposit?.recoveryDate)}</span>
-                                                                        </div>
+                                                                        <div className="text-[9px] font-bold text-slate-500 mt-1">Ref: {fin.executionDeposit?.reference || "-"}</div>
+                                                                        <div className="text-[9px] font-bold text-slate-500">Garantie: {fin.executionDeposit?.warrantyPeriod || "-"}</div>
                                                                     </div>
                                                                 </td>
                                                             </>
