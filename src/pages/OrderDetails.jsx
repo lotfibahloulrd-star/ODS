@@ -168,6 +168,9 @@ const OrderDetails = () => {
                     // Mise à jour automatique du statut lors de l'upload
                     await orderService.updateOrder(orderId, { authorization: 'Oui' }, currentUser.firstName);
                 }
+                else if (type === 'bl') await orderService.saveBlFile(orderId, reader.result, file.name);
+                else if (type === 'pv_provisoire') await orderService.savePvProvFile(orderId, reader.result, file.name);
+                else if (type === 'pv_definitive') await orderService.savePvDefFile(orderId, reader.result, file.name);
 
                 loadOrder();
                 alert(`Document ${type.replace('_', ' ').toUpperCase()} attaché avec succès !`);
@@ -1132,6 +1135,126 @@ const OrderDetails = () => {
                                                             <Plus size={16} />
                                                         </div>
                                                         <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'auth')} />
+                                                    </label>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    {/* Bon de Livraison */}
+                                    <tr>
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${order.files?.storage_bl ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-300'}`}>
+                                                    <FileCheck size={16} />
+                                                </div>
+                                                <span className="text-xs font-black text-slate-700 uppercase">Bon de Livraison (PDF)</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6 text-right">
+                                            <div className="flex items-center justify-end gap-3">
+                                                {order.files?.storage_bl ? (
+                                                    <>
+                                                        <button onClick={() => openPdf(order.id, 'storage_bl')} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all">
+                                                            <ExternalLink size={14} /> Voir le document
+                                                        </button>
+                                                        <label className="p-2 bg-slate-100 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all cursor-pointer" title="Remplacer le document">
+                                                            <RotateCcw size={16} />
+                                                            <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'bl')} />
+                                                        </label>
+                                                        {canDeleteDocuments() && (
+                                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteFile(order.id, 'storage_bl'); }} className="p-2 bg-slate-100 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer" title="Supprimer le document">
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-blue-500 transition-colors">Attacher</span>
+                                                        <div className="w-10 h-10 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-blue-500 group-hover:text-blue-500 transition-all">
+                                                            <Plus size={16} />
+                                                        </div>
+                                                        <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'bl')} />
+                                                    </label>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    {/* PV Provisoire */}
+                                    <tr>
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${order.files?.storage_pv_provisoire ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-300'}`}>
+                                                    <FileCheck size={16} />
+                                                </div>
+                                                <span className="text-xs font-black text-slate-700 uppercase">PV de Réception Provisoire (PDF)</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6 text-right">
+                                            <div className="flex items-center justify-end gap-3">
+                                                {order.files?.storage_pv_provisoire ? (
+                                                    <>
+                                                        <button onClick={() => openPdf(order.id, 'storage_pv_provisoire')} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
+                                                            <ExternalLink size={14} /> Voir le document
+                                                        </button>
+                                                        <label className="p-2 bg-slate-100 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all cursor-pointer" title="Remplacer le document">
+                                                            <RotateCcw size={16} />
+                                                            <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'pv_provisoire')} />
+                                                        </label>
+                                                        {canDeleteDocuments() && (
+                                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteFile(order.id, 'storage_pv_provisoire'); }} className="p-2 bg-slate-100 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer" title="Supprimer le document">
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-indigo-500 transition-colors">Attacher</span>
+                                                        <div className="w-10 h-10 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-indigo-500 group-hover:text-indigo-500 transition-all">
+                                                            <Plus size={16} />
+                                                        </div>
+                                                        <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'pv_provisoire')} />
+                                                    </label>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    {/* PV Definitive */}
+                                    <tr>
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${order.files?.storage_pv_definitive ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-300'}`}>
+                                                    <FileCheck size={16} />
+                                                </div>
+                                                <span className="text-xs font-black text-slate-700 uppercase">PV de Réception Définitive (PDF)</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6 text-right">
+                                            <div className="flex items-center justify-end gap-3">
+                                                {order.files?.storage_pv_definitive ? (
+                                                    <>
+                                                        <button onClick={() => openPdf(order.id, 'storage_pv_definitive')} className="px-4 py-2 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-purple-100 hover:bg-purple-700 transition-all">
+                                                            <ExternalLink size={14} /> Voir le document
+                                                        </button>
+                                                        <label className="p-2 bg-slate-100 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all cursor-pointer" title="Remplacer le document">
+                                                            <RotateCcw size={16} />
+                                                            <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'pv_definitive')} />
+                                                        </label>
+                                                        {canDeleteDocuments() && (
+                                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteFile(order.id, 'storage_pv_definitive'); }} className="p-2 bg-slate-100 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer" title="Supprimer le document">
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <label className="flex items-center gap-2 justify-end text-slate-400 group cursor-pointer">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-purple-500 transition-colors">Attacher</span>
+                                                        <div className="w-10 h-10 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center group-hover:border-purple-500 group-hover:text-purple-500 transition-all">
+                                                            <Plus size={16} />
+                                                        </div>
+                                                        <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'pv_definitive')} />
                                                     </label>
                                                 )}
                                             </div>

@@ -205,6 +205,10 @@ export const orderService = {
     saveContractFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_contracts', orderId, fileData, fileName),
     saveStopRequestFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_stops_req', orderId, fileData, fileName),
     saveStopResponseFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_stops_res', orderId, fileData, fileName),
+    saveAuthFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_auth', orderId, fileData, fileName),
+    saveBlFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_bl', orderId, fileData, fileName),
+    savePvProvFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_pv_provisoire', orderId, fileData, fileName),
+    savePvDefFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_pv_definitive', orderId, fileData, fileName),
     deleteFile: async (orderId, storageKey) => {
         // Remove file entry from local storage for the given storageKey
         const dataStr = localStorage.getItem(storageKey);
@@ -251,5 +255,8 @@ export const orderService = {
     getContractFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_contracts`,
     getStopRequestFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_stops_req`,
     getStopResponseFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_stops_res`,
-    getAuthFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_auth`
+    getAuthFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_auth`,
+    getBlFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_bl`,
+    getPvProvFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_pv_provisoire`,
+    getPvDefFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_pv_definitive`
 };
