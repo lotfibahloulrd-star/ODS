@@ -160,6 +160,17 @@ export const AuthProvider = ({ children }) => {
     const canDeleteOds = () => canEditAdminFields();
     const canReplaceOds = () => canEditAdminFields();
 
+    const canDeleteDocuments = () => {
+        const authorized = [
+            'l.bahloul@esclab-algerie.com',
+            'brikh.hamza@esclab-algerie.com',
+            'mazouz.sonia@esclab-algerie.com',
+            'belateche.taklit@esclab-algerie.com',
+            'n.bouras@esclab-algerie.com'
+        ];
+        return isSuperAdmin() || authorized.includes(currentUser?.email);
+    };
+
     const canEditDQE = () => {
         const authorized = [
             'b.rekkad@esclab-algerie.com'
@@ -224,6 +235,7 @@ export const AuthProvider = ({ children }) => {
             canExportData,
             canDeleteOds,
             canReplaceOds,
+            canDeleteDocuments,
             canEditDQE,
             canEditProgress,
             changePassword,

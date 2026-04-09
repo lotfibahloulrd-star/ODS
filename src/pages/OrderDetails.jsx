@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 const OrderDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { currentUser, isImport, isStock, isRecovery, canCreateOds, canEditAmount, isSuperAdmin, canEditAdminFields, canDeleteOds, canEditDQE, canEditProgress } = useAuth();
+    const { currentUser, isImport, isStock, isRecovery, canCreateOds, canEditAmount, isSuperAdmin, canEditAdminFields, canDeleteOds, canDeleteDocuments, canEditDQE, canEditProgress } = useAuth();
 
     const [order, setOrder] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -918,7 +918,7 @@ const OrderDetails = () => {
                                                             <RotateCcw size={16} />
                                                             <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'ods')} />
                                                         </label>
-                                                        {canDeleteOds() && (
+                                                        {canDeleteDocuments() && (
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
@@ -965,7 +965,7 @@ const OrderDetails = () => {
                                                                 <RotateCcw size={16} />
                                                                 <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'contract')} />
                                                             </label>
-                                                            {canDeleteOds() && (
+                                                            {canDeleteDocuments() && (
                                                                 <button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
@@ -1022,7 +1022,7 @@ const OrderDetails = () => {
                                                             <RotateCcw size={16} />
                                                             <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'stop_request')} />
                                                         </label>
-                                                        {canDeleteOds() && (
+                                                        {canDeleteDocuments() && (
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
@@ -1067,7 +1067,7 @@ const OrderDetails = () => {
                                                             <RotateCcw size={16} />
                                                             <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'stop_response')} />
                                                         </label>
-                                                        {canDeleteOds() && (
+                                                        {canDeleteDocuments() && (
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
@@ -1112,7 +1112,7 @@ const OrderDetails = () => {
                                                             <RotateCcw size={16} />
                                                             <input type="file" className="hidden" accept=".pdf" onChange={e => handleDirectUpload(e, order.id, 'auth')} />
                                                         </label>
-                                                        {canDeleteOds() && (
+                                                        {canDeleteDocuments() && (
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
