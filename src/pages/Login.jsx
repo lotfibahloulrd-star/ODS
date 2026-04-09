@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, AlertCircle, Eye, EyeOff, Shield } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 const Login = () => {
     const { login } = useAuth();
@@ -31,7 +32,7 @@ const Login = () => {
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
             <div className="max-w-md w-full">
                 <div className="text-center mb-10">
-                    <img src="/logo.png" alt="ESCLAB Logo" className="h-24 w-auto object-contain mx-auto mb-6 transform hover:scale-105 transition-transform duration-500" />
+                    <img src={logo} alt="ESCLAB Logo" className="h-20 object-contain mx-auto mb-6 transform hover:scale-105 transition-transform duration-500" />
                     <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Portail de Gestion <span className="text-blue-600">des Contrats ESCLAB ALGERIE</span></h1>
                     <p className="text-slate-500 font-medium">Connectez-vous à votre espace de suivi</p>
                 </div>

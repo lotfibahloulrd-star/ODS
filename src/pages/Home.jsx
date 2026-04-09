@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { orderService } from '../services/orderService';
 import { useAuth } from '../context/AuthContext';
+import logo from '../assets/logo.png';
 import { 
     Clock, 
     ArrowRight, 
@@ -166,7 +167,7 @@ const Home = () => {
     return (
         <div className="max-w-[1200px] mx-auto py-12 px-6">
             <header className="text-center mb-12 animate-in fade-in slide-in-from-top-8 duration-700">
-                <img src="/logo.png" alt="ESCLAB Logo" className="h-24 object-contain mx-auto mb-6 transform hover:scale-105 transition-transform duration-500" />
+                <img src={logo} alt="ESCLAB Logo" className="h-24 object-contain mx-auto mb-6 transform hover:scale-105 transition-transform duration-500" />
                 <h1 className="text-5xl font-black text-slate-900 tracking-tight mb-4 uppercase">
                     Portail de Gestion <span className="text-blue-600">des Contrats ESCLAB ALGERIE</span>
                 </h1>

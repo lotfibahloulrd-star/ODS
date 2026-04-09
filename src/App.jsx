@@ -11,6 +11,7 @@ import './index.css';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import OrderDetails from './pages/OrderDetails';
 import ChangePasswordModal from './components/ChangePasswordModal';
+import logo from './assets/logo.png';
 
 function AppContent() {
     const { currentUser, logout, changePassword, isAdmin, isSuperAdmin, canCreateOds } = useAuth();
@@ -59,7 +60,7 @@ function AppContent() {
                 <div className="max-w-[1600px] mx-auto px-6 py-4">
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2 shrink-0 cursor-pointer" onClick={() => navigate('/')}>
-                            <img src="/logo.png" alt="ESCLAB Logo" className="w-auto h-12 object-contain" />
+                            <img src={logo} alt="ESCLAB Logo" className="w-auto h-12 object-contain" />
                             <h1 className="text-xl font-black text-slate-900 tracking-tight hidden md:block">Portail de Gestion <span className="text-blue-600">des Contrats ESCLAB ALGERIE</span> <span className="text-[10px] font-bold text-slate-400 align-top">v4.5</span></h1>
                         </div>
 
