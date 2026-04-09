@@ -31,10 +31,8 @@ const Login = () => {
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
             <div className="max-w-md w-full">
                 <div className="text-center mb-10">
-                    <div className="w-20 h-20 bg-blue-600 rounded-[2rem] flex items-center justify-center text-white shadow-2xl shadow-blue-200 mx-auto mb-6 transform hover:rotate-12 transition-transform duration-500">
-                        <span className="font-black text-4xl">P</span>
-                    </div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Portail de Gestion <span className="text-blue-600">des Contrats</span></h1>
+                    <img src="/logo.png" alt="ESCLAB Logo" className="h-24 w-auto object-contain mx-auto mb-6 transform hover:scale-105 transition-transform duration-500" />
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Portail de Gestion <span className="text-blue-600">des Contrats ESCLAB ALGERIE</span></h1>
                     <p className="text-slate-500 font-medium">Connectez-vous à votre espace de suivi</p>
                 </div>
 
@@ -99,7 +97,7 @@ const Login = () => {
                 </div>
 
                 <p className="text-center mt-8 text-slate-400 font-bold text-sm">
-                    &copy; 2026 ESCLAB ALGERIE - Portail de Gestion des Contrats
+                    &copy; {new Date().getFullYear()} - Portail de Gestion des Contrats ESCLAB ALGERIE
                 </p>
             </div>
         </div>

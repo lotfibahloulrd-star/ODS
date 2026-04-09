@@ -166,8 +166,9 @@ const Home = () => {
     return (
         <div className="max-w-[1200px] mx-auto py-12 px-6">
             <header className="text-center mb-12 animate-in fade-in slide-in-from-top-8 duration-700">
+                <img src="/logo.png" alt="ESCLAB Logo" className="h-24 object-contain mx-auto mb-6 transform hover:scale-105 transition-transform duration-500" />
                 <h1 className="text-5xl font-black text-slate-900 tracking-tight mb-4 uppercase">
-                    Portail de Gestion <span className="text-blue-600">des Contrats</span>
+                    Portail de Gestion <span className="text-blue-600">des Contrats ESCLAB ALGERIE</span>
                 </h1>
                 <p className="text-lg text-slate-500 font-bold max-w-2xl mx-auto leading-relaxed">
                     Accédez instantanément à vos dossiers et pilotez vos projets en temps réel.
