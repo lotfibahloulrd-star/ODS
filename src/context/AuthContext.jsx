@@ -23,7 +23,8 @@ const FULL_ACCESS_EMAILS = [
     'mazouz.sonia@esclab-algerie.com',
     'belateche.taklit@esclab-algerie.com',
     'n.bouras@esclab-algerie.com',
-    'l.naitsidous@esclab-algerie.com'
+    'l.naitsidous@esclab-algerie.com',
+    'm.berri@esclab-algerie.com'
 ];
 
 export const AuthProvider = ({ children }) => {
@@ -52,7 +53,8 @@ export const AuthProvider = ({ children }) => {
             { id: 13, firstName: 'Taklit', lastName: 'Belateche', email: 'belateche.taklit@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
             { id: 14, firstName: 'N.', lastName: 'Bouras', email: 'n.bouras@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
             { id: 15, firstName: 'Melissa', lastName: 'Aidli', email: 'm.aidli@esclab-algerie.com', division: 'Recouvrement', role: 'Utilisateur', password: 'user123' },
-            { id: 16, firstName: 'Lamine', lastName: 'Nait Sidous', email: 'l.naitsidous@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'Admin123' }
+            { id: 16, firstName: 'Lamine', lastName: 'Nait Sidous', email: 'l.naitsidous@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'Admin123' },
+            { id: 17, firstName: 'Mourad', lastName: 'Berri', email: 'm.berri@esclab-algerie.com', division: 'Direction', role: 'Utilisateur', password: 'user123' }
         ];
         let hasChanges = false;
         defaultUsers.forEach(defUser => {
