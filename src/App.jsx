@@ -61,7 +61,7 @@ function AppContent() {
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2 shrink-0 cursor-pointer" onClick={() => navigate('/')}>
                             <img src={logo} alt="ESCLAB Logo" className="w-auto h-12 object-contain" />
-                            <h1 className="text-xl font-black text-slate-900 tracking-tight hidden md:block">Portail de Gestion <span className="text-blue-600">des Contrats ESCLAB ALGERIE</span> <span className="text-[10px] font-bold text-slate-400 align-top">v4.5</span></h1>
+                            <h1 className="text-xl font-black text-slate-900 tracking-tight hidden md:block">ESCLAB-Contract <span className="text-blue-600">Hub</span> <span className="text-[10px] font-bold text-slate-400 align-top">v4.5</span></h1>
                         </div>
 
                         <nav className="flex items-center bg-slate-100/50 p-1.5 rounded-2xl border border-slate-100 overflow-x-auto no-scrollbar">
