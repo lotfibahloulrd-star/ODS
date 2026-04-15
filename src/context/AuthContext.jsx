@@ -191,7 +191,8 @@ export const AuthProvider = ({ children }) => {
 
     const canViewOrder = (order) => {
         if (currentUser?.email === 'm.aidli@esclab-algerie.com') {
-            return order.status === 'En attente de paiement';
+            // TEMPORAIRE : Accès total pour retrouver les dossiers
+            return true; 
         }
         if (hasFullAccess()) return true;
         return order.division === currentUser?.division;

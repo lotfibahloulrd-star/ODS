@@ -42,8 +42,8 @@ export const orderService = {
             const deletedIds = await orderService._getDeletedIds();
             const deletedSet = new Set(deletedIds);
 
-            // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v40';
+            // Version v41 : Priorité aux données serveur pour le statut
+            const DATA_VERSION = 'ods_data_v41';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || localVersion !== DATA_VERSION) {
@@ -51,17 +51,16 @@ export const orderService = {
 
                 const mergedMap = new Map();
 
-                // 1. Charger tout ce qui vient du serveur d'abord (données réelles des utilisateurs)
+                // 1. Charger tout ce qui vient du serveur d'abord
                 if (Array.isArray(sharedOrders)) {
                     sharedOrders.forEach(o => mergedMap.set(o.id, o));
                 }
 
-                // 2. ÉCRASER les ordres du serveur par les définitions initiales (RESTAURATION)
+                // 2. Fusionner avec INITIAL_ORDERS sans écraser le statut serveur
                 INITIAL_ORDERS.forEach(o => {
                     const existing = mergedMap.get(o.id);
                     if (existing) {
-                        // On garde les fichiers et infos saisies du serveur, mais on FORCE le status de l'initialData
-                        mergedMap.set(o.id, { ...existing, ...o });
+                        mergedMap.set(o.id, { ...o, ...existing });
                     } else {
                         mergedMap.set(o.id, o);
                     }
@@ -72,14 +71,13 @@ export const orderService = {
 
                 await orderService._saveAllToShared(finalOrders);
                 localStorage.setItem('ods_data_version', DATA_VERSION);
-                // On vide aussi les IDs supprimés pour être sûr
                 await orderService.clearDeletedIds();
                 return finalOrders;
             }
 
             return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v40';
+            const DATA_VERSION = 'ods_data_v41';
             const localData = localStorage.getItem(DATA_VERSION);
             const deletedLocal = localStorage.getItem('ods_deleted_ids');
             const deletedSet = new Set(deletedLocal ? JSON.parse(deletedLocal) : []);
