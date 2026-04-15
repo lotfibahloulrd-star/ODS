@@ -346,7 +346,7 @@ export const orderService = {
         });
     },
 
-    // Système de Secours d'Urgence (Time Machine)
+    // Système de Secours d'Urgence (Time Machine) - VERSION AMÉLIORÉE
     getLocalSnapshots: () => {
         const snapshots = [];
         for (let i = 0; i < localStorage.length; i++) {
@@ -354,11 +354,17 @@ export const orderService = {
             if (key && key.startsWith('ods_data_v')) {
                 try {
                     const data = JSON.parse(localStorage.getItem(key));
-                    snapshots.push({
-                        version: key,
-                        count: Array.isArray(data) ? data.length : 0,
-                        data: data
-                    });
+                    if (Array.isArray(data)) {
+                        const totalAmount = data.reduce((sum, o) => sum + (parseFloat(o.amount) || 0), 0);
+                        const filledCount = data.filter(o => parseFloat(o.amount) > 0).length;
+                        snapshots.push({
+                            version: key,
+                            count: data.length,
+                            filledCount: filledCount,
+                            totalAmount: totalAmount,
+                            data: data
+                        });
+                    }
                 } catch (e) {}
             }
         }

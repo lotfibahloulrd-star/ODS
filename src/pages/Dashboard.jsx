@@ -1154,7 +1154,7 @@ const Dashboard = () => {
                                         <button
                                             key={idx}
                                             onClick={async () => {
-                                                if (window.confirm(`AVERTISSEMENT : Vous allez restaurer la version ${snap.version} (${snap.count} dossiers). Les données actuelles du serveur seront écrasées. Continuer ?`)) {
+                                                if (window.confirm(`AVERTISSEMENT : Vous allez restaurer la version ${snap.version} (${snap.count} dossiers). Cela va écraser les données actuelles du serveur. Continuer ?`)) {
                                                     try {
                                                         await orderService.restoreSnapshot(snap.data);
                                                         alert("RESTAURATION TERMINÉE !");
@@ -1164,18 +1164,30 @@ const Dashboard = () => {
                                                     }
                                                 }
                                             }}
-                                            className="group flex items-center justify-between p-6 bg-slate-50 hover:bg-white border-2 border-transparent hover:border-amber-200 rounded-3xl transition-all text-left shadow-sm hover:shadow-md"
+                                            className="group flex flex-col p-6 bg-slate-50 hover:bg-white border-2 border-transparent hover:border-amber-200 rounded-3xl transition-all text-left shadow-sm hover:shadow-md"
                                         >
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-all">
-                                                    <History size={24} />
+                                            <div className="flex items-center justify-between w-full mb-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-all">
+                                                        <History size={24} />
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-black text-slate-900 uppercase tracking-wide">{snap.version}</div>
+                                                        <div className="text-xs text-slate-400 font-bold">{snap.count} dossiers détectés</div>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <div className="font-black text-slate-900 uppercase tracking-wide">{snap.version}</div>
-                                                    <div className="text-xs text-slate-400 font-bold">{snap.count} dossiers détectés</div>
+                                                <ArrowRight size={20} className="text-slate-300 group-hover:text-amber-600 transition-colors" />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4 mt-2">
+                                                <div className="p-3 bg-white rounded-xl border border-slate-100">
+                                                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Dossiers Remplis</div>
+                                                    <div className="text-sm font-black text-slate-700">{snap.filledCount}</div>
+                                                </div>
+                                                <div className="p-3 bg-white rounded-xl border border-slate-100">
+                                                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Somme Totale</div>
+                                                    <div className="text-sm font-black text-emerald-600">{new Intl.NumberFormat('fr-DZ').format(snap.totalAmount)} DA</div>
                                                 </div>
                                             </div>
-                                            <ArrowRight size={20} className="text-slate-300 group-hover:text-amber-600 transition-colors" />
                                         </button>
                                     ))}
                                 </div>
