@@ -156,6 +156,21 @@ export const orderService = {
         return true;
     },
 
+    clearDeletedIds: async () => {
+        try {
+            localStorage.setItem('ods_deleted_ids', JSON.stringify([]));
+            await fetch(`${API_URL}?action=save_deleted_ids`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify([])
+            });
+            return true;
+        } catch (e) {
+            console.error("Restoration failed:", e);
+            throw e;
+        }
+    },
+
     _uploadToShared: async (storageKey, orderId, fileDataOrBlob, fileName) => {
         try {
             let blob = fileDataOrBlob;

@@ -604,6 +604,26 @@ const Dashboard = () => {
                             <ShieldCheck size={20} />
                         </button>
 
+                        {isSuperAdmin && (
+                            <button
+                                onClick={async () => {
+                                    if (window.confirm("URGENT : Voulez-vous restaurer tous les dossiers qui auraient pu être supprimés par erreur ?")) {
+                                        try {
+                                            await orderService.clearDeletedIds();
+                                            alert("Restauration terminée ! Les dossiers devraient réapparaître.");
+                                            loadOrders();
+                                        } catch (e) {
+                                            alert("Erreur lors de la restauration : " + e.message);
+                                        }
+                                    }
+                                }}
+                                title="Restaurer les dossiers supprimés"
+                                className="w-11 h-11 flex items-center justify-center bg-red-50 border border-red-100 rounded-2xl text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                            >
+                                <RotateCcw size={20} />
+                            </button>
+                        )}
+
                         {auth?.canExportData() && (
                             <button
                                 onClick={handleExportExcel}
