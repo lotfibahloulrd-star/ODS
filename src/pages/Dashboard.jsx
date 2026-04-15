@@ -26,6 +26,7 @@ import {
     ShieldCheck,
     RotateCcw,
     Upload,
+    Download,
     Plus,
     Trash2
 } from 'lucide-react';
@@ -622,6 +623,40 @@ const Dashboard = () => {
                             >
                                 <RotateCcw size={20} />
                             </button>
+                        )}
+
+                        {isSuperAdmin && (
+                            <div className="flex gap-2 p-1 bg-slate-50 rounded-2xl border border-slate-100">
+                                <button
+                                    onClick={() => orderService.exportData()}
+                                    title="Télécharger une sauvegarde complète (JSON)"
+                                    className="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-white rounded-xl transition-all"
+                                >
+                                    <Download size={18} />
+                                </button>
+                                <label className="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-emerald-600 hover:bg-white rounded-xl transition-all cursor-pointer">
+                                    <input 
+                                        type="file" 
+                                        className="hidden" 
+                                        accept=".json"
+                                        onChange={async (e) => {
+                                            const file = e.target.files[0];
+                                            if (file) {
+                                                try {
+                                                    const success = await orderService.importData(file);
+                                                    if (success) {
+                                                        alert("Restauration réussie !");
+                                                        loadOrders();
+                                                    }
+                                                } catch (err) {
+                                                    alert("Échec de la restauration : " + err.message);
+                                                }
+                                            }
+                                        }}
+                                    />
+                                    <Upload size={18} />
+                                </label>
+                            </div>
                         )}
 
                         {auth?.canExportData() && (

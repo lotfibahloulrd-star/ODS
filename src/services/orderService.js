@@ -273,5 +273,57 @@ export const orderService = {
     getAuthFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_auth`,
     getBlFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_bl`,
     getPvProvFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_pv_provisoire`,
-    getPvDefFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_pv_definitive`
+    getPvDefFile: (orderId) => `${API_URL}?action=get_file&orderId=${orderId}&storageKey=storage_pv_definitive`,
+
+    // Système de Sauvegarde
+    exportData: async () => {
+        const orders = await orderService.getAllOrders();
+        const deletedIds = await orderService._getDeletedIds();
+        const backup = {
+            version: '1.0',
+            timestamp: new Date().toISOString(),
+            dataVersion: 'ods_data_v41',
+            orders,
+            deletedIds
+        };
+        
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ODS_BACKUP_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return true;
+    },
+
+    importData: async (jsonFile) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const backup = JSON.parse(e.target.result);
+                    if (!backup.orders || !Array.isArray(backup.orders)) {
+                        throw new Error("Format de sauvegarde invalide");
+                    }
+                    
+                    if (window.confirm(`Êtes-vous sûr ? Cela va écraser les données actuelles par les ${backup.orders.length} dossiers de la sauvegarde.`)) {
+                        await orderService._saveAllToShared(backup.orders);
+                        if (backup.deletedIds) {
+                            await orderService._saveDeletedIds(backup.deletedIds);
+                        }
+                        resolve(true);
+                    } else {
+                        resolve(false);
+                    }
+                } catch (err) {
+                    reject(err);
+                }
+            };
+            reader.onerror = () => reject(new Error("Erreur de lecture du fichier"));
+            reader.readAsText(jsonFile);
+        });
+    }
 };
