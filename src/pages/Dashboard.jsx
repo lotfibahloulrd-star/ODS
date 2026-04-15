@@ -27,6 +27,7 @@ import {
     RotateCcw,
     Upload,
     Download,
+    History,
     Plus,
     Trash2
 } from 'lucide-react';
@@ -52,6 +53,8 @@ const Dashboard = () => {
     const [overdueFilter, setOverdueFilter] = useState(searchParams.get('overdue') === 'true');
     const [financialFilter, setFinancialFilter] = useState(searchParams.get('financial') === 'true');
     const [activeStatusFilter, setActiveStatusFilter] = useState(searchParams.get('status'));
+    const [showRescueModal, setShowRescueModal] = useState(false);
+    const [localSnapshots, setLocalSnapshots] = useState([]);
 
     // Update filters if URL changes
     useEffect(() => {
@@ -656,6 +659,17 @@ const Dashboard = () => {
                                     />
                                     <Upload size={18} />
                                 </label>
+                                <button
+                                    onClick={() => {
+                                        const snapshots = orderService.getLocalSnapshots();
+                                        setLocalSnapshots(snapshots);
+                                        setShowRescueModal(true);
+                                    }}
+                                    title="Time Machine : Récupérer d'anciennes données"
+                                    className="w-9 h-9 flex items-center justify-center text-amber-600 hover:bg-amber-600 hover:text-white rounded-xl transition-all"
+                                >
+                                    <History size={18} />
+                                </button>
                             </div>
                         )}
 
@@ -1117,6 +1131,62 @@ const Dashboard = () => {
             )}
 
             {/* Modal removed in favor of standalone page */}
+            {/* Time Machine / Rescue Modal */}
+            {showRescueModal && (
+                <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+                    <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-amber-50">
+                            <div>
+                                <h3 className="text-2xl font-black text-amber-900 uppercase tracking-tight">Time Machine - Récupération</h3>
+                                <p className="text-amber-700 font-bold text-sm">Sélectionner une version locale pour restaurer vos données de 14h00.</p>
+                            </div>
+                            <button onClick={() => setShowRescueModal(false)} className="text-amber-900 hover:scale-110 transition-transform font-black">FERMER</button>
+                        </div>
+                        <div className="p-8 max-h-[60vh] overflow-y-auto">
+                            {localSnapshots.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <History size={48} className="mx-auto text-slate-200 mb-4" />
+                                    <p className="text-slate-400 font-bold">Aucune sauvegarde locale trouvée sur ce navigateur.</p>
+                                </div>
+                            ) : (
+                                <div className="grid gap-4">
+                                    {localSnapshots.map((snap, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={async () => {
+                                                if (window.confirm(`AVERTISSEMENT : Vous allez restaurer la version ${snap.version} (${snap.count} dossiers). Les données actuelles du serveur seront écrasées. Continuer ?`)) {
+                                                    try {
+                                                        await orderService.restoreSnapshot(snap.data);
+                                                        alert("RESTAURATION TERMINÉE !");
+                                                        window.location.reload();
+                                                    } catch (err) {
+                                                        alert("Erreur : " + err.message);
+                                                    }
+                                                }
+                                            }}
+                                            className="group flex items-center justify-between p-6 bg-slate-50 hover:bg-white border-2 border-transparent hover:border-amber-200 rounded-3xl transition-all text-left shadow-sm hover:shadow-md"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-all">
+                                                    <History size={24} />
+                                                </div>
+                                                <div>
+                                                    <div className="font-black text-slate-900 uppercase tracking-wide">{snap.version}</div>
+                                                    <div className="text-xs text-slate-400 font-bold">{snap.count} dossiers détectés</div>
+                                                </div>
+                                            </div>
+                                            <ArrowRight size={20} className="text-slate-300 group-hover:text-amber-600 transition-colors" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-8 bg-slate-50 border-t border-slate-100 italic text-xs text-slate-400 font-medium leading-relaxed">
+                            Note : Ces sauvegardes sont stockées localement sur votre ordinateur. Choisissez la version datant d'avant 14h00 (probablement v38 ou v39) pour récupérer votre saisie perdue.
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

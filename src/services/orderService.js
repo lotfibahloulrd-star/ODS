@@ -344,5 +344,34 @@ export const orderService = {
             reader.onerror = () => reject(new Error("Erreur de lecture du fichier"));
             reader.readAsText(jsonFile);
         });
+    },
+
+    // Système de Secours d'Urgence (Time Machine)
+    getLocalSnapshots: () => {
+        const snapshots = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('ods_data_v')) {
+                try {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    snapshots.push({
+                        version: key,
+                        count: Array.isArray(data) ? data.length : 0,
+                        data: data
+                    });
+                } catch (e) {}
+            }
+        }
+        return snapshots.sort((a, b) => b.version.localeCompare(a.version));
+    },
+
+    restoreSnapshot: async (snapshotData) => {
+        if (!Array.isArray(snapshotData)) throw new Error("Données invalides");
+        await orderService._saveAllToShared(snapshotData);
+        // On force la version actuelle à correspondre pour éviter les conflits
+        const currentVersion = 'ods_data_v42';
+        localStorage.setItem(currentVersion, JSON.stringify(snapshotData));
+        localStorage.setItem('ods_data_version', currentVersion);
+        return true;
     }
 };
