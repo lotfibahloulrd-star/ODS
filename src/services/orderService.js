@@ -42,8 +42,8 @@ export const orderService = {
             const deletedIds = await orderService._getDeletedIds();
             const deletedSet = new Set(deletedIds);
 
-            // Version v42 : Fusion intelligente pour réparer les pertes de valeurs
-            const DATA_VERSION = 'ods_data_v42';
+            // Version v45 : Harmonisation et protection renforcée
+            const DATA_VERSION = 'ods_data_v45';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || localVersion !== DATA_VERSION) {
@@ -96,7 +96,7 @@ export const orderService = {
 
             return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v42';
+            const DATA_VERSION = 'ods_data_v45';
             const localData = localStorage.getItem(DATA_VERSION);
             const deletedLocal = localStorage.getItem('ods_deleted_ids');
             const deletedSet = new Set(deletedLocal ? JSON.parse(deletedLocal) : []);
@@ -106,8 +106,18 @@ export const orderService = {
     },
 
     _saveAllToShared: async (orders) => {
-        const DATA_VERSION = 'ods_data_v39';
+        const DATA_VERSION = 'ods_data_v45';
         try {
+            // SÉCURITÉ : Ne pas sauvegarder si la liste est vide alors qu'on avait des données
+            const local = localStorage.getItem(DATA_VERSION);
+            if (local) {
+                const prev = JSON.parse(local);
+                if (prev.length > 10 && orders.length < prev.length / 2) {
+                    console.error("ALERTE : Tentative de sauvegarde d'une liste massivement tronquée. Opération annulée.");
+                    return;
+                }
+            }
+
             await fetch(`${API_URL}?action=save_orders`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -301,7 +311,7 @@ export const orderService = {
         const backup = {
             version: '1.0',
             timestamp: new Date().toISOString(),
-            dataVersion: 'ods_data_v41',
+            dataVersion: 'ods_data_v45',
             orders,
             deletedIds
         };
@@ -375,7 +385,7 @@ export const orderService = {
         if (!Array.isArray(snapshotData)) throw new Error("Données invalides");
         await orderService._saveAllToShared(snapshotData);
         // On force la version actuelle à correspondre pour éviter les conflits
-        const currentVersion = 'ods_data_v42';
+        const currentVersion = 'ods_data_v45';
         localStorage.setItem(currentVersion, JSON.stringify(snapshotData));
         localStorage.setItem('ods_data_version', currentVersion);
         return true;
