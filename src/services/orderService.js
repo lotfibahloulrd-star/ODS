@@ -43,7 +43,7 @@ export const orderService = {
             const deletedSet = new Set(deletedIds);
 
             // Si le serveur contient moins d'ODS que notre liste initiale, ou si la version a changé, on injecte tout
-            const DATA_VERSION = 'ods_data_v39';
+            const DATA_VERSION = 'ods_data_v40';
             const localVersion = localStorage.getItem('ods_data_version');
 
             if (!Array.isArray(sharedOrders) || localVersion !== DATA_VERSION) {
@@ -56,12 +56,12 @@ export const orderService = {
                     sharedOrders.forEach(o => mergedMap.set(o.id, o));
                 }
 
-                // 2. ÉCRASER les ordres initiaux par les nouvelles définitions
+                // 2. ÉCRASER les ordres du serveur par les définitions initiales (RESTAURATION)
                 INITIAL_ORDERS.forEach(o => {
-                    if (deletedSet.has(o.id)) return;
                     const existing = mergedMap.get(o.id);
                     if (existing) {
-                        mergedMap.set(o.id, { ...o, ...existing });
+                        // On garde les fichiers et infos saisies du serveur, mais on FORCE le status de l'initialData
+                        mergedMap.set(o.id, { ...existing, ...o });
                     } else {
                         mergedMap.set(o.id, o);
                     }
@@ -72,12 +72,14 @@ export const orderService = {
 
                 await orderService._saveAllToShared(finalOrders);
                 localStorage.setItem('ods_data_version', DATA_VERSION);
+                // On vide aussi les IDs supprimés pour être sûr
+                await orderService.clearDeletedIds();
                 return finalOrders;
             }
 
-            return sharedOrders.filter(o => !deletedSet.has(o.id));
+            return sharedOrders;
         } catch (e) {
-            const DATA_VERSION = 'ods_data_v39';
+            const DATA_VERSION = 'ods_data_v40';
             const localData = localStorage.getItem(DATA_VERSION);
             const deletedLocal = localStorage.getItem('ods_deleted_ids');
             const deletedSet = new Set(deletedLocal ? JSON.parse(deletedLocal) : []);
