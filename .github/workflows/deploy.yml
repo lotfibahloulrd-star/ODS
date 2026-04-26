@@ -8,7 +8,8 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: 🚚 Checkout
         uses: actions/checkout@v4
@@ -16,7 +17,7 @@ jobs:
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: 📦 Install dependencies
         run: npm install
@@ -40,3 +41,5 @@ jobs:
             **/.node_modules*
             data_ods_shared.json
             uploads_ods/**
+            *.json_bak
+            *.sql
