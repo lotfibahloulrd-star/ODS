@@ -456,10 +456,16 @@ const OrderDetails = () => {
     };
 
     const openPdf = (orderId, storageKey) => {
+        // Déterminer l'ID réel du fichier (peut différer de l'ID du dossier si réparé)
+        let fileId = orderId;
+        if (order?.files?.[storageKey]?.linkedId) {
+            fileId = order.files[storageKey].linkedId;
+        }
+
         // Construction du chemin absolu via le BASE_URL de Vite
         const baseUrl = import.meta.env.BASE_URL || '/';
         const apiPath = baseUrl.endsWith('/') ? `${baseUrl}api.php` : `${baseUrl}/api.php`;
-        const fileUrl = `${apiPath}?action=get_file&orderId=${orderId}&storageKey=${storageKey}`;
+        const fileUrl = `${apiPath}?action=get_file&orderId=${fileId}&storageKey=${storageKey}`;
 
         const newWindow = window.open();
         if (newWindow) {

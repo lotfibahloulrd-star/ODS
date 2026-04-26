@@ -94,6 +94,55 @@ export const orderService = {
                 return finalOrders;
             }
 
+            // --- RÉPARATION AUTOMATIQUE DES LIENS FICHIERS V4.5 ---
+            try {
+                const fileRes = await fetch(`${API_URL}?action=list_files`);
+                if (fileRes.ok) {
+                    const { files: serverFiles } = await fileRes.json();
+                    if (Array.isArray(serverFiles) && Array.isArray(sharedOrders)) {
+                        let repairCount = 0;
+                        sharedOrders.forEach(order => {
+                            if (!order.files) order.files = {};
+                            const possibleIds = [
+                                String(order.id),
+                                order.refOds?.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+                                order.refContrat?.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+                                order.refContract?.toLowerCase().replace(/[^a-z0-9]/g, '-')
+                            ].filter(Boolean);
+
+                            serverFiles.forEach(fileName => {
+                                // Format attendu : ID_STORAGEKEY.EXT
+                                const parts = fileName.split('_');
+                                if (parts.length < 2) return;
+                                
+                                const fileId = parts[0];
+                                const remainder = parts.slice(1).join('_');
+                                const [storageKeyWithExt] = remainder.split('.');
+                                const storageKey = storageKeyWithExt; 
+
+                                // Si l'ID du fichier correspond à l'un des ID ou Slugs du dossier
+                                if (possibleIds.some(pid => fileId.includes(pid) || pid.includes(fileId))) {
+                                    if (!order.files[storageKey] || !order.files[storageKey].exists) {
+                                        order.files[storageKey] = {
+                                            exists: true,
+                                            name: fileName,
+                                            at: new Date().toISOString(),
+                                            ext: fileName.split('.').pop(),
+                                            linkedId: fileId // On stocke l'ID qui a permis le lien
+                                        };
+                                        repairCount++;
+                                    }
+                                }
+                            });
+                        });
+                        if (repairCount > 0) {
+                            console.log(`${repairCount} liens fichiers réparés automatiquement.`);
+                            await orderService._saveAllToShared(sharedOrders);
+                        }
+                    }
+                }
+            } catch (e) { console.error("File repair failed:", e); }
+
             if (Array.isArray(sharedOrders)) {
                 let hasChanges = false;
                 
