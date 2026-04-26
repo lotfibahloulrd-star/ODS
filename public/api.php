@@ -209,6 +209,17 @@ if ($action === 'get_file') {
     exit;
 }
 
+if ($action === 'list_files') {
+    $files = [];
+    if (file_exists($UPLOAD_DIR)) {
+        $files = array_values(array_filter(scandir($UPLOAD_DIR), function($f) {
+            return $f !== '.' && $f !== '..' && $f !== 'index.html';
+        }));
+    }
+    echo json_encode(['success' => true, 'files' => $files]);
+    exit;
+}
+
 if ($action === 'diag') {
     echo json_encode([
         'upload_dir' => $UPLOAD_DIR,
