@@ -1,4 +1,5 @@
 import { INITIAL_ORDERS } from './initialData';
+import { BATCH_ORDERS_V4_5 } from './batchData';
 import { notificationService } from './notificationService';
 
 const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
@@ -92,6 +93,23 @@ export const orderService = {
                 localStorage.setItem('ods_data_version', DATA_VERSION);
                 await orderService.clearDeletedIds();
                 return finalOrders;
+            }
+
+            // --- SEEDING AUTOMATIQUE V4.5 ---
+            const SEED_FLAG = 'batch_v45_seeded';
+            if (localStorage.getItem(SEED_FLAG) !== 'true') {
+                console.log("Injection des nouveaux dossiers (Lot v4.5)...");
+                const currentOrders = Array.isArray(sharedOrders) ? sharedOrders : INITIAL_ORDERS;
+                const existingIds = new Set(currentOrders.map(o => o.id));
+                
+                const newToSeed = BATCH_ORDERS_V4_5.filter(o => !existingIds.has(o.id));
+                if (newToSeed.length > 0) {
+                    const updatedList = [...newToSeed, ...currentOrders];
+                    await orderService._saveAllToShared(updatedList);
+                    localStorage.setItem(SEED_FLAG, 'true');
+                    return updatedList;
+                }
+                localStorage.setItem(SEED_FLAG, 'true');
             }
 
             return sharedOrders;
