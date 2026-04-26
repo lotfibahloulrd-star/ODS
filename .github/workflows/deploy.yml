@@ -34,3 +34,9 @@ jobs:
           server-dir: ./
           protocol: ftp
           port: 21
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.node_modules*
+            data_ods_shared.json
+            uploads_ods/**
