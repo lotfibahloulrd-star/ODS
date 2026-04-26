@@ -8,7 +8,7 @@ import Login from './pages/Login';
 import { LayoutDashboard, PlusCircle, Users, LogOut, Key, User } from 'lucide-react';
 import './index.css';
 
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import OrderDetails from './pages/OrderDetails';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import logo from './assets/logo.png';
@@ -140,7 +140,7 @@ function AppContent() {
 function App() {
     return (
         <AuthProvider>
-            <Router basename={import.meta.env.BASE_URL || '/'}>
+            <Router>
                 <AppContent />
             </Router>
         </AuthProvider>
