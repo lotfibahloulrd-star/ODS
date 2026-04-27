@@ -125,7 +125,7 @@ export const AuthProvider = ({ children }) => {
             'belateche.taklit@esclab-algerie.com',
             'n.bouras@esclab-algerie.com'
         ];
-        return isSuperAdmin() || authorized.includes(currentUser?.email);
+        return isAdmin() || authorized.includes(currentUser?.email);
     };
 
     const canEditAmount = () => {
@@ -138,7 +138,7 @@ export const AuthProvider = ({ children }) => {
             'belateche.taklit@esclab-algerie.com',
             'n.bouras@esclab-algerie.com'
         ];
-        return isSuperAdmin() || authorized.includes(currentUser?.email);
+        return isAdmin() || authorized.includes(currentUser?.email);
     };
 
     const canEditAdminFields = () => {
@@ -149,7 +149,7 @@ export const AuthProvider = ({ children }) => {
             'belateche.taklit@esclab-algerie.com',
             'n.bouras@esclab-algerie.com'
         ];
-        return isSuperAdmin() || authorized.includes(currentUser?.email);
+        return isAdmin() || authorized.includes(currentUser?.email);
     };
 
     const canExportData = () => {
