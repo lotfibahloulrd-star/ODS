@@ -154,61 +154,6 @@ export const orderService = {
                     hasChanges = true;
                 }
 
-                // 2. Mise à jour intelligente d'après votre tableau (V4.5-UPDATE)
-                const UPDATES_V45 = {
-                    "13/2023": { ttc: 2499000, livraison: "2026-03-01" },
-                    "CRAPC N°08": { ttc: 1414951.60 },
-                    "SAIDAL EQUIPEMENT": { ttc: 5196016 },
-                    "Marché N°234/2024": { ttc: 193772595.96 },
-                    "001/2024": { ttc: 6199900 },
-                    "002/2024": { ttc: 7304220 },
-                    "DS/ELH/DAA/0": { ttc: 21171290 },
-                    "04/DAC/MED/": { ttc: 6544312.41 },
-                    "01/CACQE/202": { ttc: 85888766.15 },
-                    "002/25": { ttc: 2375240 },
-                    "003/25": { ttc: 9520000 },
-                    "03/CACQE/202": { ttc: 203048323 },
-                    "001/2025": { ttc: 3870000 },
-                    "09/2025": { ttc: 12041372 },
-                    "INCC 321/005": { ttc: 58878773.53 },
-                    "05/CACQE/2024": { ttc: 117045663 },
-                    "F1107 / 24 DCM": { ttc: 3375174 },
-                    "04/2025": { ttc: 461500 },
-                    "13 & 14": { ttc: 6511000 },
-                    "Univ SPTIF 13/25": { ttc: 899999.43 },
-                    "09/2024": { ttc: 21704430 },
-                    "GTFT 24725": { ttc: 44220108 },
-                    "15/DG/2024": { ttc: 6000000 },
-                    "seaal/DAM UN/2025": { ttc: 4829531.7 },
-                    "15/CRAPC/2024": { ttc: 2084683.1 },
-                    "01/CRD/2024": { ttc: 1141072466.29 },
-                    "BC 4500057418": { ttc: 1880414.8 },
-                    "05/25": { ttc: 5438300 },
-                    "11/2025": { ttc: 4109041 },
-                    "126/2025": { ttc: 1511000 },
-                    "23/25": { ttc: 8733410 },
-                    "02/25": { ttc: 27867182 },
-                    "TIARET": { ttc: 6152538 },
-                    "127/25": { ttc: 3816359.44 },
-                    "02/2025": { ttc: 386750 },
-                    "063/25": { ttc: 102340000 },
-                    "001885": { ttc: 7163046.73 },
-                    "MARCHE N° 02/2025": { ttc: 27867182 }
-                };
-
-                sharedOrders.forEach(order => {
-                    const ref = String(order.refContrat || order.refContract || "").toUpperCase();
-                    for (const [key, val] of Object.entries(UPDATES_V45)) {
-                        if (ref.includes(key.toUpperCase())) {
-                            if (val.ttc) {
-                                order.totals = { ...order.totals, ttc: val.ttc };
-                                order.amount = String(val.ttc);
-                            }
-                            if (val.livraison) order.deliveryDate = val.livraison;
-                            hasChanges = true;
-                        }
-                    }
-                });
 
                 if (hasChanges) {
                     await orderService._saveAllToShared(sharedOrders);
