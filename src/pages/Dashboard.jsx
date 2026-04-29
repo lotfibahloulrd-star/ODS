@@ -151,11 +151,18 @@ const Dashboard = () => {
     };
 
     const loadMessages = async () => {
-        if (!currentUser) return;
-        const list = await messageService.getMessages();
-        const safeList = Array.isArray(list) ? list : [];
-        const myMessages = safeList.filter(m => m.to === 'all' || m.to === currentUser.email || m.senderEmail === currentUser.email);
-        setMessages(myMessages);
+        try {
+            if (!currentUser || !currentUser.email) return;
+            const list = await messageService.getMessages();
+            const safeList = Array.isArray(list) ? list : [];
+            const myMessages = safeList.filter(m => 
+                m && (m.to === 'all' || m.to === currentUser.email || m.senderEmail === currentUser.email)
+            );
+            setMessages(myMessages);
+        } catch (error) {
+            console.error("Error loading messages:", error);
+            setMessages([]);
+        }
     };
 
     const handleSendMessage = async (e) => {
@@ -552,8 +559,11 @@ const Dashboard = () => {
                             onClick={() => setShowMessages(!showMessages)}
                             className="w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm relative group"
                         >
-                            {(Array.isArray(messages) ? messages : []).filter(m => !m.readBy?.includes(currentUser?.email)).length > 0 ? (
-                                <BellDot className="text-blue-600 animate-bounce" size={24} />
+                            {(Array.isArray(messages) ? messages : []).filter(m => m && !m.readBy?.includes(currentUser?.email)).length > 0 ? (
+                                <div className="relative">
+                                    <Bell size={24} className="text-blue-600" />
+                                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white rounded-full animate-pulse"></span>
+                                </div>
                             ) : (
                                 <Bell size={24} />
                             )}
@@ -598,6 +608,7 @@ const Dashboard = () => {
                                             </div>
                                         ) : (
                                             messages.map(m => {
+                                                if (!m) return null;
                                                 const isMe = m.senderEmail === currentUser?.email;
                                                 return (
                                                     <div key={m.id} className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
