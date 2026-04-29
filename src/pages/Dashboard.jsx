@@ -270,7 +270,7 @@ const Dashboard = () => {
         }
     }, [orders]);
 
-    const hasUnread = notifications.some(n => !n.readBy.includes(currentUser?.email));
+
 
     const filteredOrders = useMemo(() => {
         const result = orders.filter(o => {
