@@ -554,23 +554,32 @@ const Dashboard = () => {
 
                         {showMessages && (
                             <>
-                                <div className="fixed inset-0 z-[60]" onClick={() => setShowMessages(false)}></div>
-                                <div className="absolute right-0 mt-4 w-[400px] h-[550px] flex flex-col bg-white rounded-3xl shadow-2xl border border-slate-100 z-[70] overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+                                <div className="fixed inset-0 z-[60] bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowMessages(false)}></div>
+                                <div className="fixed top-0 right-0 h-screen w-[450px] max-w-full flex flex-col bg-white shadow-2xl border-l border-slate-100 z-[70] animate-in slide-in-from-right duration-300">
                                     <div className="p-6 bg-slate-900 text-white flex justify-between items-center shrink-0">
                                         <div>
                                             <h3 className="text-sm font-black uppercase tracking-widest">Messagerie Interne</h3>
                                             <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Discussions de l'équipe</p>
                                         </div>
-                                        <button
-                                            onClick={async () => {
-                                                await messageService.markAllAsRead(currentUser.email);
-                                                loadMessages();
-                                            }}
-                                            className="text-[10px] font-black uppercase tracking-tighter hover:text-blue-400 transition-colors"
-                                        >
-                                            Tout lire
-                                        </button>
+                                        <div className="flex items-center gap-4">
+                                            <button
+                                                onClick={async () => {
+                                                    await messageService.markAllAsRead(currentUser.email);
+                                                    loadMessages();
+                                                }}
+                                                className="text-[10px] font-black uppercase tracking-tighter hover:text-blue-400 transition-colors"
+                                            >
+                                                Tout lire
+                                            </button>
+                                            <button 
+                                                onClick={() => setShowMessages(false)}
+                                                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
                                     </div>
+
                                     
                                     <div className="flex-1 overflow-y-auto scrollbar-hide p-4 bg-slate-50 flex flex-col gap-3">
                                         {messages.length === 0 ? (
