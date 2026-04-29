@@ -42,7 +42,7 @@ const Dashboard = () => {
     const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
     
     const canCreate = auth?.canCreateOds();
-    const isSuperAdmin = auth?.isSuperAdmin;
+    const isSuperAdmin = typeof auth?.isSuperAdmin === 'function' ? auth.isSuperAdmin() : false;
     const currentUser = auth?.currentUser;
     const [orders, setOrders] = useState([]);
     const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || "");
@@ -919,7 +919,7 @@ const Dashboard = () => {
                                                                         <button
                                                                             onClick={async (e) => {
                                                                                 e.stopPropagation();
-                                                                                if (isSuperAdmin && isSuperAdmin()) {
+                                                                                if (isSuperAdmin) {
                                                                                     await orderService.updateOrder(order.id, {
                                                                                         authorization: order.authorization === 'Oui' ? 'Non' : 'Oui'
                                                                                     }, currentUser.firstName);
