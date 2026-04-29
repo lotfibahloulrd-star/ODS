@@ -174,21 +174,20 @@ const Dashboard = () => {
     };
 
     useEffect(() => {
+        if (!currentUser) return;
+        
         loadOrders();
         loadMessages();
-        // Poll for messages every 10 seconds
-        const interval = setInterval(loadMessages, 10000);
-        return () => clearInterval(interval);
+
+        // Intervalle de rafraîchissement des données (ODS et Messages)
+        const orderInterval = setInterval(loadOrders, 30000);
+        const messageInterval = setInterval(loadMessages, 10000);
+
+        return () => {
+            clearInterval(orderInterval);
+            clearInterval(messageInterval);
+        };
     }, [currentUser?.email]);
-
-    useEffect(() => {
-        loadOrders();
-        loadMessages();
-
-        // Timer for polling shared data
-        const timer = setInterval(loadOrders, 30000);
-        return () => clearInterval(timer);
-    }, [currentUser]);
 
     // Système de secours : Migration automatique des fichiers locaux vers le serveur
     useEffect(() => {
@@ -611,7 +610,7 @@ const Dashboard = () => {
                                                             {m.content}
                                                         </div>
                                                         <span className="text-[8px] text-slate-400 mt-1">
-                                                            {new Date(m.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                                            {m.timestamp ? new Date(m.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                                                         </span>
                                                     </div>
                                                 );
