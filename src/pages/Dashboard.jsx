@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { orderService } from '../services/orderService';
 import { useAuth } from '../context/AuthContext';
 import { notificationService } from '../services/notificationService';
+import { messageService } from '../services/messageService';
 import {
     FileText,
     FileCheck,
@@ -29,7 +30,9 @@ import {
     Download,
     History,
     Plus,
-    Trash2
+    Trash2,
+    MessageSquare,
+    Send
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -108,9 +111,17 @@ const Dashboard = () => {
         reader.readAsDataURL(file);
     };
 
-    // Notifications state
-    const [notifications, setNotifications] = useState([]);
-    const [showNotifications, setShowNotifications] = useState(false);
+    // Messages state
+    const [messages, setMessages] = useState([]);
+    const [showMessages, setShowMessages] = useState(false);
+    const [newMessageText, setNewMessageText] = useState("");
+    const [messageRecipient, setMessageRecipient] = useState("all");
+    const [allUsers, setAllUsers] = useState([]);
+
+    useEffect(() => {
+        const usersStr = localStorage.getItem('ods_users_v7');
+        if (usersStr) setAllUsers(JSON.parse(usersStr));
+    }, []);
 
     const loadOrders = async () => {
         setIsLoading(true);
@@ -132,23 +143,39 @@ const Dashboard = () => {
         }
     };
 
-    const loadNotifications = () => {
+    const loadMessages = async () => {
         if (!currentUser) return;
-        const list = notificationService.getNotifications(currentUser.email);
-        setNotifications(list);
+        const list = await messageService.getMessages();
+        const myMessages = list.filter(m => m.to === 'all' || m.to === currentUser.email || m.senderEmail === currentUser.email);
+        setMessages(myMessages);
+    };
+
+    const handleSendMessage = async (e) => {
+        e.preventDefault();
+        if (!newMessageText.trim()) return;
+        
+        await messageService.saveMessage({
+            senderEmail: currentUser.email,
+            senderName: `${currentUser.firstName} ${currentUser.lastName}`,
+            to: messageRecipient,
+            content: newMessageText.trim()
+        });
+        
+        setNewMessageText("");
+        loadMessages();
     };
 
     useEffect(() => {
         loadOrders();
-        loadNotifications();
-        // Poll for notifications every 30 seconds
-        const interval = setInterval(loadNotifications, 30000);
+        loadMessages();
+        // Poll for messages every 10 seconds
+        const interval = setInterval(loadMessages, 10000);
         return () => clearInterval(interval);
     }, [currentUser?.email]);
 
     useEffect(() => {
         loadOrders();
-        loadNotifications();
+        loadMessages();
 
         // Timer for polling shared data
         const timer = setInterval(loadOrders, 30000);
@@ -512,78 +539,97 @@ const Dashboard = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* Notification Bell */}
+                    {/* Messagerie Interne (remplace Notifications) */}
                     <div className="relative">
                         <button
-                            onClick={() => setShowNotifications(!showNotifications)}
+                            onClick={() => setShowMessages(!showMessages)}
                             className="w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm relative group"
                         >
-                            {hasUnread ? (
+                            {messages.filter(m => !m.readBy.includes(currentUser?.email)).length > 0 ? (
                                 <BellDot className="text-blue-600 animate-bounce" size={24} />
                             ) : (
                                 <Bell size={24} />
                             )}
                         </button>
 
-                        {showNotifications && (
+                        {showMessages && (
                             <>
-                                <div className="fixed inset-0 z-[60]" onClick={() => setShowNotifications(false)}></div>
-                                <div className="absolute right-0 mt-4 w-[400px] bg-white rounded-3xl shadow-2xl border border-slate-100 z-[70] overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
-                                    <div className="p-6 bg-slate-900 text-white flex justify-between items-center">
+                                <div className="fixed inset-0 z-[60]" onClick={() => setShowMessages(false)}></div>
+                                <div className="absolute right-0 mt-4 w-[400px] h-[550px] flex flex-col bg-white rounded-3xl shadow-2xl border border-slate-100 z-[70] overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+                                    <div className="p-6 bg-slate-900 text-white flex justify-between items-center shrink-0">
                                         <div>
-                                            <h3 className="text-sm font-black uppercase tracking-widest">Centre de Notifications</h3>
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Dernières activités de l'équipe</p>
+                                            <h3 className="text-sm font-black uppercase tracking-widest">Messagerie Interne</h3>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Discussions de l'équipe</p>
                                         </div>
                                         <button
-                                            onClick={() => {
-                                                notifications.forEach(n => notificationService.markAsRead(n.id, currentUser.email));
-                                                loadNotifications();
+                                            onClick={async () => {
+                                                await messageService.markAllAsRead(currentUser.email);
+                                                loadMessages();
                                             }}
                                             className="text-[10px] font-black uppercase tracking-tighter hover:text-blue-400 transition-colors"
                                         >
-                                            Tout marquer comme lu
+                                            Tout lire
                                         </button>
                                     </div>
-                                    <div className="max-h-[400px] overflow-y-auto scrollbar-hide py-2">
-                                        {notifications.length === 0 ? (
-                                            <div className="p-10 text-center text-slate-400">
-                                                <Bell className="mx-auto mb-4 opacity-20" size={48} />
-                                                <p className="font-bold">Aucune notification</p>
+                                    
+                                    <div className="flex-1 overflow-y-auto scrollbar-hide p-4 bg-slate-50 flex flex-col gap-3">
+                                        {messages.length === 0 ? (
+                                            <div className="m-auto text-center text-slate-400">
+                                                <MessageSquare className="mx-auto mb-4 opacity-20" size={48} />
+                                                <p className="font-bold">Aucun message</p>
                                             </div>
                                         ) : (
-                                            notifications.map(n => (
-                                                <div
-                                                    key={n.id}
-                                                    className={`p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer relative ${!n.readBy.includes(currentUser.email) ? 'bg-blue-50/30' : ''}`}
-                                                    onClick={() => {
-                                                        notificationService.markAsRead(n.id, currentUser.email);
-                                                        loadNotifications();
-                                                        if (n.orderId) {
-                                                            navigate(`/order/${n.orderId}`);
-                                                        }
-                                                        setShowNotifications(false);
-                                                    }}
-                                                >
-                                                    {!n.readBy.includes(currentUser.email) && (
-                                                        <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-                                                    )}
-                                                    <div className="flex items-start gap-3 pl-4">
-                                                        <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${n.type === 'success' ? 'bg-emerald-500' : 'bg-blue-500'}`}></div>
-                                                        <div>
-                                                            <p className="text-[11px] font-bold text-slate-700 leading-relaxed mb-1">{n.message}</p>
-                                                            <div className="flex items-center gap-2 text-[9px] text-slate-400 font-black uppercase">
-                                                                <Clock size={10} />
-                                                                {new Date(n.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                                                            </div>
+                                            messages.map(m => {
+                                                const isMe = m.senderEmail === currentUser?.email;
+                                                return (
+                                                    <div key={m.id} className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
+                                                        <div className="flex items-end gap-1 mb-1">
+                                                            <span className="text-[9px] font-bold text-slate-400 uppercase">{isMe ? 'Moi' : m.senderName}</span>
+                                                            {m.to === 'all' && !isMe && <span className="text-[8px] bg-slate-200 text-slate-500 px-1 rounded">À Tous</span>}
+                                                            {m.to !== 'all' && !isMe && <span className="text-[8px] bg-blue-100 text-blue-600 px-1 rounded">Privé</span>}
                                                         </div>
+                                                        <div className={`p-3 rounded-2xl text-[13px] leading-relaxed shadow-sm ${isMe ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'}`}>
+                                                            {m.content}
+                                                        </div>
+                                                        <span className="text-[8px] text-slate-400 mt-1">
+                                                            {new Date(m.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
                                                     </div>
-                                                </div>
-                                            ))
+                                                );
+                                            })
                                         )}
                                     </div>
-                                    <div className="p-4 bg-slate-50 border-t border-slate-100 text-center">
-                                        <button className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-slate-900 transition-colors">Afficher tout l'historique</button>
-                                    </div>
+                                    
+                                    <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-slate-100 shrink-0">
+                                        <div className="flex gap-2 mb-3">
+                                            <select 
+                                                value={messageRecipient} 
+                                                onChange={(e) => setMessageRecipient(e.target.value)}
+                                                className="text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 flex-1 outline-none focus:border-blue-400 transition-colors"
+                                            >
+                                                <option value="all">Envoyer à : Tous (Général)</option>
+                                                {allUsers.filter(u => u.email !== currentUser?.email).map(u => (
+                                                    <option key={u.email} value={u.email}>👤 {u.firstName} {u.lastName}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="Votre message..."
+                                                value={newMessageText}
+                                                onChange={(e) => setNewMessageText(e.target.value)}
+                                                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors"
+                                            />
+                                            <button 
+                                                type="submit" 
+                                                disabled={!newMessageText.trim()}
+                                                className="bg-blue-600 text-white w-11 flex items-center justify-center rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors shadow-sm"
+                                            >
+                                                <Send size={18} />
+                                            </button>
+                                        </div>
+                                    </form>
                                 </div>
                             </>
                         )}

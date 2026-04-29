@@ -6,6 +6,7 @@ header("Content-Type: application/json");
 
 // Dossiers de stockage
 $DATA_FILE = 'data_ods_shared.json';
+$MESSAGES_FILE = 'data_messages_shared.json';
 $UPLOAD_DIR = 'uploads_ods/';
 
 // Tentative de création du dossier avec des permissions robustes
@@ -26,6 +27,9 @@ if (file_exists($UPLOAD_DIR) && !is_writable($UPLOAD_DIR)) {
 // Initialiser le fichier de données s'il n'existe pas
 if (!file_exists($DATA_FILE)) {
     file_put_contents($DATA_FILE, json_encode([]));
+}
+if (!file_exists($MESSAGES_FILE)) {
+    file_put_contents($MESSAGES_FILE, json_encode([]));
 }
 
 $action = $_GET['action'] ?? '';
@@ -69,6 +73,28 @@ if ($action === 'save_orders' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode($input, true);
         if ($data !== null) {
             file_put_contents($DATA_FILE, json_encode($data, JSON_PRETTY_PRINT));
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Invalid JSON']);
+        }
+    } else {
+        echo json_encode(['success' => false, 'message' => 'No data received']);
+    }
+    exit;
+}
+
+if ($action === 'get_messages') {
+    $data = @file_get_contents($MESSAGES_FILE);
+    echo $data ? $data : json_encode([]);
+    exit;
+}
+
+if ($action === 'save_messages' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input = file_get_contents('php://input');
+    if ($input) {
+        $data = json_decode($input, true);
+        if ($data !== null) {
+            file_put_contents($MESSAGES_FILE, json_encode($data, JSON_PRETTY_PRINT));
             echo json_encode(['success' => true]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Invalid JSON']);
