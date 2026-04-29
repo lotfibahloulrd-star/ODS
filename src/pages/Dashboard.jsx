@@ -119,8 +119,15 @@ const Dashboard = () => {
     const [allUsers, setAllUsers] = useState([]);
 
     useEffect(() => {
-        const usersStr = localStorage.getItem('ods_users_v7');
-        if (usersStr) setAllUsers(JSON.parse(usersStr));
+        try {
+            const usersStr = localStorage.getItem('ods_users_v7');
+            if (usersStr) {
+                const parsed = JSON.parse(usersStr);
+                setAllUsers(Array.isArray(parsed) ? parsed : []);
+            }
+        } catch (e) {
+            setAllUsers([]);
+        }
     }, []);
 
     const loadOrders = async () => {
@@ -146,7 +153,8 @@ const Dashboard = () => {
     const loadMessages = async () => {
         if (!currentUser) return;
         const list = await messageService.getMessages();
-        const myMessages = list.filter(m => m.to === 'all' || m.to === currentUser.email || m.senderEmail === currentUser.email);
+        const safeList = Array.isArray(list) ? list : [];
+        const myMessages = safeList.filter(m => m.to === 'all' || m.to === currentUser.email || m.senderEmail === currentUser.email);
         setMessages(myMessages);
     };
 
@@ -545,7 +553,7 @@ const Dashboard = () => {
                             onClick={() => setShowMessages(!showMessages)}
                             className="w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm relative group"
                         >
-                            {messages.filter(m => !m.readBy.includes(currentUser?.email)).length > 0 ? (
+                            {(Array.isArray(messages) ? messages : []).filter(m => !m.readBy?.includes(currentUser?.email)).length > 0 ? (
                                 <BellDot className="text-blue-600 animate-bounce" size={24} />
                             ) : (
                                 <Bell size={24} />
@@ -564,8 +572,10 @@ const Dashboard = () => {
                                         <div className="flex items-center gap-4">
                                             <button
                                                 onClick={async () => {
-                                                    await messageService.markAllAsRead(currentUser.email);
-                                                    loadMessages();
+                                                    if (currentUser?.email) {
+                                                        await messageService.markAllAsRead(currentUser.email);
+                                                        loadMessages();
+                                                    }
                                                 }}
                                                 className="text-[10px] font-black uppercase tracking-tighter hover:text-blue-400 transition-colors"
                                             >
@@ -582,7 +592,7 @@ const Dashboard = () => {
 
                                     
                                     <div className="flex-1 overflow-y-auto scrollbar-hide p-4 bg-slate-50 flex flex-col gap-3">
-                                        {messages.length === 0 ? (
+                                        {(!Array.isArray(messages) || messages.length === 0) ? (
                                             <div className="m-auto text-center text-slate-400">
                                                 <MessageSquare className="mx-auto mb-4 opacity-20" size={48} />
                                                 <p className="font-bold">Aucun message</p>
@@ -617,7 +627,7 @@ const Dashboard = () => {
                                                 className="text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 flex-1 outline-none focus:border-blue-400 transition-colors"
                                             >
                                                 <option value="all">Envoyer à : Tous (Général)</option>
-                                                {allUsers.filter(u => u.email !== currentUser?.email).map(u => (
+                                                {(Array.isArray(allUsers) ? allUsers : []).filter(u => u.email !== currentUser?.email).map(u => (
                                                     <option key={u.email} value={u.email}>👤 {u.firstName} {u.lastName}</option>
                                                 ))}
                                             </select>
