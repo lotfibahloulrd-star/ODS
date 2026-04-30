@@ -5,11 +5,12 @@ import Home from './pages/Home';
 import NewOrder from './pages/NewOrder';
 import UsersPage from './pages/Users';
 import Login from './pages/Login';
-import { LayoutDashboard, PlusCircle, Users, LogOut, Key, User } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Users, LogOut, Key, User, Briefcase } from 'lucide-react';
 import './index.css';
 
 import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import OrderDetails from './pages/OrderDetails';
+import Tenders from './pages/Tenders';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import logo from './assets/logo.png';
 
@@ -42,6 +43,7 @@ function AppContent() {
         if (location.pathname === '/dashboard') return 'dashboard';
         if (location.pathname === '/ods/new') return 'new';
         if (location.pathname === '/users') return 'users';
+        if (location.pathname === '/tenders') return 'tenders';
         return '';
     };
 
@@ -64,37 +66,40 @@ function AppContent() {
                             <h1 className="text-xl font-black text-slate-900 tracking-tight hidden md:block">ESCLAB-Contract <span className="text-blue-600">Hub</span> <span className="text-[10px] font-bold text-slate-400 align-top">v4.5</span></h1>
                         </div>
 
-                        <nav className="flex items-center bg-slate-100/50 p-1.5 rounded-2xl border border-slate-100 overflow-x-auto no-scrollbar">
-                            <button
-                                onClick={() => navigate('/')}
-                                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-black transition-all whitespace-nowrap ${activeTab === 'home' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                        <nav className="hidden md:flex items-center gap-1 bg-slate-100/50 p-1 rounded-2xl border border-slate-200">
+                            <button 
+                                onClick={() => navigate('/dashboard')} 
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-600 hover:bg-white'}`}
                             >
                                 <LayoutDashboard size={18} />
-                                <span className="hidden sm:inline">Accueil</span>
+                                <span className="hidden lg:inline">Tableau ODS</span>
                             </button>
-                            <button
-                                onClick={() => navigate('/dashboard')}
-                                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-black transition-all whitespace-nowrap ${activeTab === 'dashboard' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                            
+                            <button 
+                                onClick={() => navigate('/tenders')} 
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'tenders' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-600 hover:bg-white'}`}
                             >
-                                <LayoutDashboard size={18} />
-                                <span className="hidden sm:inline">Tableau de Bord</span>
+                                <Briefcase size={18} />
+                                <span className="hidden lg:inline">Appels d'Offres</span>
                             </button>
+
                             {canCreateOds() && (
                                 <button
                                     onClick={() => navigate('/ods/new')}
-                                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-black transition-all whitespace-nowrap ${activeTab === 'new' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'new' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'text-slate-600 hover:bg-white'}`}
                                 >
                                     <PlusCircle size={18} />
-                                    <span className="hidden sm:inline">Nouvel ODS</span>
+                                    <span className="hidden lg:inline">Nouvel ODS</span>
                                 </button>
                             )}
+
                             {isSuperAdmin() && (
                                 <button
                                     onClick={() => navigate('/users')}
-                                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-black transition-all whitespace-nowrap ${activeTab === 'users' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'users' ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/30' : 'text-slate-600 hover:bg-white'}`}
                                 >
                                     <Users size={18} />
-                                    <span className="hidden sm:inline">Utilisateurs</span>
+                                    <span className="hidden lg:inline">Utilisateurs</span>
                                 </button>
                             )}
                         </nav>
@@ -127,6 +132,7 @@ function AppContent() {
                         <Route path="/" element={<Home />} />
                         <Route path="/home" element={<Home />} />
                         <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/tenders" element={<Tenders />} />
                         <Route path="/ods/new" element={canCreateOds() ? <NewOrder onSave={() => navigate('/dashboard')} /> : <div className="text-center py-20 text-slate-400">Accès restreint</div>} />
                         <Route path="/users" element={isSuperAdmin() ? <UsersPage /> : <div className="text-center py-20 text-slate-400">Accès restreint</div>} />
                         <Route path="/order/:id" element={<OrderDetails />} />

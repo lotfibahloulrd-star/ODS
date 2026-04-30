@@ -8,6 +8,7 @@ header("Content-Type: application/json");
 $DATA_FILE = 'data_ods_shared.json';
 $MESSAGES_FILE = 'data_messages_shared.json';
 $LOGS_FILE = 'data_logs_shared.json';
+$TENDERS_FILE = 'data_tenders_shared.json';
 $UPLOAD_DIR = 'uploads_ods/';
 
 // Tentative de création du dossier avec des permissions robustes
@@ -34,6 +35,9 @@ if (!file_exists($MESSAGES_FILE)) {
 }
 if (!file_exists($LOGS_FILE)) {
     file_put_contents($LOGS_FILE, json_encode([]));
+}
+if (!file_exists($TENDERS_FILE)) {
+    file_put_contents($TENDERS_FILE, json_encode([]));
 }
 
 $action = $_GET['action'] ?? '';
@@ -132,6 +136,28 @@ if ($action === 'save_log' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $logs = array_slice($logs, 0, 500);
             
             file_put_contents($LOGS_FILE, json_encode($logs, JSON_PRETTY_PRINT));
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Invalid JSON']);
+        }
+    } else {
+        echo json_encode(['success' => false, 'message' => 'No data received']);
+    }
+    exit;
+}
+
+if ($action === 'get_tenders') {
+    $data = @file_get_contents($TENDERS_FILE);
+    echo $data ? $data : json_encode([]);
+    exit;
+}
+
+if ($action === 'save_tenders' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input = file_get_contents('php://input');
+    if ($input) {
+        $data = json_decode($input, true);
+        if ($data !== null) {
+            file_put_contents($TENDERS_FILE, json_encode($data, JSON_PRETTY_PRINT));
             echo json_encode(['success' => true]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Invalid JSON']);
