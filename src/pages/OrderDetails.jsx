@@ -52,6 +52,8 @@ const OrderDetails = () => {
     const [tempProgress, setTempProgress] = useState("");
     const [isEditingDivision, setIsEditingDivision] = useState(false);
     const [tempDivision, setTempDivision] = useState("");
+    const [isEditingManager, setIsEditingManager] = useState(false);
+    const [tempManager, setTempManager] = useState("");
     const [editingArticleIndex, setEditingArticleIndex] = useState(null);
     const [editingArticleData, setEditingArticleData] = useState(null);
     const [isAddingArticle, setIsAddingArticle] = useState(false);
@@ -107,6 +109,7 @@ const OrderDetails = () => {
                 setTempDeliveryDate(found.deliveryDate || "");
                 setTempProgress(found.manualProgress !== undefined ? found.manualProgress : "");
                 setTempDivision(found.division || "");
+                setTempManager(found.manager || "");
                 const finData = found.financial || {
                     paymentStatus: 'Aucun',
                     paymentAmount: '',
@@ -644,7 +647,7 @@ const OrderDetails = () => {
 
                 <div className="p-10 space-y-12">
                     {/* Key Stats Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                         <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 group hover:border-blue-200 transition-all">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Client Engagé</span>
                             {isEditingClient ? (
@@ -725,6 +728,31 @@ const OrderDetails = () => {
                                             <Plus size={14} />
                                         </button>
                                     )}
+                                </div>
+                            )}
+                        </div>
+                        <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 group hover:border-blue-200 transition-all">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Responsable Dossier</span>
+                            {isEditingManager ? (
+                                <div className="flex gap-2">
+                                    <select 
+                                        value={tempManager} 
+                                        onChange={e => setTempManager(e.target.value)} 
+                                        className="flex-1 p-2 bg-white border-2 border-blue-200 rounded-xl font-black text-slate-900 outline-none text-xs"
+                                        autoFocus
+                                    >
+                                        <option value="">-- Aucun --</option>
+                                        <option value="MAZOUZ SONIA">MAZOUZ SONIA</option>
+                                        <option value="BELATECHE TAKLIT">BELATECHE TAKLIT</option>
+                                        <option value="NIHAD BOURAS">NIHAD BOURAS</option>
+                                        <option value="HAMZA BRIKH">HAMZA BRIKH</option>
+                                    </select>
+                                    <button onClick={() => handleSaveAdminFields('manager', tempManager, setTempManager, setIsEditingManager, 'Responsable')} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase">OK</button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xl font-black text-blue-600 uppercase block truncate">{order.manager || "NON DÉSIGNÉ"}</span>
+                                    {canEditAdminFields() && <button onClick={() => { setTempManager(order.manager || ""); setIsEditingManager(true); }} className="p-2 hover:bg-white text-blue-500 rounded-lg transition-all border border-blue-100 bg-blue-50/50"><Plus size={14} /></button>}
                                 </div>
                             )}
                         </div>

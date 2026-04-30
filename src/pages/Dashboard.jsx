@@ -915,6 +915,7 @@ const Dashboard = () => {
                                         <thead>
                                             <tr className="bg-slate-50 border-b border-slate-100">
                                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Client / Maître d'Ouvrage</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Responsable</th>
                                                 {financialFilter ? (
                                                     <>
                                                         <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-amber-600 text-center">État Règlement</th>
@@ -973,6 +974,14 @@ const Dashboard = () => {
                                                             </div>
                                                             <div className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">
                                                                 {order.refOds || order.ref || "Sans Réf ODS"}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-7">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                                                                    <User size={12} />
+                                                                </div>
+                                                                <span className="text-[10px] font-black text-slate-900 uppercase tracking-tighter whitespace-nowrap">{order.manager || "-"}</span>
                                                             </div>
                                                         </td>
 

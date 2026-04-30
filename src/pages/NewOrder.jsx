@@ -41,6 +41,7 @@ const NewOrder = ({ onSave }) => {
         judicialProceedings: '',
         articles: [],
         contacts: [],
+        manager: '', // Responsable du dossier
         totals: { ht: 0, tva: 0, ttc: 0 }
     });
 
@@ -398,6 +399,7 @@ const NewOrder = ({ onSave }) => {
                 bankDomiciliation: '',
                 judicialProceedings: '',
                 articles: [],
+                manager: '',
                 totals: { ht: 0, tva: 0, ttc: 0 }
             });
             if (onSave) onSave();
@@ -617,7 +619,7 @@ const NewOrder = ({ onSave }) => {
                             {/* Section 2: Identification */}
                             <div className="space-y-10">
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                    <div className="lg:col-span-2">
+                                    <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3 px-1">Client / Maître d'Ouvrage</label>
                                         <input
                                             type="text"
@@ -638,6 +640,20 @@ const NewOrder = ({ onSave }) => {
                                             <option value="Division Analytique et Laboratoire">Division Analytique et Laboratoire (DL/DA)</option>
                                             <option value="Laboratoire de Métrologie">Laboratoire de Métrologie</option>
                                             <option value="Direction Maintenance SAV">Direction Maintenance SAV</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3 px-1">Responsable du dossier</label>
+                                        <select
+                                            className="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-[2rem] font-black text-blue-600 outline-none focus:border-blue-500 transition-all shadow-sm cursor-pointer"
+                                            value={formData.manager}
+                                            onChange={e => setFormData({ ...formData, manager: e.target.value })}
+                                        >
+                                            <option value="">-- Sélectionner --</option>
+                                            <option value="MAZOUZ SONIA">MAZOUZ SONIA</option>
+                                            <option value="BELATECHE TAKLIT">BELATECHE TAKLIT</option>
+                                            <option value="NIHAD BOURAS">NIHAD BOURAS</option>
+                                            <option value="HAMZA BRIKH">HAMZA BRIKH</option>
                                         </select>
                                     </div>
                                 </div>
