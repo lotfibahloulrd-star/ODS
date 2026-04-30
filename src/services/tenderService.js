@@ -77,5 +77,29 @@ export const tenderService = {
         } catch (e) {
             return false;
         }
+    },
+
+    saveFile: async (tenderId, storageKey, file, fileName) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('orderId', tenderId);
+        formData.append('storageKey', storageKey);
+        formData.append('fileName', fileName);
+        formData.append('type', 'tender');
+
+        try {
+            const response = await fetch(`${API_URL}?action=upload_file`, {
+                method: 'POST',
+                body: formData
+            });
+            return await response.json();
+        } catch (e) {
+            console.error("TenderService: Error uploading file", e);
+            return { success: false };
+        }
+    },
+
+    getFileUrl: (tenderId, storageKey) => {
+        return `${API_URL}?action=get_file&orderId=${tenderId}&storageKey=${storageKey}&type=tender`;
     }
 };

@@ -172,6 +172,7 @@ if ($action === 'upload_file' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $orderId = $_POST['orderId'] ?? '';
     $storageKey = $_POST['storageKey'] ?? '';
     $fileName = $_POST['fileName'] ?? '';
+    $type = $_POST['type'] ?? 'ods'; // 'ods' ou 'tender'
     
     if ($orderId && $storageKey) {
         if (!isset($_FILES['file'])) {
@@ -197,27 +198,29 @@ if ($action === 'upload_file' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $ext = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
         if (!$ext || $ext === 'json') $ext = 'pdf';
         
-        $allowed = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
+        $allowed = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'xlsx', 'xls', 'docx', 'doc'];
         if (!in_array($ext, $allowed)) $ext = 'pdf';
 
-        $finalName = $orderId . '_' . $storageKey . '.' . $ext;
+        $prefix = ($type === 'tender') ? 'tender_' : '';
+        $finalName = $prefix . $orderId . '_' . $storageKey . '.' . $ext;
         $targetPath = $UPLOAD_DIR . $finalName;
         
         if (move_uploaded_file($_FILES['file']['tmp_name'], $targetPath)) {
             @chmod($targetPath, 0644);
             
-            // --- Mise à jour atomique du JSON ---
-            $fp = @fopen($DATA_FILE, 'r+');
+            // --- Mise à jour atomique du JSON concerné ---
+            $targetJson = ($type === 'tender') ? $TENDERS_FILE : $DATA_FILE;
+            $fp = @fopen($targetJson, 'r+');
             if ($fp) {
                 if (flock($fp, LOCK_EX)) {
                     $content = stream_get_contents($fp);
-                    $orders = json_decode($content, true) ?: [];
+                    $items = json_decode($content, true) ?: [];
                     
                     $updated = false;
-                    foreach ($orders as &$order) {
-                        if ($order['id'] == $orderId) {
-                            if (!isset($order['files'])) $order['files'] = [];
-                            $order['files'][$storageKey] = [
+                    foreach ($items as &$item) {
+                        if ($item['id'] == $orderId) {
+                            if (!isset($item['files'])) $item['files'] = [];
+                            $item['files'][$storageKey] = [
                                 'exists' => true,
                                 'name' => $fileName,
                                 'at' => date('c'),
@@ -231,7 +234,7 @@ if ($action === 'upload_file' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($updated) {
                         ftruncate($fp, 0);
                         rewind($fp);
-                        fwrite($fp, json_encode($orders, JSON_PRETTY_PRINT));
+                        fwrite($fp, json_encode($items, JSON_PRETTY_PRINT));
                     }
                     flock($fp, LOCK_UN);
                 }
@@ -245,12 +248,7 @@ if ($action === 'upload_file' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 'path' => $finalName
             ]);
         } else {
-            $dirExists = file_exists($UPLOAD_DIR) ? 'Exists' : 'Not Found';
-            $dirWritable = is_writable($UPLOAD_DIR) ? 'Writable' : 'Not Writable';
-            echo json_encode([
-                'success' => false, 
-                'message' => "Move failed. Folder: $dirExists, $dirWritable. Check permissions on $UPLOAD_DIR"
-            ]);
+            echo json_encode(['success' => false, 'message' => "Move failed."]);
         }
     } else {
         echo json_encode(['success' => false, 'message' => 'Missing data']);
@@ -261,20 +259,22 @@ if ($action === 'upload_file' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($action === 'get_file') {
     $orderId = $_GET['orderId'] ?? '';
     $storageKey = $_GET['storageKey'] ?? '';
+    $type = $_GET['type'] ?? 'ods';
     
     if (!$orderId || !$storageKey) {
         echo json_encode(['success' => false, 'message' => 'Paramètres manquants']);
         exit;
     }
 
-    // On cherche les extensions possibles
-    $extensions = ['pdf', 'jpg', 'png', 'jpeg', 'webp'];
+    $prefix = ($type === 'tender') ? 'tender_' : '';
+    $extensions = ['pdf', 'jpg', 'png', 'jpeg', 'webp', 'xlsx', 'xls', 'docx', 'doc'];
     foreach ($extensions as $ext) {
-        $path = $UPLOAD_DIR . $orderId . '_' . $storageKey . '.' . $ext;
+        $path = $UPLOAD_DIR . $prefix . $orderId . '_' . $storageKey . '.' . $ext;
         if (file_exists($path)) {
             $mime = 'application/octet-stream';
             if ($ext === 'pdf') $mime = 'application/pdf';
             elseif (in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) $mime = 'image/' . ($ext === 'jpg' ? 'jpeg' : $ext);
+            elseif (in_array($ext, ['xlsx', 'xls'])) $mime = 'application/vnd.ms-excel';
 
             header("Content-Type: " . $mime);
             header("Content-Length: " . filesize($path));
@@ -285,16 +285,7 @@ if ($action === 'get_file') {
     }
     
     http_response_code(404);
-    echo json_encode([
-        'success' => false, 
-        'message' => 'file not found',
-        'debug' => [
-            'orderId' => $orderId,
-            'storageKey' => $storageKey,
-            'searched_in' => $UPLOAD_DIR,
-            'server_time' => date('Y-m-d H:i:s')
-        ]
-    ]);
+    echo json_encode(['success' => false, 'message' => 'file not found']);
     exit;
 }
 

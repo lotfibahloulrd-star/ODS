@@ -26,33 +26,55 @@ import {
     X,
     LayoutDashboard,
     MessageSquare,
-    Bell
+    Bell,
+    Paperclip,
+    FileUp,
+    Eye,
+    Check,
+    Share2,
+    Lock,
+    User
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+const PERSONNEL = [
+    { name: "MOUHOUB IMENE", email: "mouhoub.imene@esclab-algerie.com", role: "Coordinatrice" },
+    { name: "HASSIBA FOUDIL", email: "h.foudil@esclab-algerie.com", role: "Assistante commerciale" },
+    { name: "RANIA MOULAOUI", email: "r.moulaoui@esclab-algerie.com", role: "Assistante commerciale" },
+    { name: "ABDERRAHMANE CHERBAL", email: "y.cherbal@esclab-algerie.com", role: "Technico-commercial" },
+    { name: "NOUR EL HOUDA BELHAMEL", email: "n.belhamel@esclab-algerie.com", role: "Assistante commerciale" },
+    { name: "YOUCEF BELKADI", email: "belkadi.youcef@esclab-algerie.com", role: "Technico-commercial" },
+    { name: "KAMELIA IDIRI", email: "k.idiri@esclab-algerie.com", role: "Assistante commerciale" },
+    { name: "MOUNIR KHELFAOUI", email: "m.khelfaoui@esclab-algerie.com", role: "Technico-commercial" },
+    { name: "ILIZA ABDELLI", email: "i.abdelli@esclab-algerie.com", role: "Assistante commerciale" },
+    { name: "LYDIA BELHOCINE", email: "l.belhocine@esclab-algerie.com", role: "Assistante commerciale" },
+    { name: "NAZIM MOKHTARI", email: "n.mokhtari@esclab-algerie.com", role: "Technico-commercial" },
+    { name: "ALI AIT AZZOUZ", email: "a.aitazouz@esclab-algerie.com", role: "Technico-commercial" }
+];
+
 const Tenders = () => {
-    const { currentUser, isSuperAdmin } = useAuth();
+    const { currentUser } = useAuth();
     const navigate = useNavigate();
     
+    const isCoordinator = currentUser?.email === 'mouhoub.imene@esclab-algerie.com';
+
     const [tenders, setTenders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [showForm, setShowForm] = useState(false);
-    const [editingTender, setEditingTender] = useState(null);
+    const [selectedTender, setSelectedTender] = useState(null);
     const [activeStatusFilter, setActiveStatusFilter] = useState("all");
+    const [isUploading, setIsUploading] = useState(false);
 
     // Form states
     const [formData, setFormData] = useState({
-        dispatchDate: "",
+        dispatchDate: new Date().toISOString().split('T')[0],
         deadlineDate: "",
-        depositDate: "",
-        salesPersons: "",
         refCdc: "",
         object: "",
         organism: "",
-        confirmation: "En attente",
         status: "En préparation",
-        comments: ""
+        assignments: [] // Array of { email, name, role, status: 'pending'|'done' }
     });
 
     useEffect(() => {
@@ -68,24 +90,34 @@ const Tenders = () => {
 
     const handleOpenForm = (tender = null) => {
         if (tender) {
-            setEditingTender(tender);
             setFormData({ ...tender });
         } else {
-            setEditingTender(null);
             setFormData({
                 dispatchDate: new Date().toISOString().split('T')[0],
                 deadlineDate: "",
-                depositDate: "",
-                salesPersons: "",
                 refCdc: "",
                 object: "",
                 organism: "",
-                confirmation: "En attente",
                 status: "En préparation",
-                comments: ""
+                assignments: []
             });
         }
         setShowForm(true);
+    };
+
+    const toggleAssignment = (person) => {
+        const exists = formData.assignments.find(a => a.email === person.email);
+        if (exists) {
+            setFormData({
+                ...formData,
+                assignments: formData.assignments.filter(a => a.email !== person.email)
+            });
+        } else {
+            setFormData({
+                ...formData,
+                assignments: [...formData.assignments, { ...person, status: 'pending' }]
+            });
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -97,15 +129,47 @@ const Tenders = () => {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Supprimer définitivement ce dossier ?")) {
-            const ok = await tenderService.deleteTender(id, `${currentUser?.firstName} ${currentUser?.lastName}`);
-            if (ok) loadTenders();
+    const handleFileUpload = async (e, tenderId, storageKey) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const res = await tenderService.saveFile(tenderId, storageKey, file, file.name);
+            if (res.success) {
+                // If a participant uploads their offer, we check if they are done
+                if (storageKey.startsWith('offer_')) {
+                    const updatedTenders = [...tenders];
+                    const tIndex = updatedTenders.findIndex(t => t.id === tenderId);
+                    if (tIndex !== -1) {
+                        const tender = updatedTenders[tIndex];
+                        const aIndex = tender.assignments.findIndex(a => a.email === currentUser.email);
+                        if (aIndex !== -1) {
+                            tender.assignments[aIndex].status = 'done';
+                            await tenderService.saveTender(tender, currentUser.firstName);
+                        }
+                    }
+                }
+                loadTenders();
+                alert("Fichier uploadé avec succès !");
+            } else {
+                alert("Erreur lors de l'upload.");
+            }
+        } catch (err) {
+            alert("Erreur serveur.");
+        } finally {
+            setIsUploading(false);
         }
     };
 
     const filteredTenders = useMemo(() => {
         return tenders.filter(t => {
+            // Workers only see their assigned tenders
+            if (!isCoordinator) {
+                const isAssigned = t.assignments?.some(a => a.email === currentUser?.email);
+                if (!isAssigned) return false;
+            }
+
             const matchesSearch = (
                 (t.refCdc || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (t.object || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -114,7 +178,7 @@ const Tenders = () => {
             const matchesStatus = activeStatusFilter === "all" || t.status === activeStatusFilter;
             return matchesSearch && matchesStatus;
         });
-    }, [tenders, searchTerm, activeStatusFilter]);
+    }, [tenders, searchTerm, activeStatusFilter, isCoordinator, currentUser]);
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -122,32 +186,31 @@ const Tenders = () => {
             case 'Déposé': return 'bg-blue-100 text-blue-700 border-blue-200';
             case 'Adjugé': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
             case 'Perdu': return 'bg-rose-100 text-rose-700 border-rose-200';
-            case 'Annulé': return 'bg-slate-100 text-slate-700 border-slate-200';
             default: return 'bg-slate-100 text-slate-700 border-slate-200';
         }
     };
 
     return (
         <div className="min-h-screen bg-slate-50/50 pb-12">
-            {/* Navigation Header (Simplified) */}
+            {/* Nav Header */}
             <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-8">
                         <h1 className="text-xl font-black text-slate-900 tracking-tighter flex items-center gap-2">
-                            <span className="bg-blue-600 text-white p-1.5 rounded-lg"><Briefcase size={18}/></span>
-                            ESCLAB <span className="text-blue-600">TENDERS</span>
+                            <span className="bg-indigo-600 text-white p-1.5 rounded-lg"><Briefcase size={18}/></span>
+                            ESCLAB <span className="text-indigo-600">TENDERS</span>
                         </h1>
                         <div className="hidden md:flex items-center gap-1">
-                            <button onClick={() => navigate('/dashboard')} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors">Dashboard ODS</button>
-                            <button className="px-4 py-2 text-sm font-black text-blue-600 border-b-2 border-blue-600 bg-blue-50/50">Appels d'Offres</button>
+                            <button onClick={() => navigate('/dashboard')} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">Dashboard ODS</button>
+                            <button className="px-4 py-2 text-sm font-black text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50">Appels d'Offres</button>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="text-right mr-3 hidden sm:block">
-                            <p className="text-[10px] font-black text-slate-400 uppercase leading-none">Connecté en tant que</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase leading-none">Session</p>
                             <p className="text-xs font-black text-slate-900">{currentUser?.firstName} {currentUser?.lastName}</p>
                         </div>
-                        <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-black text-sm">
+                        <div className="w-10 h-10 bg-indigo-900 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-200">
                             {currentUser?.firstName?.[0]}{currentUser?.lastName?.[0]}
                         </div>
                     </div>
@@ -155,253 +218,544 @@ const Tenders = () => {
             </nav>
 
             <main className="max-w-7xl mx-auto px-6 pt-8">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
                     <div>
-                        <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-1">Appels d'Offres & CDC</h2>
-                        <p className="text-slate-500 font-bold flex items-center gap-2 italic">
-                            <span className="w-2 h-2 bg-indigo-600 rounded-full animate-pulse"></span>
-                            Gestion des soumissions et cahiers des charges
-                        </p>
-                    </div>
-
-                    <button 
-                        onClick={() => handleOpenForm()}
-                        className="bg-blue-600 text-white px-6 py-3.5 rounded-2xl font-black flex items-center gap-3 shadow-xl shadow-blue-600/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all active:translate-y-0"
-                    >
-                        <Plus size={20} />
-                        Nouveau CDC
-                    </button>
-                </div>
-
-                {/* Filters & Stats */}
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-                    <div className="lg:col-span-3 flex flex-col md:flex-row gap-4">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                            <input 
-                                type="text" 
-                                placeholder="Rechercher par référence, objet ou organisme..."
-                                className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold shadow-sm focus:border-blue-400 outline-none transition-all"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <div className="flex p-1 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-x-auto whitespace-nowrap">
-                            {['all', 'En préparation', 'Déposé', 'Adjugé', 'Perdu'].map((status) => (
-                                <button
-                                    key={status}
-                                    onClick={() => setActiveStatusFilter(status)}
-                                    className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all ${
-                                        activeStatusFilter === status 
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' 
-                                        : 'text-slate-500 hover:bg-slate-50'
-                                    }`}
-                                >
-                                    {status === 'all' ? 'Tous' : status}
-                                </button>
-                            ))}
+                        <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-2">Gestion des Appels d'Offres</h2>
+                        <div className="flex items-center gap-3">
+                            <span className="flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                <Activity size={12} className="text-indigo-500" /> Workflow CDC
+                            </span>
+                            {isCoordinator && (
+                                <span className="px-3 py-1 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md">
+                                    Coordinatrice (Admin)
+                                </span>
+                            )}
                         </div>
                     </div>
+
+                    {isCoordinator && (
+                        <button 
+                            onClick={() => handleOpenForm()}
+                            className="bg-indigo-600 text-white px-8 py-4 rounded-[2rem] font-black flex items-center gap-3 shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 hover:-translate-y-1 transition-all active:translate-y-0"
+                        >
+                            <Plus size={22} />
+                            Nouveau CDC
+                        </button>
+                    )}
                 </div>
 
-                {/* Tenders Table */}
-                <div className="bg-white border border-slate-200 rounded-[32px] shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-slate-50/50 border-b border-slate-100">
-                                    <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">CDC / Objet</th>
-                                    <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Organisme</th>
-                                    <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Dates Clés</th>
-                                    <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Équipe</th>
-                                    <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Statut</th>
-                                    <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {isLoading ? (
-                                    <tr>
-                                        <td colSpan="6" className="p-20 text-center font-bold text-slate-400">Chargement...</td>
-                                    </tr>
-                                ) : filteredTenders.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="6" className="p-20 text-center font-bold text-slate-400 italic">Aucun dossier trouvé</td>
-                                    </tr>
-                                ) : (
-                                    filteredTenders.map((tender) => (
-                                        <tr key={tender.id} className="hover:bg-slate-50/50 transition-colors group">
-                                            <td className="p-6">
-                                                <div className="font-black text-slate-900 group-hover:text-blue-600 transition-colors">{tender.refCdc || "SANS RÉF"}</div>
-                                                <div className="text-xs text-slate-500 font-bold mt-1 line-clamp-1">{tender.object}</div>
-                                            </td>
-                                            <td className="p-6">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
-                                                        <Building2 size={16} />
-                                                    </div>
-                                                    <span className="text-sm font-bold text-slate-700">{tender.organism}</span>
+                {/* Filters */}
+                <div className="flex flex-col md:flex-row gap-4 mb-8">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                        <input 
+                            type="text" 
+                            placeholder="Référence, Objet, Organisme..."
+                            className="w-full pl-14 pr-6 py-4.5 bg-white border border-slate-200 rounded-[2rem] text-sm font-bold shadow-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex p-1.5 bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-x-auto">
+                        {['all', 'En préparation', 'Déposé', 'Adjugé'].map((status) => (
+                            <button
+                                key={status}
+                                onClick={() => setActiveStatusFilter(status)}
+                                className={`px-6 py-3 rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest transition-all ${
+                                    activeStatusFilter === status 
+                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
+                                    : 'text-slate-500 hover:bg-slate-50'
+                                }`}
+                            >
+                                {status === 'all' ? 'Tout voir' : status}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* List of Tenders */}
+                <div className="grid grid-cols-1 gap-6">
+                    {isLoading ? (
+                        <div className="bg-white p-20 rounded-[3rem] border border-slate-200 text-center animate-pulse">
+                            <Clock size={48} className="mx-auto text-indigo-200 mb-4" />
+                            <p className="font-black text-slate-400 uppercase tracking-widest">Chargement des dossiers...</p>
+                        </div>
+                    ) : filteredTenders.length === 0 ? (
+                        <div className="bg-white p-20 rounded-[3rem] border border-slate-200 text-center">
+                            <FileSearch size={64} className="mx-auto text-slate-200 mb-6" />
+                            <p className="text-xl font-black text-slate-900 mb-2">Aucun appel d'offre trouvé</p>
+                            <p className="text-slate-400 font-bold italic">Ajustez vos filtres ou créez un nouveau dossier</p>
+                        </div>
+                    ) : (
+                        filteredTenders.map(tender => (
+                            <div 
+                                key={tender.id} 
+                                className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm hover:border-indigo-300 transition-all group"
+                            >
+                                <div className="flex flex-col lg:flex-row gap-8">
+                                    {/* Main Info */}
+                                    <div className="flex-1 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatusColor(tender.status)}`}>
+                                                {tender.status}
+                                            </span>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                Créé le {new Date(tender.createdAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-2xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">
+                                                {tender.refCdc || "SANS RÉFÉRENCE"}
+                                            </h3>
+                                            <p className="text-slate-500 font-bold text-sm mt-1 uppercase italic">{tender.organism}</p>
+                                        </div>
+                                        <p className="text-slate-700 font-medium leading-relaxed line-clamp-2">{tender.object}</p>
+                                        
+                                        <div className="flex flex-wrap gap-6 pt-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                                                    <Calendar size={18} />
                                                 </div>
-                                            </td>
-                                            <td className="p-6">
-                                                <div className="flex flex-col gap-1">
-                                                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
-                                                        <Clock size={12} className="text-blue-500" /> Limite: {tender.deadlineDate || '-'}
-                                                    </div>
-                                                    {tender.depositDate && (
-                                                        <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-600">
-                                                            <CheckCircle2 size={12} /> Déposé le: {tender.depositDate}
+                                                <div>
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Date Limite</p>
+                                                    <p className="text-sm font-black text-slate-900">{tender.deadlineDate || 'Non définie'}</p>
+                                                </div>
+                                            </div>
+                                            {tender.files?.cdc && (
+                                                <a 
+                                                    href={tenderService.getFileUrl(tender.id, 'cdc')} 
+                                                    target="_blank" 
+                                                    className="flex items-center gap-3 px-4 py-2 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition-all"
+                                                >
+                                                    <FileText size={18} className="text-indigo-500" />
+                                                    <span className="text-xs font-black text-slate-700 uppercase tracking-tight">Cahier des Charges</span>
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Assignments & Progress */}
+                                    <div className="w-full lg:w-[400px] bg-slate-50 rounded-[2.5rem] p-6 border border-slate-100">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Intervenants & Statut</h4>
+                                            <Users size={16} className="text-slate-400" />
+                                        </div>
+                                        <div className="space-y-3">
+                                            {tender.assignments?.map(a => {
+                                                const isDone = a.status === 'done';
+                                                const isMe = a.email === currentUser?.email;
+                                                return (
+                                                    <div key={a.email} className="flex items-center justify-between bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black ${isDone ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                                                                {a.name[0]}
+                                                            </div>
+                                                            <div>
+                                                                <p className={`text-xs font-black uppercase tracking-tight ${isMe ? 'text-indigo-600' : 'text-slate-900'}`}>
+                                                                    {a.name} {isMe && "(Moi)"}
+                                                                </p>
+                                                                <p className="text-[9px] font-bold text-slate-400 uppercase">{a.role}</p>
+                                                            </div>
                                                         </div>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="p-6 text-sm font-bold text-slate-600">
-                                                {tender.salesPersons || "Non assigné"}
-                                            </td>
-                                            <td className="p-6">
-                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight border ${getStatusColor(tender.status)}`}>
-                                                    {tender.status}
-                                                </span>
-                                            </td>
-                                            <td className="p-6">
-                                                <div className="flex items-center gap-2">
+                                                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isDone ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200' : 'bg-amber-500 text-white shadow-lg shadow-amber-200'}`}>
+                                                            {isDone ? <Check size={14} strokeWidth={4} /> : <Clock size={14} strokeWidth={4} />}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                            {(!tender.assignments || tender.assignments.length === 0) && (
+                                                <p className="text-center text-[10px] font-bold text-slate-400 py-4 italic uppercase">Aucun intervenant assigné</p>
+                                            )}
+                                        </div>
+
+                                        {/* Actions per user role */}
+                                        <div className="mt-6 flex flex-col gap-2">
+                                            {isCoordinator ? (
+                                                <div className="grid grid-cols-2 gap-2">
                                                     <button 
                                                         onClick={() => handleOpenForm(tender)}
-                                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                                                        className="flex items-center justify-center gap-2 py-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase hover:bg-slate-50 transition-all"
                                                     >
-                                                        <Edit3 size={18} />
+                                                        <Edit3 size={14} /> Modifier
                                                     </button>
                                                     <button 
-                                                        onClick={() => handleDelete(tender.id)}
-                                                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                                                        onClick={() => setSelectedTender(tender)}
+                                                        className="flex items-center justify-center gap-2 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
                                                     >
-                                                        <Trash2 size={18} />
+                                                        <LayoutDashboard size={14} /> Gérer
                                                     </button>
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                            ) : tender.assignments?.some(a => a.email === currentUser?.email) && (
+                                                <button 
+                                                    onClick={() => setSelectedTender(tender)}
+                                                    className="w-full flex items-center justify-center gap-3 py-4 bg-indigo-600 text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100"
+                                                >
+                                                    <FileUp size={16} /> Déposer mon offre
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </main>
 
-            {/* Modal Form */}
+            {/* Creation Form Modal (Coordinator) */}
             {showForm && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowForm(false)}></div>
-                    <div className="relative bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowForm(false)}></div>
+                    <div className="relative bg-white w-full max-w-4xl rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                        <div className="p-10 bg-indigo-900 text-white flex justify-between items-center">
                             <div>
-                                <h3 className="text-xl font-black uppercase tracking-tight">
-                                    {editingTender ? "Modifier le Dossier" : "Nouveau CDC / Soumission"}
-                                </h3>
-                                <p className="text-xs text-slate-400 font-bold uppercase mt-1">Saisie des informations de l'appel d'offre</p>
+                                <h3 className="text-2xl font-black uppercase tracking-tight">Nouveau Dossier CDC</h3>
+                                <p className="text-xs text-indigo-300 font-bold uppercase mt-1">Initiation du workflow d'appel d'offre</p>
                             </div>
-                            <button onClick={() => setShowForm(false)} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors">
+                            <button onClick={() => setShowForm(false)} className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-colors border border-white/10">
                                 <X size={24} />
                             </button>
                         </div>
                         
-                        <form onSubmit={handleSubmit} className="p-8 max-h-[70vh] overflow-y-auto bg-slate-50/50">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Référence CDC</label>
-                                    <input 
-                                        required
-                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-blue-400 transition-all"
-                                        value={formData.refCdc}
-                                        onChange={(e) => setFormData({...formData, refCdc: e.target.value})}
-                                    />
+                        <form onSubmit={handleSubmit} className="p-10 max-h-[75vh] overflow-y-auto bg-white">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* Left Column: Info */}
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Référence du CDC</label>
+                                        <input 
+                                            required
+                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-sm outline-none focus:border-indigo-400 focus:bg-white transition-all"
+                                            value={formData.refCdc}
+                                            onChange={(e) => setFormData({...formData, refCdc: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Organisme / Client</label>
+                                        <input 
+                                            required
+                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-sm outline-none focus:border-indigo-400 focus:bg-white transition-all"
+                                            value={formData.organism}
+                                            onChange={(e) => setFormData({...formData, organism: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Objet</label>
+                                        <textarea 
+                                            required
+                                            rows="3"
+                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-sm outline-none focus:border-indigo-400 focus:bg-white transition-all resize-none"
+                                            value={formData.object}
+                                            onChange={(e) => setFormData({...formData, object: e.target.value})}
+                                        ></textarea>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Date d'envoi</label>
+                                            <input 
+                                                type="date"
+                                                className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-sm outline-none focus:border-indigo-400 focus:bg-white transition-all"
+                                                value={formData.dispatchDate}
+                                                onChange={(e) => setFormData({...formData, dispatchDate: e.target.value})}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Date Limite</label>
+                                            <input 
+                                                type="date"
+                                                className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-sm outline-none focus:border-indigo-400 focus:bg-white transition-all"
+                                                value={formData.deadlineDate}
+                                                onChange={(e) => setFormData({...formData, deadlineDate: e.target.value})}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Organisme / Client</label>
-                                    <input 
-                                        required
-                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-blue-400 transition-all"
-                                        value={formData.organism}
-                                        onChange={(e) => setFormData({...formData, organism: e.target.value})}
-                                    />
-                                </div>
-                                <div className="md:col-span-2 space-y-2">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Objet de la soumission</label>
-                                    <textarea 
-                                        required
-                                        rows="2"
-                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-blue-400 transition-all resize-none"
-                                        value={formData.object}
-                                        onChange={(e) => setFormData({...formData, object: e.target.value})}
-                                    ></textarea>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Date d'envoi du CDC</label>
-                                    <input 
-                                        type="date"
-                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-blue-400 transition-all"
-                                        value={formData.dispatchDate}
-                                        onChange={(e) => setFormData({...formData, dispatchDate: e.target.value})}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Date limite de remise</label>
-                                    <input 
-                                        type="date"
-                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-blue-400 transition-all"
-                                        value={formData.deadlineDate}
-                                        onChange={(e) => setFormData({...formData, deadlineDate: e.target.value})}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Commerciaux concernés</label>
-                                    <input 
-                                        placeholder="Ex: Ahmed, Sarah, Karim"
-                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-blue-400 transition-all"
-                                        value={formData.salesPersons}
-                                        onChange={(e) => setFormData({...formData, salesPersons: e.target.value})}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Statut du Dossier</label>
-                                    <select 
-                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-blue-400 transition-all"
-                                        value={formData.status}
-                                        onChange={(e) => setFormData({...formData, status: e.target.value})}
-                                    >
-                                        <option value="En préparation">En préparation</option>
-                                        <option value="Déposé">Déposé</option>
-                                        <option value="Adjugé">Adjugé (Gagné)</option>
-                                        <option value="Perdu">Perdu</option>
-                                        <option value="Annulé">Annulé</option>
-                                    </select>
-                                </div>
-                                <div className="md:col-span-2 space-y-2">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Commentaires / Suivi</label>
-                                    <textarea 
-                                        rows="3"
-                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-blue-400 transition-all resize-none"
-                                        value={formData.comments}
-                                        onChange={(e) => setFormData({...formData, comments: e.target.value})}
-                                    ></textarea>
+
+                                {/* Right Column: Assignments */}
+                                <div className="space-y-6">
+                                    <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-200">
+                                        <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                            <Users size={14} /> Sélection des intervenants
+                                        </h4>
+                                        <div className="space-y-2 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                                            {PERSONNEL.filter(p => p.email !== 'mouhoub.imene@esclab-algerie.com').map(person => {
+                                                const isSelected = formData.assignments.some(a => a.email === person.email);
+                                                return (
+                                                    <button
+                                                        key={person.email}
+                                                        type="button"
+                                                        onClick={() => toggleAssignment(person)}
+                                                        className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
+                                                            isSelected 
+                                                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100' 
+                                                            : 'bg-white border-slate-100 text-slate-600 hover:border-indigo-200'
+                                                        }`}
+                                                    >
+                                                        <div className="text-left">
+                                                            <p className="text-xs font-black uppercase tracking-tight">{person.name}</p>
+                                                            <p className={`text-[9px] font-bold uppercase ${isSelected ? 'text-indigo-200' : 'text-slate-400'}`}>
+                                                                {person.role}
+                                                            </p>
+                                                        </div>
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 ${isSelected ? 'bg-white text-indigo-600 border-white' : 'border-slate-200'}`}>
+                                                            {isSelected && <Check size={12} strokeWidth={4} />}
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div className="mt-10 flex gap-4">
+                            <div className="mt-12 flex gap-6">
                                 <button 
                                     type="button"
                                     onClick={() => setShowForm(false)}
-                                    className="flex-1 px-8 py-4 bg-white border border-slate-200 rounded-2xl font-black text-slate-600 hover:bg-slate-50 transition-all"
+                                    className="flex-1 px-8 py-5 bg-slate-100 text-slate-500 rounded-[2rem] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
                                 >
                                     Annuler
                                 </button>
                                 <button 
                                     type="submit"
-                                    className="flex-[2] px-8 py-4 bg-blue-600 text-white rounded-2xl font-black shadow-xl shadow-blue-600/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all active:translate-y-0"
+                                    className="flex-[2] px-8 py-5 bg-indigo-600 text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 transition-all"
                                 >
-                                    {editingTender ? "Enregistrer les modifications" : "Créer le dossier"}
+                                    {formData.id ? "Enregistrer" : "Lancer le Workflow"}
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Workflow Management / Offer Submission Modal */}
+            {selectedTender && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-xl" onClick={() => setSelectedTender(null)}></div>
+                    <div className="relative bg-slate-50 w-full max-w-5xl rounded-[4rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 duration-500 flex flex-col md:flex-row h-[85vh]">
+                        
+                        {/* Sidebar: Status & Info */}
+                        <div className="w-full md:w-[320px] bg-indigo-900 p-10 text-white space-y-10 shrink-0">
+                            <button onClick={() => setSelectedTender(null)} className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/10 hover:bg-white/20 transition-colors mb-4">
+                                <X size={24} />
+                            </button>
+                            <div>
+                                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] block mb-2">Dossier en cours</span>
+                                <h3 className="text-2xl font-black tracking-tight leading-tight">{selectedTender.refCdc}</h3>
+                                <p className="text-xs font-bold text-indigo-300 mt-2 line-clamp-3">{selectedTender.object}</p>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="p-5 bg-white/5 rounded-3xl border border-white/10">
+                                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">Statut Global</p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-3 h-3 bg-indigo-500 rounded-full animate-pulse shadow-lg shadow-indigo-500/50"></div>
+                                        <span className="text-sm font-black uppercase">{selectedTender.status}</span>
+                                    </div>
+                                </div>
+                                <div className="p-5 bg-white/5 rounded-3xl border border-white/10">
+                                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">Intervenants</p>
+                                    <div className="flex -space-x-2">
+                                        {selectedTender.assignments?.map(a => (
+                                            <div key={a.email} title={a.name} className="w-8 h-8 rounded-full bg-indigo-700 border-2 border-indigo-900 flex items-center justify-center text-[10px] font-black uppercase">
+                                                {a.name[0]}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Content Area */}
+                        <div className="flex-1 p-12 overflow-y-auto space-y-10 scroll-smooth">
+                            {/* Section 1: Documents (Imene) */}
+                            {isCoordinator && (
+                                <div className="space-y-6">
+                                    <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
+                                        <Paperclip className="text-indigo-600" /> Documents Sources
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="p-8 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 hover:border-indigo-400 transition-all group flex flex-col items-center text-center">
+                                            <FileUp size={32} className="text-slate-300 group-hover:text-indigo-500 transition-colors mb-4" />
+                                            <p className="text-xs font-black text-slate-900 uppercase tracking-widest mb-2">Cahier des Charges (CDC)</p>
+                                            <p className="text-[10px] text-slate-400 font-bold mb-4 uppercase">Upload du fichier principal PDF</p>
+                                            <input 
+                                                type="file" 
+                                                id="upload-cdc" 
+                                                className="hidden" 
+                                                onChange={(e) => handleFileUpload(e, selectedTender.id, 'cdc')}
+                                            />
+                                            <label 
+                                                htmlFor="upload-cdc" 
+                                                className="px-6 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                                            >
+                                                {selectedTender.files?.cdc ? "Remplacer le CDC" : "Choisir un fichier"}
+                                            </label>
+                                            {selectedTender.files?.cdc && (
+                                                <div className="mt-4 flex items-center gap-2">
+                                                    <CheckCircle2 size={14} className="text-emerald-500" />
+                                                    <span className="text-[10px] font-black text-slate-600 truncate max-w-[150px]">{selectedTender.files.cdc.name}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <div className="p-8 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 hover:border-indigo-400 transition-all group flex flex-col items-center text-center">
+                                            <Share2 size={32} className="text-slate-300 group-hover:text-indigo-500 transition-colors mb-4" />
+                                            <p className="text-xs font-black text-slate-900 uppercase tracking-widest mb-2">Offre Globale Finalisée</p>
+                                            <p className="text-[10px] text-slate-400 font-bold mb-4 uppercase">Compilation technique & financière</p>
+                                            <input 
+                                                type="file" 
+                                                id="upload-global" 
+                                                className="hidden" 
+                                                onChange={(e) => handleFileUpload(e, selectedTender.id, 'global_offer')}
+                                            />
+                                            <label 
+                                                htmlFor="upload-global" 
+                                                className="px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-indigo-600 transition-all shadow-lg"
+                                            >
+                                                Sauvegarder l'offre finale
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Section 2: Worker Contribution */}
+                            {!isCoordinator && selectedTender.assignments?.some(a => a.email === currentUser.email) && (
+                                <div className="space-y-6 animate-in slide-in-from-right-10">
+                                    <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
+                                        <Send className="text-indigo-600" /> Ma Contribution au Dossier
+                                    </h4>
+                                    <div className="bg-indigo-600 p-10 rounded-[3rem] text-white shadow-2xl shadow-indigo-200 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 p-10 opacity-10">
+                                            <Briefcase size={120} />
+                                        </div>
+                                        <div className="relative z-10 space-y-6">
+                                            <div>
+                                                <p className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Consignes</p>
+                                                <p className="text-lg font-bold leading-relaxed">Veuillez uploader votre proposition technique et financière compilée en un seul document PDF pour traitement par la coordinatrice.</p>
+                                            </div>
+                                            
+                                            <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
+                                                <input 
+                                                    type="file" 
+                                                    id="worker-upload" 
+                                                    className="hidden" 
+                                                    onChange={(e) => handleFileUpload(e, selectedTender.id, `offer_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`)}
+                                                />
+                                                <label 
+                                                    htmlFor="worker-upload" 
+                                                    className="flex items-center gap-3 px-8 py-4 bg-white text-indigo-600 rounded-2xl font-black text-xs uppercase tracking-widest cursor-pointer hover:scale-105 transition-all shadow-xl"
+                                                >
+                                                    <FileUp size={18} /> Sélectionner mon PDF
+                                                </label>
+                                                {selectedTender.assignments.find(a => a.email === currentUser.email)?.status === 'done' && (
+                                                    <div className="flex items-center gap-2 bg-emerald-500/20 px-4 py-2 rounded-xl border border-emerald-500/30">
+                                                        <Check size={16} strokeWidth={4} />
+                                                        <span className="text-[10px] font-black uppercase">Offre Déposée</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Section 3: Overview Table (Imene) */}
+                            {isCoordinator && (
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Suivi des Contributions</h4>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase">
+                                            {selectedTender.assignments?.filter(a => a.status === 'done').length} / {selectedTender.assignments?.length} Terminés
+                                        </span>
+                                    </div>
+                                    <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
+                                        <table className="w-full text-left">
+                                            <thead className="bg-slate-50">
+                                                <tr>
+                                                    <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Intervenant</th>
+                                                    <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Rôle</th>
+                                                    <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Statut</th>
+                                                    <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Document</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {selectedTender.assignments?.map(a => {
+                                                    const offerKey = `offer_${a.email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                                                    const hasOffer = selectedTender.files?.[offerKey];
+                                                    return (
+                                                        <tr key={a.email} className="hover:bg-slate-50/50 transition-colors">
+                                                            <td className="p-6">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400">
+                                                                        {a.name[0]}
+                                                                    </div>
+                                                                    <span className="text-xs font-black text-slate-900 uppercase">{a.name}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="p-6">
+                                                                <span className="text-[10px] font-bold text-slate-500 uppercase italic">{a.role}</span>
+                                                            </td>
+                                                            <td className="p-6">
+                                                                {a.status === 'done' ? (
+                                                                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-tighter">Complété</span>
+                                                                ) : (
+                                                                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-[9px] font-black uppercase tracking-tighter">En attente</span>
+                                                                )}
+                                                            </td>
+                                                            <td className="p-6">
+                                                                {hasOffer ? (
+                                                                    <a 
+                                                                        href={tenderService.getFileUrl(selectedTender.id, offerKey)} 
+                                                                        target="_blank" 
+                                                                        className="flex items-center gap-2 text-indigo-600 hover:underline text-[10px] font-black uppercase"
+                                                                    >
+                                                                        <Eye size={14} /> Voir Offre
+                                                                    </a>
+                                                                ) : (
+                                                                    <span className="text-[9px] text-slate-300 font-bold uppercase">Aucun fichier</span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Section 4: Finalization (Imene) */}
+                            {isCoordinator && selectedTender.files?.global_offer && (
+                                <div className="p-10 bg-slate-900 rounded-[3rem] text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-indigo-100">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <Lock size={16} className="text-indigo-400" />
+                                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Offre Globale Disponible</p>
+                                        </div>
+                                        <h4 className="text-2xl font-black tracking-tight mb-2">Prêt pour le partage ?</h4>
+                                        <p className="text-sm font-bold text-slate-400">Le dossier est complet. Vous pouvez maintenant le diffuser aux cadres des marchés.</p>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <a 
+                                            href={tenderService.getFileUrl(selectedTender.id, 'global_offer')} 
+                                            target="_blank"
+                                            className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all shadow-xl"
+                                        >
+                                            Consulter l'offre finalisée
+                                        </a>
+                                        <button 
+                                            onClick={() => alert("Fonction de partage activée vers les cadres sélectionnés.")}
+                                            className="w-14 h-14 bg-indigo-600 text-white flex items-center justify-center rounded-2xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/20"
+                                        >
+                                            <Share2 size={22} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
@@ -410,3 +764,4 @@ const Tenders = () => {
 };
 
 export default Tenders;
+
