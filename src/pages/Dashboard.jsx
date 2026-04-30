@@ -4,6 +4,7 @@ import { orderService } from '../services/orderService';
 import { useAuth } from '../context/AuthContext';
 import { notificationService } from '../services/notificationService';
 import { messageService } from '../services/messageService';
+import { logService } from '../services/logService';
 import {
     FileText,
     FileCheck,
@@ -32,7 +33,9 @@ import {
     Plus,
     Trash2,
     MessageSquare,
-    Send
+    Send,
+    Activity,
+    ClipboardList
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -117,6 +120,8 @@ const Dashboard = () => {
     const [newMessageText, setNewMessageText] = useState("");
     const [messageRecipient, setMessageRecipient] = useState("all");
     const [allUsers, setAllUsers] = useState([]);
+    const [logs, setLogs] = useState([]);
+    const [showLogs, setShowLogs] = useState(false);
 
     useEffect(() => {
         try {
@@ -165,6 +170,11 @@ const Dashboard = () => {
         }
     };
 
+    const loadLogs = async () => {
+        const list = await logService.getLogs();
+        setLogs(Array.isArray(list) ? list : []);
+    };
+
     const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!newMessageText.trim()) return;
@@ -185,14 +195,17 @@ const Dashboard = () => {
         
         loadOrders();
         loadMessages();
+        loadLogs();
 
-        // Intervalle de rafraîchissement des données (ODS et Messages)
+        // Intervalle de rafraîchissement des données (ODS, Messages, Logs)
         const orderInterval = setInterval(loadOrders, 30000);
         const messageInterval = setInterval(loadMessages, 10000);
+        const logInterval = setInterval(loadLogs, 20000);
 
         return () => {
             clearInterval(orderInterval);
             clearInterval(messageInterval);
+            clearInterval(logInterval);
         };
     }, [currentUser?.email]);
 
@@ -567,6 +580,14 @@ const Dashboard = () => {
                             ) : (
                                 <Bell size={24} />
                             )}
+                        </button>
+
+                        <button
+                            onClick={() => setShowLogs(!showLogs)}
+                            className="w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm relative group"
+                            title="Journal d'activités"
+                        >
+                            <Activity size={24} />
                         </button>
 
                         {showMessages && (
@@ -1267,6 +1288,75 @@ const Dashboard = () => {
                         </div>
                         <div className="p-8 bg-slate-50 border-t border-slate-100 italic text-xs text-slate-400 font-medium leading-relaxed">
                             Note : Ces sauvegardes sont stockées localement sur votre ordinateur. Choisissez la version datant d'avant 14h00 (probablement v38 ou v39) pour récupérer votre saisie perdue.
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Journal d'Événements */}
+            {showLogs && (
+                <div className="fixed top-0 right-0 h-screen w-[500px] max-w-full flex flex-col bg-white shadow-2xl border-l border-slate-100 z-[70] animate-in slide-in-from-right duration-300">
+                    <div className="p-6 bg-slate-900 text-white flex justify-between items-center shrink-0">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400">
+                                <ClipboardList size={24} />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-black uppercase tracking-widest">Journal d'Événements</h3>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Traçabilité des interventions</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => setShowLogs(false)}
+                            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
+                        <div className="space-y-4">
+                            {logs.length === 0 ? (
+                                <div className="text-center py-20 text-slate-400">
+                                    <Activity className="mx-auto mb-4 opacity-10" size={64} />
+                                    <p className="font-bold">Aucune activité enregistrée</p>
+                                </div>
+                            ) : (
+                                logs.map((log) => (
+                                    <div key={log.id} className="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all group">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                                                {log.action}
+                                            </span>
+                                            <span className="text-[9px] text-slate-400 font-bold">
+                                                {new Date(log.timestamp).toLocaleString('fr-FR', {
+                                                    day: '2-digit',
+                                                    month: '2-digit',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm font-bold text-slate-800 mb-2">{log.details}</p>
+                                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-50">
+                                            <div className="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-[10px] font-black text-slate-500 uppercase">
+                                                {(log.userName || "??").substring(0, 2)}
+                                            </div>
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase">{log.userName}</span>
+                                            {log.orderId && (
+                                                <button 
+                                                    onClick={() => {
+                                                        setShowLogs(false);
+                                                        navigate(`/order/${log.orderId}`);
+                                                    }}
+                                                    className="ml-auto text-[10px] text-blue-600 font-black uppercase hover:underline"
+                                                >
+                                                    Voir Dossier
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>

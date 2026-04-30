@@ -1,5 +1,6 @@
 import { INITIAL_ORDERS } from './initialData';
 import { notificationService } from './notificationService';
+import { logService } from './logService';
 
 const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
 const API_URL = baseUrl + '/api.php';
@@ -212,15 +213,30 @@ export const orderService = {
         };
         orders.unshift(newOrder);
         await orderService._saveAllToShared(orders);
+        
+        await logService.saveLog({
+            userName: orderData.createdBy || "Inconnu",
+            action: "Création ODS",
+            details: `Nouvel ODS créé pour le client ${newOrder.client} (Réf: ${newOrder.refOds || '-'})`,
+            orderId: newOrder.id
+        });
+
         return newOrder;
     },
 
-    updateOrder: async (id, updates) => {
+    updateOrder: async (id, updates, userName = "Inconnu") => {
         const orders = await orderService.getAllOrders();
         const index = orders.findIndex(o => o.id === id);
         if (index === -1) return null;
-        orders[index] = { ...orders[index], ...updates };
-        await orderService._saveAllToShared(orders);
+        const updatedOrders = orders.map(o => o.id === id ? { ...o, ...updates } : o);
+        await orderService._saveAllToShared(updatedOrders);
+        
+        await logService.saveLog({
+            userName: userName,
+            action: "Mise à jour ODS",
+            details: `Mise à jour de l'ODS de ${orders[index].client || id}`,
+            orderId: id
+        });
 
         // Notifications
         if (updates.authorization === 'Oui') {
@@ -233,14 +249,22 @@ export const orderService = {
             notificationService.addNotification(`LIVRAISON CONFIRMÉE : ${orders[index].client} est livré !`, 'success', ['all'], id);
         }
 
-        return orders[index];
+        return updatedOrders[index];
     },
 
-    deleteOrder: async (id) => {
+    deleteOrder: async (id, userName = "Inconnu") => {
         const orders = await orderService.getAllOrders();
-        const filtered = orders.filter(o => o.id !== id);
-        if (filtered.length === orders.length) return false;
-        await orderService._saveAllToShared(filtered);
+        const deletedOrder = orders.find(o => o.id === id);
+        const finalOrders = orders.filter(o => o.id !== id);
+        if (finalOrders.length === orders.length) return false;
+        await orderService._saveAllToShared(finalOrders);
+        
+        await logService.saveLog({
+            userName: userName,
+            action: "Suppression ODS",
+            details: `Suppression définitive de l'ODS de ${deletedOrder?.client || id}`,
+            orderId: id
+        });
 
         const deletedIds = await orderService._getDeletedIds();
         if (!deletedIds.includes(id)) {
@@ -265,7 +289,7 @@ export const orderService = {
         }
     },
 
-    _uploadToShared: async (storageKey, orderId, fileDataOrBlob, fileName) => {
+    _uploadToShared: async (storageKey, orderId, fileDataOrBlob, fileName, userName = "Inconnu") => {
         try {
             let blob = fileDataOrBlob;
 
@@ -303,6 +327,13 @@ export const orderService = {
                 }
             }
 
+            await logService.saveLog({
+                userName: userName,
+                action: "Upload Document",
+                details: `Fichier ${fileName} ajouté (${storageKey})`,
+                orderId: orderId
+            });
+
             return true;
         } catch (e) {
             console.error("Shared Upload Failed:", e);
@@ -318,7 +349,7 @@ export const orderService = {
     saveBlFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_bl', orderId, fileData, fileName),
     savePvProvFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_pv_provisoire', orderId, fileData, fileName),
     savePvDefFile: async (orderId, fileData, fileName) => orderService._uploadToShared('storage_pv_definitive', orderId, fileData, fileName),
-    deleteFile: async (orderId, storageKey) => {
+    deleteFile: async (orderId, storageKey, userName = "Inconnu") => {
         // Remove file entry from local storage for the given storageKey
         const dataStr = localStorage.getItem(storageKey);
         if (!dataStr) return false;
@@ -331,6 +362,14 @@ export const orderService = {
                 method: 'POST'
             });
         } catch (e) { /* ignore server errors */ }
+
+        await logService.saveLog({
+            userName: userName,
+            action: "Suppression Document",
+            details: `Fichier supprimé (${storageKey})`,
+            orderId: orderId
+        });
+
         return true;
     },
 

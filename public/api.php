@@ -7,6 +7,7 @@ header("Content-Type: application/json");
 // Dossiers de stockage
 $DATA_FILE = 'data_ods_shared.json';
 $MESSAGES_FILE = 'data_messages_shared.json';
+$LOGS_FILE = 'data_logs_shared.json';
 $UPLOAD_DIR = 'uploads_ods/';
 
 // Tentative de création du dossier avec des permissions robustes
@@ -30,6 +31,9 @@ if (!file_exists($DATA_FILE)) {
 }
 if (!file_exists($MESSAGES_FILE)) {
     file_put_contents($MESSAGES_FILE, json_encode([]));
+}
+if (!file_exists($LOGS_FILE)) {
+    file_put_contents($LOGS_FILE, json_encode([]));
 }
 
 $action = $_GET['action'] ?? '';
@@ -95,6 +99,39 @@ if ($action === 'save_messages' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode($input, true);
         if ($data !== null) {
             file_put_contents($MESSAGES_FILE, json_encode($data, JSON_PRETTY_PRINT));
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Invalid JSON']);
+        }
+    } else {
+        echo json_encode(['success' => false, 'message' => 'No data received']);
+    }
+    exit;
+}
+
+if ($action === 'get_logs') {
+    $data = @file_get_contents($LOGS_FILE);
+    echo $data ? $data : json_encode([]);
+    exit;
+}
+
+if ($action === 'save_log' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input = file_get_contents('php://input');
+    if ($input) {
+        $newEvent = json_decode($input, true);
+        if ($newEvent !== null) {
+            $logs = json_decode(file_get_contents($LOGS_FILE), true);
+            if (!is_array($logs)) $logs = [];
+            
+            // Add unique ID and timestamp if not provided
+            if (!isset($newEvent['id'])) $newEvent['id'] = time() . '_' . uniqid();
+            if (!isset($newEvent['timestamp'])) $newEvent['timestamp'] = date('c');
+            
+            array_unshift($logs, $newEvent);
+            // Keep last 500 events
+            $logs = array_slice($logs, 0, 500);
+            
+            file_put_contents($LOGS_FILE, json_encode($logs, JSON_PRETTY_PRINT));
             echo json_encode(['success' => true]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Invalid JSON']);
