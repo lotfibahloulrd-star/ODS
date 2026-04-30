@@ -570,9 +570,7 @@ const Dashboard = () => {
                         </button>
 
                         {showMessages && (
-                            <>
-                                <div className="fixed inset-0 z-[60] bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowMessages(false)}></div>
-                                <div className="fixed top-0 right-0 h-screen w-[450px] max-w-full flex flex-col bg-white shadow-2xl border-l border-slate-100 z-[70] animate-in slide-in-from-right duration-300">
+                            <div className="fixed top-0 right-0 h-screen w-[450px] max-w-full flex flex-col bg-white shadow-2xl border-l border-slate-100 z-[70] animate-in slide-in-from-right duration-300">
                                     <div className="p-6 bg-slate-900 text-white flex justify-between items-center shrink-0">
                                         <div>
                                             <h3 className="text-sm font-black uppercase tracking-widest">Messagerie Interne</h3>
@@ -660,7 +658,6 @@ const Dashboard = () => {
                                         </div>
                                     </form>
                                 </div>
-                            </>
                         )}
                     </div>
 
