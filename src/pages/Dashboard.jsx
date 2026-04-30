@@ -35,7 +35,9 @@ import {
     MessageSquare,
     Send,
     Activity,
-    ClipboardList
+    ClipboardList,
+    Users,
+    Check
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -122,6 +124,9 @@ const Dashboard = () => {
     const [allUsers, setAllUsers] = useState([]);
     const [logs, setLogs] = useState([]);
     const [showLogs, setShowLogs] = useState(false);
+    const [activeConversation, setActiveConversation] = useState(null); // ID of active conversation
+    const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+    const [selectedGroupParticipants, setSelectedGroupParticipants] = useState([]);
 
     useEffect(() => {
         try {
@@ -157,11 +162,17 @@ const Dashboard = () => {
 
     const loadMessages = async () => {
         try {
-            if (!currentUser || !currentUser.email) return;
             const list = await messageService.getMessages();
             const safeList = Array.isArray(list) ? list : [];
+            // Filter messages where I am a participant or broadcast
             const myMessages = safeList.filter(m => 
-                m && (m.to === 'all' || m.to === currentUser.email || m.senderEmail === currentUser.email)
+                m && (
+                m.to === 'all' || 
+                m.senderEmail === currentUser?.email || 
+                (Array.isArray(m.to) && m.to.includes(currentUser?.email)) ||
+                (typeof m.to === 'string' && m.to === currentUser?.email) ||
+                (m.participants && m.participants.includes(currentUser?.email))
+                )
             );
             setMessages(myMessages);
         } catch (error) {
@@ -176,19 +187,102 @@ const Dashboard = () => {
     };
 
     const handleSendMessage = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         if (!newMessageText.trim()) return;
-        
+
+        // For group discussions or specific one-to-one
+        let recipients = [];
+        if (activeConversation === 'all') {
+            recipients = 'all';
+        } else if (isCreatingGroup) {
+            recipients = selectedGroupParticipants;
+        } else if (activeConversation) {
+            // Existing conversation: recipients are all participants except me
+            recipients = activeConversation.split(',').filter(email => email !== currentUser?.email);
+        } else {
+            // Default to selection
+            recipients = messageRecipient === 'all' ? 'all' : [messageRecipient];
+        }
+
+        if (recipients !== 'all' && recipients.length === 0) {
+            alert("Veuillez sélectionner au moins un destinataire.");
+            return;
+        }
+
         await messageService.saveMessage({
-            senderEmail: currentUser.email,
-            senderName: `${currentUser.firstName} ${currentUser.lastName}`,
-            to: messageRecipient,
-            content: newMessageText.trim()
+            senderEmail: currentUser?.email,
+            senderName: `${currentUser?.firstName} ${currentUser?.lastName}`,
+            to: recipients,
+            content: newMessageText.trim(),
+            participants: recipients === 'all' ? ['all'] : [...new Set([...recipients, currentUser?.email])].sort()
         });
-        
+
         setNewMessageText("");
+        setIsCreatingGroup(false);
+        setSelectedGroupParticipants([]);
         loadMessages();
     };
+
+    // Helper to group messages into conversations
+    const conversations = useMemo(() => {
+        if (!Array.isArray(messages)) return [];
+        
+        const groups = {};
+        
+        messages.forEach(m => {
+            if (!m) return;
+            let convId = "";
+            let convName = "";
+            
+            if (m.to === 'all' || (m.participants && m.participants.includes('all'))) {
+                convId = 'all';
+                convName = 'Général (Tous)';
+            } else {
+                const participants = m.participants || [m.senderEmail, ...(Array.isArray(m.to) ? m.to : [m.to])];
+                const sortedParticipants = [...new Set(participants)].sort();
+                convId = sortedParticipants.join(',');
+                
+                // Get names for the conversation
+                const otherParticipants = sortedParticipants.filter(email => email !== currentUser?.email);
+                if (otherParticipants.length === 1) {
+                    const user = allUsers.find(u => u.email === otherParticipants[0]);
+                    convName = user ? `${user.firstName} ${user.lastName}` : otherParticipants[0];
+                } else {
+                    convName = `Groupe (${otherParticipants.length + (sortedParticipants.includes(currentUser?.email) ? 1 : 0)})`;
+                }
+            }
+            
+            if (!groups[convId]) {
+                groups[convId] = {
+                    id: convId,
+                    name: convName,
+                    messages: [],
+                    lastMessage: null,
+                    unreadCount: 0,
+                    participants: convId === 'all' ? ['all'] : convId.split(',')
+                };
+            }
+            
+            groups[convId].messages.push(m);
+            if (!groups[convId].lastMessage || new Date(m.timestamp) > new Date(groups[convId].lastMessage.timestamp)) {
+                groups[convId].lastMessage = m;
+            }
+            
+            if (!m.readBy?.includes(currentUser?.email)) {
+                groups[convId].unreadCount++;
+            }
+        });
+        
+        return Object.values(groups).sort((a, b) => 
+            new Date(b.lastMessage?.timestamp || 0) - new Date(a.lastMessage?.timestamp || 0)
+        );
+    }, [messages, currentUser, allUsers]);
+
+    useEffect(() => {
+        if (showMessages && !activeConversation && conversations.length > 0) {
+            setActiveConversation(conversations[0].id);
+        }
+    }, [showMessages, conversations]);
 
     useEffect(() => {
         if (!currentUser) return;
@@ -591,94 +685,266 @@ const Dashboard = () => {
                         </button>
 
                         {showMessages && (
-                            <div className="fixed top-0 right-0 h-screen w-[450px] max-w-full flex flex-col bg-white shadow-2xl border-l border-slate-100 z-[70] animate-in slide-in-from-right duration-300">
-                                    <div className="p-6 bg-slate-900 text-white flex justify-between items-center shrink-0">
-                                        <div>
-                                            <h3 className="text-sm font-black uppercase tracking-widest">Messagerie Interne</h3>
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Discussions de l'équipe</p>
+                            <div className="fixed top-0 right-0 h-screen w-[850px] max-w-full flex flex-col bg-white shadow-2xl border-l border-slate-100 z-[70] animate-in slide-in-from-right duration-300">
+                                <div className="p-6 bg-slate-900 text-white flex justify-between items-center shrink-0">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                                            <MessageSquare size={20} />
                                         </div>
-                                        <div className="flex items-center gap-4">
+                                        <div>
+                                            <h3 className="text-sm font-black uppercase tracking-widest">Messagerie Collaborative</h3>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Échanges sécurisés en temps réel</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            onClick={async () => {
+                                                if (currentUser?.email) {
+                                                    await messageService.markAllAsRead(currentUser.email);
+                                                    loadMessages();
+                                                }
+                                            }}
+                                            className="text-[10px] font-black uppercase tracking-widest hover:text-blue-400 transition-colors px-3 py-1.5 border border-white/10 rounded-lg bg-white/5"
+                                        >
+                                            Tout lire
+                                        </button>
+                                        <button
+                                            onClick={() => setShowMessages(false)}
+                                            className="w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-colors border border-white/10"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 flex overflow-hidden">
+                                    {/* Sidebar: Conversation List */}
+                                    <div className="w-80 border-r border-slate-100 flex flex-col bg-slate-50/50">
+                                        <div className="p-4 border-b border-slate-100 space-y-3">
                                             <button
-                                                onClick={async () => {
-                                                    if (currentUser?.email) {
-                                                        await messageService.markAllAsRead(currentUser.email);
-                                                        loadMessages();
-                                                    }
+                                                onClick={() => {
+                                                    setIsCreatingGroup(true);
+                                                    setActiveConversation(null);
+                                                    setSelectedGroupParticipants([]);
                                                 }}
-                                                className="text-[10px] font-black uppercase tracking-tighter hover:text-blue-400 transition-colors"
+                                                className="w-full py-3 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md shadow-blue-100 flex items-center justify-center gap-2"
                                             >
-                                                Tout lire
+                                                <Plus size={14} /> Nouvelle Discussion
                                             </button>
-                                            <button 
-                                                onClick={() => setShowMessages(false)}
-                                                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
-                                            >
-                                                ✕
-                                            </button>
+                                        </div>
+                                        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                                            {conversations.length === 0 && !isCreatingGroup && (
+                                                <div className="p-8 text-center text-slate-400 space-y-2">
+                                                    <div className="w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center mx-auto opacity-50">
+                                                        <MessageSquare size={20} />
+                                                    </div>
+                                                    <p className="text-[10px] font-bold uppercase">Aucune discussion</p>
+                                                </div>
+                                            )}
+                                            {conversations.map(conv => (
+                                                <button
+                                                    key={conv.id}
+                                                    onClick={() => {
+                                                        setActiveConversation(conv.id);
+                                                        setIsCreatingGroup(false);
+                                                    }}
+                                                    className={`w-full p-4 rounded-2xl flex items-center gap-4 transition-all group ${activeConversation === conv.id ? 'bg-white shadow-lg shadow-slate-200/50 ring-1 ring-slate-100' : 'hover:bg-white/60'}`}
+                                                >
+                                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${activeConversation === conv.id ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500 group-hover:bg-white'}`}>
+                                                        {conv.id === 'all' ? <Users size={20} /> : <User size={20} />}
+                                                    </div>
+                                                    <div className="text-left overflow-hidden">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <p className={`text-[11px] font-black uppercase truncate ${activeConversation === conv.id ? 'text-slate-900' : 'text-slate-500'}`}>
+                                                                {conv.name}
+                                                            </p>
+                                                            {conv.unreadCount > 0 && (
+                                                                <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                                                                    {conv.unreadCount}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                                                            {conv.lastMessage?.content || "Aucun message"}
+                                                        </p>
+                                                    </div>
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
 
-                                    
-                                    <div className="flex-1 overflow-y-auto scrollbar-hide p-4 bg-slate-50 flex flex-col gap-3">
-                                        {(!Array.isArray(messages) || messages.length === 0) ? (
-                                            <div className="m-auto text-center text-slate-400">
-                                                <MessageSquare className="mx-auto mb-4 opacity-20" size={48} />
-                                                <p className="font-bold">Aucun message</p>
-                                            </div>
-                                        ) : (
-                                            messages.map(m => {
-                                                if (!m) return null;
-                                                const isMe = m.senderEmail === currentUser?.email;
-                                                return (
-                                                    <div key={m.id} className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
-                                                        <div className="flex items-end gap-1 mb-1">
-                                                            <span className="text-[9px] font-bold text-slate-400 uppercase">{isMe ? 'Moi' : m.senderName}</span>
-                                                            {m.to === 'all' && !isMe && <span className="text-[8px] bg-slate-200 text-slate-500 px-1 rounded">À Tous</span>}
-                                                            {m.to !== 'all' && !isMe && <span className="text-[8px] bg-blue-100 text-blue-600 px-1 rounded">Privé</span>}
+                                    {/* Chat Area */}
+                                    <div className="flex-1 flex flex-col bg-white">
+                                        {isCreatingGroup ? (
+                                            <div className="flex-1 flex flex-col p-10 space-y-8 animate-fade-in">
+                                                <div className="space-y-2">
+                                                    <h4 className="text-lg font-black uppercase tracking-widest text-slate-900">Nouvelle Discussion</h4>
+                                                    <p className="text-xs text-slate-400 font-bold uppercase">Sélectionnez vos interlocuteurs pour démarrer un échange</p>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4 max-h-[400px] overflow-y-auto p-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            setActiveConversation('all');
+                                                            setIsCreatingGroup(false);
+                                                        }}
+                                                        className="p-4 border-2 border-slate-100 rounded-2xl text-left hover:border-blue-400 hover:bg-blue-50 transition-all group"
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                                                <Users size={18} />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs font-black uppercase tracking-tight">Général (Tous)</p>
+                                                                <p className="text-[9px] text-slate-400 font-bold uppercase">Tout le personnel</p>
+                                                            </div>
                                                         </div>
-                                                        <div className={`p-3 rounded-2xl text-[13px] leading-relaxed shadow-sm ${isMe ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'}`}>
-                                                            {m.content}
+                                                    </button>
+                                                    {allUsers.filter(u => u.email !== currentUser?.email).map(u => (
+                                                        <button
+                                                            key={u.email}
+                                                            onClick={() => {
+                                                                const isSelected = selectedGroupParticipants.includes(u.email);
+                                                                if (isSelected) {
+                                                                    setSelectedGroupParticipants(prev => prev.filter(e => e !== u.email));
+                                                                } else {
+                                                                    setSelectedGroupParticipants(prev => [...prev, u.email]);
+                                                                }
+                                                            }}
+                                                            className={`p-4 border-2 rounded-2xl text-left transition-all relative ${selectedGroupParticipants.includes(u.email) ? 'border-blue-500 bg-blue-50' : 'border-slate-100 hover:border-blue-200'}`}
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedGroupParticipants.includes(u.email) ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                                                    <User size={18} />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-xs font-black uppercase tracking-tight">{u.firstName} {u.lastName}</p>
+                                                                    <p className="text-[9px] text-slate-400 font-bold uppercase">{u.role || 'Utilisateur'}</p>
+                                                                </div>
+                                                            </div>
+                                                            {selectedGroupParticipants.includes(u.email) && (
+                                                                <div className="absolute top-2 right-2 w-4 h-4 bg-blue-600 text-white rounded-full flex items-center justify-center">
+                                                                    <Check size={10} strokeWidth={4} />
+                                                                </div>
+                                                            )}
+                                                        </button>
+                                                    ))}
+                                                </div>
+
+                                                {selectedGroupParticipants.length > 0 && (
+                                                    <div className="mt-auto space-y-4">
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {selectedGroupParticipants.map(email => {
+                                                                const user = allUsers.find(u => u.email === email);
+                                                                return (
+                                                                    <span key={email} className="px-3 py-1 bg-blue-100 text-blue-700 text-[9px] font-black uppercase rounded-full border border-blue-200">
+                                                                        {user ? user.firstName : email}
+                                                                    </span>
+                                                                );
+                                                            })}
                                                         </div>
-                                                        <span className="text-[8px] text-slate-400 mt-1">
-                                                            {m.timestamp ? new Date(m.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-                                                        </span>
+                                                        <button
+                                                            onClick={() => {
+                                                                if (selectedGroupParticipants.length === 1) {
+                                                                    setActiveConversation([...selectedGroupParticipants, currentUser.email].sort().join(','));
+                                                                    setIsCreatingGroup(false);
+                                                                } else {
+                                                                    // For group, it stays in creating mode until first message is sent
+                                                                    // but we need to show the chat box
+                                                                    setActiveConversation(null); 
+                                                                }
+                                                            }}
+                                                            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-xl shadow-slate-200"
+                                                        >
+                                                            {selectedGroupParticipants.length > 1 ? "Démarrer Discussion de Groupe" : "Démarrer Discussion Directe"}
+                                                        </button>
                                                     </div>
-                                                );
-                                            })
+                                                )}
+                                            </div>
+                                        ) : activeConversation ? (
+                                            <>
+                                                {/* Header Conversation */}
+                                                <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between shrink-0">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-blue-600 font-black">
+                                                            {activeConversation === 'all' ? <Users size={20} /> : <User size={20} />}
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-[13px] font-black text-slate-900 uppercase tracking-tight">
+                                                                {conversations.find(c => c.id === activeConversation)?.name || "Discussion"}
+                                                            </h4>
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                                                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Canal Actif</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Messages List */}
+                                                <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-slate-50/30">
+                                                    {(conversations.find(c => c.id === activeConversation)?.messages || []).map(m => {
+                                                        const isMe = m.senderEmail === currentUser?.email;
+                                                        return (
+                                                            <div key={m.id} className={`flex flex-col max-w-[80%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    {!isMe && <span className="text-[10px] font-black text-slate-900 uppercase tracking-tighter">{m.senderName}</span>}
+                                                                    <span className="text-[8px] font-bold text-slate-400">{m.timestamp ? new Date(m.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}</span>
+                                                                </div>
+                                                                <div className={`p-4 rounded-3xl text-[13px] leading-relaxed shadow-sm ${isMe ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'}`}>
+                                                                    {m.content}
+                                                                </div>
+                                                                {isMe && m.readBy?.length > 1 && (
+                                                                    <div className="flex items-center gap-1 mt-1">
+                                                                        <Check size={10} className="text-blue-500" strokeWidth={4} />
+                                                                        <span className="text-[8px] text-slate-400 font-bold uppercase">Lu</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                    {(!conversations.find(c => c.id === activeConversation)?.messages?.length) && (
+                                                        <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale scale-90">
+                                                            <MessageSquare size={64} className="mb-4" />
+                                                            <p className="font-black text-sm uppercase tracking-widest">Commencer la discussion</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Input Area */}
+                                                <form onSubmit={handleSendMessage} className="p-6 bg-white border-t border-slate-100 shrink-0">
+                                                    <div className="flex gap-3 bg-slate-50 p-2 rounded-[2rem] border border-slate-200 focus-within:border-blue-400 transition-all">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Écrivez votre message ici..."
+                                                            value={newMessageText}
+                                                            onChange={(e) => setNewMessageText(e.target.value)}
+                                                            className="flex-1 bg-transparent px-6 py-2 text-sm outline-none font-medium"
+                                                        />
+                                                        <button
+                                                            type="submit"
+                                                            disabled={!newMessageText.trim()}
+                                                            className="w-12 h-12 bg-blue-600 text-white flex items-center justify-center rounded-2xl hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-200"
+                                                        >
+                                                            <Send size={18} />
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </>
+                                        ) : (
+                                            <div className="flex-1 flex flex-col items-center justify-center p-20 text-center space-y-6 animate-pulse">
+                                                <div className="w-24 h-24 bg-slate-100 rounded-[2.5rem] flex items-center justify-center text-slate-300">
+                                                    <MessageSquare size={48} />
+                                                </div>
+                                                <div className="max-w-xs">
+                                                    <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">Prêt pour l'échange ?</h4>
+                                                    <p className="text-[11px] text-slate-400 font-bold uppercase mt-2">Sélectionnez une discussion à gauche pour commencer à collaborer.</p>
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
-                                    
-                                    <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-slate-100 shrink-0">
-                                        <div className="flex gap-2 mb-3">
-                                            <select 
-                                                value={messageRecipient} 
-                                                onChange={(e) => setMessageRecipient(e.target.value)}
-                                                className="text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 flex-1 outline-none focus:border-blue-400 transition-colors"
-                                            >
-                                                <option value="all">Envoyer à : Tous (Général)</option>
-                                                {(Array.isArray(allUsers) ? allUsers : []).filter(u => u.email !== currentUser?.email).map(u => (
-                                                    <option key={u.email} value={u.email}>👤 {u.firstName} {u.lastName}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Votre message..."
-                                                value={newMessageText}
-                                                onChange={(e) => setNewMessageText(e.target.value)}
-                                                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors"
-                                            />
-                                            <button 
-                                                type="submit" 
-                                                disabled={!newMessageText.trim()}
-                                                className="bg-blue-600 text-white w-11 flex items-center justify-center rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors shadow-sm"
-                                            >
-                                                <Send size={18} />
-                                            </button>
-                                        </div>
-                                    </form>
                                 </div>
+                            </div>
                         )}
                     </div>
 
