@@ -127,9 +127,7 @@ const Tenders = () => {
             setShowForm(false);
             loadTenders();
         }
-    };
-
-    const handleFileUpload = async (e, tenderId, storageKey) => {
+    };    const handleFileUpload = async (e, tenderId, storageKey) => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -137,21 +135,32 @@ const Tenders = () => {
         try {
             const res = await tenderService.saveFile(tenderId, storageKey, file, file.name);
             if (res.success) {
-                // If a participant uploads their offer, we check if they are done
-                if (storageKey.startsWith('offer_')) {
+                // Determine if this is a worker contribution
+                const isTech = storageKey.startsWith('tech_');
+                const isFin = storageKey.startsWith('fin_');
+                
+                if (isTech || isFin) {
                     const updatedTenders = [...tenders];
                     const tIndex = updatedTenders.findIndex(t => t.id === tenderId);
                     if (tIndex !== -1) {
                         const tender = updatedTenders[tIndex];
                         const aIndex = tender.assignments.findIndex(a => a.email === currentUser.email);
                         if (aIndex !== -1) {
-                            tender.assignments[aIndex].status = 'done';
+                            // Update assignment status
+                            if (isTech) tender.assignments[aIndex].techStatus = 'done';
+                            if (isFin) tender.assignments[aIndex].finStatus = 'done';
+                            
+                            // Overall status is 'done' if both are done
+                            if (tender.assignments[aIndex].techStatus === 'done' && tender.assignments[aIndex].finStatus === 'done') {
+                                tender.assignments[aIndex].status = 'done';
+                            }
+                            
                             await tenderService.saveTender(tender, currentUser.firstName);
                         }
                     }
                 }
                 loadTenders();
-                alert("Fichier uploadé avec succès !");
+                alert("Fichier transmis avec succès !");
             } else {
                 alert("Erreur lors de l'upload.");
             }
@@ -160,6 +169,23 @@ const Tenders = () => {
         } finally {
             setIsUploading(false);
         }
+    };
+
+    const handleBatchDownload = (type) => {
+        // Simple implementation: alert with instructions since we can't easily merge PDFs in browser without lib
+        const count = selectedTender.assignments?.filter(a => a[`${type}Status`] === 'done').length;
+        if (count === 0) {
+            alert(`Aucune offre ${type === 'tech' ? 'technique' : 'financière'} disponible pour la compilation.`);
+            return;
+        }
+        alert(`Compilation automatique : ${count} fichiers détectés. \nLe système prépare le téléchargement groupé pour votre traitement manuel.`);
+        
+        selectedTender.assignments.forEach(a => {
+            if (a[`${type}Status`] === 'done') {
+                const key = `${type}_${a.email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                window.open(tenderService.getFileUrl(selectedTender.id, key), '_blank');
+            }
+        });
     };
 
     const filteredTenders = useMemo(() => {
@@ -358,8 +384,19 @@ const Tenders = () => {
                                                                 <p className="text-[9px] font-bold text-slate-400 uppercase">{a.role}</p>
                                                             </div>
                                                         </div>
-                                                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isDone ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200' : 'bg-amber-500 text-white shadow-lg shadow-amber-200'}`}>
-                                                            {isDone ? <Check size={14} strokeWidth={4} /> : <Clock size={14} strokeWidth={4} />}
+                                                        <div className="flex gap-1">
+                                                            <div 
+                                                                title="Offre Technique"
+                                                                className={`w-5 h-5 rounded-lg flex items-center justify-center text-[8px] font-black ${a.techStatus === 'done' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400'}`}
+                                                            >
+                                                                T
+                                                            </div>
+                                                            <div 
+                                                                title="Offre Financière"
+                                                                className={`w-5 h-5 rounded-lg flex items-center justify-center text-[8px] font-black ${a.finStatus === 'done' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400'}`}
+                                                            >
+                                                                F
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 );
@@ -380,7 +417,10 @@ const Tenders = () => {
                                                         <Edit3 size={14} /> Modifier
                                                     </button>
                                                     <button 
-                                                        onClick={() => setSelectedTender(tender)}
+                                                        onClick={() => {
+                                                            setSelectedTender(tender);
+                                                            // For manual build, we just set the tender
+                                                        }}
                                                         className="flex items-center justify-center gap-2 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
                                                     >
                                                         <LayoutDashboard size={14} /> Gérer
@@ -391,7 +431,7 @@ const Tenders = () => {
                                                     onClick={() => setSelectedTender(tender)}
                                                     className="w-full flex items-center justify-center gap-3 py-4 bg-indigo-600 text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100"
                                                 >
-                                                    <FileUp size={16} /> Déposer mon offre
+                                                    <FileUp size={16} /> Déposer mes offres
                                                 </button>
                                             )}
                                         </div>
@@ -569,20 +609,21 @@ const Tenders = () => {
 
                         {/* Content Area */}
                         <div className="flex-1 p-12 overflow-y-auto space-y-10 scroll-smooth">
-                            {/* Section 1: Documents (Imene) */}
+                            {/* Section 1: Documents Sources (Imene) */}
                             {isCoordinator && (
                                 <div className="space-y-6">
                                     <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
-                                        <Paperclip className="text-indigo-600" /> Documents Sources
+                                        <Paperclip className="text-indigo-600" /> Documents de Référence
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="p-8 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 hover:border-indigo-400 transition-all group flex flex-col items-center text-center">
                                             <FileUp size={32} className="text-slate-300 group-hover:text-indigo-500 transition-colors mb-4" />
                                             <p className="text-xs font-black text-slate-900 uppercase tracking-widest mb-2">Cahier des Charges (CDC)</p>
-                                            <p className="text-[10px] text-slate-400 font-bold mb-4 uppercase">Upload du fichier principal PDF</p>
+                                            <p className="text-[10px] text-slate-400 font-bold mb-4 uppercase">PDF ou XLSX accepté</p>
                                             <input 
                                                 type="file" 
                                                 id="upload-cdc" 
+                                                accept=".pdf,.xlsx,.xls"
                                                 className="hidden" 
                                                 onChange={(e) => handleFileUpload(e, selectedTender.id, 'cdc')}
                                             />
@@ -590,7 +631,7 @@ const Tenders = () => {
                                                 htmlFor="upload-cdc" 
                                                 className="px-6 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
                                             >
-                                                {selectedTender.files?.cdc ? "Remplacer le CDC" : "Choisir un fichier"}
+                                                {selectedTender.files?.cdc ? "Mettre à jour le CDC" : "Choisir un fichier"}
                                             </label>
                                             {selectedTender.files?.cdc && (
                                                 <div className="mt-4 flex items-center gap-2">
@@ -603,7 +644,7 @@ const Tenders = () => {
                                         <div className="p-8 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 hover:border-indigo-400 transition-all group flex flex-col items-center text-center">
                                             <Share2 size={32} className="text-slate-300 group-hover:text-indigo-500 transition-colors mb-4" />
                                             <p className="text-xs font-black text-slate-900 uppercase tracking-widest mb-2">Offre Globale Finalisée</p>
-                                            <p className="text-[10px] text-slate-400 font-bold mb-4 uppercase">Compilation technique & financière</p>
+                                            <p className="text-[10px] text-slate-400 font-bold mb-4 uppercase">Compilation Manuelle Finale</p>
                                             <input 
                                                 type="file" 
                                                 id="upload-global" 
@@ -614,77 +655,101 @@ const Tenders = () => {
                                                 htmlFor="upload-global" 
                                                 className="px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-indigo-600 transition-all shadow-lg"
                                             >
-                                                Sauvegarder l'offre finale
+                                                Uploader l'offre finale
                                             </label>
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Section 2: Worker Contribution */}
+                            {/* Section 2: Worker Contribution (2 Files) */}
                             {!isCoordinator && selectedTender.assignments?.some(a => a.email === currentUser.email) && (
                                 <div className="space-y-6 animate-in slide-in-from-right-10">
                                     <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
-                                        <Send className="text-indigo-600" /> Ma Contribution au Dossier
+                                        <Send className="text-indigo-600" /> Mes Propositions
                                     </h4>
-                                    <div className="bg-indigo-600 p-10 rounded-[3rem] text-white shadow-2xl shadow-indigo-200 relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 p-10 opacity-10">
-                                            <Briefcase size={120} />
-                                        </div>
-                                        <div className="relative z-10 space-y-6">
-                                            <div>
-                                                <p className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Consignes</p>
-                                                <p className="text-lg font-bold leading-relaxed">Veuillez uploader votre proposition technique et financière compilée en un seul document PDF pour traitement par la coordinatrice.</p>
-                                            </div>
-                                            
-                                            <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Technical Offer */}
+                                        <div className="bg-indigo-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100 relative overflow-hidden">
+                                            <div className="relative z-10">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-indigo-200">Partie 1</p>
+                                                <h5 className="text-lg font-black uppercase mb-4">Offre Technique</h5>
                                                 <input 
                                                     type="file" 
-                                                    id="worker-upload" 
+                                                    id="worker-upload-tech" 
+                                                    accept=".pdf,.xlsx,.xls"
                                                     className="hidden" 
-                                                    onChange={(e) => handleFileUpload(e, selectedTender.id, `offer_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`)}
+                                                    onChange={(e) => handleFileUpload(e, selectedTender.id, `tech_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`)}
                                                 />
                                                 <label 
-                                                    htmlFor="worker-upload" 
-                                                    className="flex items-center gap-3 px-8 py-4 bg-white text-indigo-600 rounded-2xl font-black text-xs uppercase tracking-widest cursor-pointer hover:scale-105 transition-all shadow-xl"
+                                                    htmlFor="worker-upload-tech" 
+                                                    className="inline-flex items-center gap-3 px-6 py-3 bg-white text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest cursor-pointer hover:scale-105 transition-all shadow-lg"
                                                 >
-                                                    <FileUp size={18} /> Sélectionner mon PDF
+                                                    <FileUp size={16} /> {selectedTender.assignments.find(a => a.email === currentUser.email)?.techStatus === 'done' ? 'Modifier PDF/XLSX' : 'Déposer Technique'}
                                                 </label>
-                                                {selectedTender.assignments.find(a => a.email === currentUser.email)?.status === 'done' && (
-                                                    <div className="flex items-center gap-2 bg-emerald-500/20 px-4 py-2 rounded-xl border border-emerald-500/30">
-                                                        <Check size={16} strokeWidth={4} />
-                                                        <span className="text-[10px] font-black uppercase">Offre Déposée</span>
-                                                    </div>
-                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Financial Offer */}
+                                        <div className="bg-emerald-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-emerald-100 relative overflow-hidden">
+                                            <div className="relative z-10">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-emerald-200">Partie 2</p>
+                                                <h5 className="text-lg font-black uppercase mb-4">Offre Financière</h5>
+                                                <input 
+                                                    type="file" 
+                                                    id="worker-upload-fin" 
+                                                    accept=".pdf,.xlsx,.xls"
+                                                    className="hidden" 
+                                                    onChange={(e) => handleFileUpload(e, selectedTender.id, `fin_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`)}
+                                                />
+                                                <label 
+                                                    htmlFor="worker-upload-fin" 
+                                                    className="inline-flex items-center gap-3 px-6 py-3 bg-white text-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest cursor-pointer hover:scale-105 transition-all shadow-lg"
+                                                >
+                                                    <FileUp size={16} /> {selectedTender.assignments.find(a => a.email === currentUser.email)?.finStatus === 'done' ? 'Modifier PDF/XLSX' : 'Déposer Financière'}
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Section 3: Overview Table (Imene) */}
+                            {/* Section 3: Overview & Auto-Compilation (Imene) */}
                             {isCoordinator && (
                                 <div className="space-y-6">
-                                    <div className="flex items-center justify-between">
-                                        <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Suivi des Contributions</h4>
-                                        <span className="text-[10px] font-black text-slate-400 uppercase">
-                                            {selectedTender.assignments?.filter(a => a.status === 'done').length} / {selectedTender.assignments?.length} Terminés
-                                        </span>
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Suivi & Compilation</h4>
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={() => handleBatchDownload('tech')}
+                                                className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-200 transition-all flex items-center gap-2"
+                                            >
+                                                <Share2 size={12} /> Compiler Tech.
+                                            </button>
+                                            <button 
+                                                onClick={() => handleBatchDownload('fin')}
+                                                className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-200 transition-all flex items-center gap-2"
+                                            >
+                                                <Share2 size={12} /> Compiler Fin.
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
                                         <table className="w-full text-left">
                                             <thead className="bg-slate-50">
                                                 <tr>
                                                     <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Intervenant</th>
-                                                    <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Rôle</th>
-                                                    <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Statut</th>
-                                                    <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Document</th>
+                                                    <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Offre Tech.</th>
+                                                    <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Offre Fin.</th>
+                                                    <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Global</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100">
                                                 {selectedTender.assignments?.map(a => {
-                                                    const offerKey = `offer_${a.email.replace(/[^a-zA-Z0-9]/g, '_')}`;
-                                                    const hasOffer = selectedTender.files?.[offerKey];
+                                                    const techKey = `tech_${a.email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                                                    const finKey = `fin_${a.email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                                                    const hasTech = selectedTender.files?.[techKey];
+                                                    const hasFin = selectedTender.files?.[finKey];
                                                     return (
                                                         <tr key={a.email} className="hover:bg-slate-50/50 transition-colors">
                                                             <td className="p-6">
@@ -692,30 +757,35 @@ const Tenders = () => {
                                                                     <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400">
                                                                         {a.name[0]}
                                                                     </div>
-                                                                    <span className="text-xs font-black text-slate-900 uppercase">{a.name}</span>
+                                                                    <div>
+                                                                        <p className="text-xs font-black text-slate-900 uppercase">{a.name}</p>
+                                                                        <p className="text-[8px] font-bold text-slate-400 uppercase">{a.role}</p>
+                                                                    </div>
                                                                 </div>
                                                             </td>
                                                             <td className="p-6">
-                                                                <span className="text-[10px] font-bold text-slate-500 uppercase italic">{a.role}</span>
+                                                                {hasTech ? (
+                                                                    <a href={tenderService.getFileUrl(selectedTender.id, techKey)} target="_blank" className="flex items-center gap-2 text-indigo-600 hover:underline text-[9px] font-black uppercase">
+                                                                        <Eye size={12} /> {hasTech.ext.toUpperCase()}
+                                                                    </a>
+                                                                ) : <span className="text-[8px] text-slate-300 font-bold uppercase italic">Manquant</span>}
+                                                            </td>
+                                                            <td className="p-6">
+                                                                {hasFin ? (
+                                                                    <a href={tenderService.getFileUrl(selectedTender.id, finKey)} target="_blank" className="flex items-center gap-2 text-emerald-600 hover:underline text-[9px] font-black uppercase">
+                                                                        <Eye size={12} /> {hasFin.ext.toUpperCase()}
+                                                                    </a>
+                                                                ) : <span className="text-[8px] text-slate-300 font-bold uppercase italic">Manquant</span>}
                                                             </td>
                                                             <td className="p-6">
                                                                 {a.status === 'done' ? (
-                                                                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-tighter">Complété</span>
+                                                                    <div className="w-5 h-5 bg-emerald-500 text-white rounded flex items-center justify-center shadow-md">
+                                                                        <Check size={12} strokeWidth={4} />
+                                                                    </div>
                                                                 ) : (
-                                                                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-[9px] font-black uppercase tracking-tighter">En attente</span>
-                                                                )}
-                                                            </td>
-                                                            <td className="p-6">
-                                                                {hasOffer ? (
-                                                                    <a 
-                                                                        href={tenderService.getFileUrl(selectedTender.id, offerKey)} 
-                                                                        target="_blank" 
-                                                                        className="flex items-center gap-2 text-indigo-600 hover:underline text-[10px] font-black uppercase"
-                                                                    >
-                                                                        <Eye size={14} /> Voir Offre
-                                                                    </a>
-                                                                ) : (
-                                                                    <span className="text-[9px] text-slate-300 font-bold uppercase">Aucun fichier</span>
+                                                                    <div className="w-5 h-5 bg-slate-200 text-slate-400 rounded flex items-center justify-center">
+                                                                        <Clock size={12} />
+                                                                    </div>
                                                                 )}
                                                             </td>
                                                         </tr>
@@ -733,10 +803,10 @@ const Tenders = () => {
                                     <div>
                                         <div className="flex items-center gap-2 mb-3">
                                             <Lock size={16} className="text-indigo-400" />
-                                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Offre Globale Disponible</p>
+                                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Offre Globale Finalisée</p>
                                         </div>
-                                        <h4 className="text-2xl font-black tracking-tight mb-2">Prêt pour le partage ?</h4>
-                                        <p className="text-sm font-bold text-slate-400">Le dossier est complet. Vous pouvez maintenant le diffuser aux cadres des marchés.</p>
+                                        <h4 className="text-2xl font-black tracking-tight mb-2">Prêt pour diffusion ?</h4>
+                                        <p className="text-sm font-bold text-slate-400">Le dossier est prêt. Vous pouvez le partager avec les cadres des marchés.</p>
                                     </div>
                                     <div className="flex gap-4">
                                         <a 
@@ -744,10 +814,10 @@ const Tenders = () => {
                                             target="_blank"
                                             className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all shadow-xl"
                                         >
-                                            Consulter l'offre finalisée
+                                            Consulter le dossier final
                                         </a>
                                         <button 
-                                            onClick={() => alert("Fonction de partage activée vers les cadres sélectionnés.")}
+                                            onClick={() => alert("Partage activé.")}
                                             className="w-14 h-14 bg-indigo-600 text-white flex items-center justify-center rounded-2xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/20"
                                         >
                                             <Share2 size={22} />
@@ -757,6 +827,8 @@ const Tenders = () => {
                             )}
                         </div>
                     </div>
+                </div>
+            )}</div>
                 </div>
             )}
         </div>
