@@ -655,8 +655,14 @@ const Tenders = () => {
                                                 htmlFor="upload-global" 
                                                 className="px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-indigo-600 transition-all shadow-lg"
                                             >
-                                                Uploader l'offre finale
+                                                {selectedTender.files?.global_offer ? "Remplacer l'offre globale" : "Uploader l'offre finale"}
                                             </label>
+                                            {selectedTender.files?.global_offer && (
+                                                <div className="mt-4 flex items-center gap-2">
+                                                    <CheckCircle2 size={14} className="text-emerald-500" />
+                                                    <span className="text-[10px] font-black text-slate-600 truncate max-w-[150px]">{selectedTender.files.global_offer.name}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -673,20 +679,40 @@ const Tenders = () => {
                                         <div className="bg-indigo-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100 relative overflow-hidden">
                                             <div className="relative z-10">
                                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-indigo-200">Partie 1</p>
-                                                <h5 className="text-lg font-black uppercase mb-4">Offre Technique</h5>
-                                                <input 
-                                                    type="file" 
-                                                    id="worker-upload-tech" 
-                                                    accept=".pdf,.xlsx,.xls"
-                                                    className="hidden" 
-                                                    onChange={(e) => handleFileUpload(e, selectedTender.id, `tech_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`)}
-                                                />
-                                                <label 
-                                                    htmlFor="worker-upload-tech" 
-                                                    className="inline-flex items-center gap-3 px-6 py-3 bg-white text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest cursor-pointer hover:scale-105 transition-all shadow-lg"
-                                                >
-                                                    <FileUp size={16} /> {selectedTender.assignments.find(a => a.email === currentUser.email)?.techStatus === 'done' ? 'Modifier PDF/XLSX' : 'Déposer Technique'}
-                                                </label>
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <h5 className="text-lg font-black uppercase">Offre Technique</h5>
+                                                    {selectedTender.files?.[`tech_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`] && (
+                                                        <div className="flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full border border-white/20">
+                                                            <CheckCircle2 size={12} className="text-emerald-300" />
+                                                            <span className="text-[9px] font-black uppercase">Présent</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col gap-4">
+                                                    <input 
+                                                        type="file" 
+                                                        id="worker-upload-tech" 
+                                                        accept=".pdf,.xlsx,.xls"
+                                                        className="hidden" 
+                                                        onChange={(e) => handleFileUpload(e, selectedTender.id, `tech_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`)}
+                                                    />
+                                                    <label 
+                                                        htmlFor="worker-upload-tech" 
+                                                        className="inline-flex items-center justify-center gap-3 px-6 py-3 bg-white text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest cursor-pointer hover:scale-105 transition-all shadow-lg"
+                                                    >
+                                                        <FileUp size={16} /> {selectedTender.files?.[`tech_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`] ? 'Remplacer le fichier' : 'Déposer mon fichier'}
+                                                    </label>
+                                                    
+                                                    {selectedTender.files?.[`tech_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`] && (
+                                                        <a 
+                                                            href={tenderService.getFileUrl(selectedTender.id, `tech_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`)} 
+                                                            target="_blank"
+                                                            className="text-[10px] font-bold text-indigo-100 hover:text-white underline flex items-center gap-2"
+                                                        >
+                                                            <Eye size={12} /> Consulter mon dépôt
+                                                        </a>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
 
@@ -694,20 +720,40 @@ const Tenders = () => {
                                         <div className="bg-emerald-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-emerald-100 relative overflow-hidden">
                                             <div className="relative z-10">
                                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-emerald-200">Partie 2</p>
-                                                <h5 className="text-lg font-black uppercase mb-4">Offre Financière</h5>
-                                                <input 
-                                                    type="file" 
-                                                    id="worker-upload-fin" 
-                                                    accept=".pdf,.xlsx,.xls"
-                                                    className="hidden" 
-                                                    onChange={(e) => handleFileUpload(e, selectedTender.id, `fin_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`)}
-                                                />
-                                                <label 
-                                                    htmlFor="worker-upload-fin" 
-                                                    className="inline-flex items-center gap-3 px-6 py-3 bg-white text-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest cursor-pointer hover:scale-105 transition-all shadow-lg"
-                                                >
-                                                    <FileUp size={16} /> {selectedTender.assignments.find(a => a.email === currentUser.email)?.finStatus === 'done' ? 'Modifier PDF/XLSX' : 'Déposer Financière'}
-                                                </label>
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <h5 className="text-lg font-black uppercase">Offre Financière</h5>
+                                                    {selectedTender.files?.[`fin_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`] && (
+                                                        <div className="flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full border border-white/20">
+                                                            <CheckCircle2 size={12} className="text-emerald-300" />
+                                                            <span className="text-[9px] font-black uppercase">Présent</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col gap-4">
+                                                    <input 
+                                                        type="file" 
+                                                        id="worker-upload-fin" 
+                                                        accept=".pdf,.xlsx,.xls"
+                                                        className="hidden" 
+                                                        onChange={(e) => handleFileUpload(e, selectedTender.id, `fin_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`)}
+                                                    />
+                                                    <label 
+                                                        htmlFor="worker-upload-fin" 
+                                                        className="inline-flex items-center justify-center gap-3 px-6 py-3 bg-white text-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest cursor-pointer hover:scale-105 transition-all shadow-lg"
+                                                    >
+                                                        <FileUp size={16} /> {selectedTender.files?.[`fin_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`] ? 'Remplacer le fichier' : 'Déposer mon fichier'}
+                                                    </label>
+
+                                                    {selectedTender.files?.[`fin_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`] && (
+                                                        <a 
+                                                            href={tenderService.getFileUrl(selectedTender.id, `fin_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`)} 
+                                                            target="_blank"
+                                                            className="text-[10px] font-bold text-emerald-100 hover:text-white underline flex items-center gap-2"
+                                                        >
+                                                            <Eye size={12} /> Consulter mon dépôt
+                                                        </a>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
