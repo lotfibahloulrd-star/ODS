@@ -828,12 +828,9 @@ const Tenders = () => {
                         </div>
                     </div>
                 </div>
-            )}</div>
-                </div>
             )}
         </div>
     );
 };
 
 export default Tenders;
-
