@@ -103,7 +103,10 @@ const Tenders = () => {
         logisticsBillingStatus: "En attente",
         logisticsProvisionalPvStatus: "En attente",
         logisticsWarrantyStatus: "",
-        logisticsFinalPvStatus: "En attente"
+        logisticsFinalPvStatus: "En attente",
+
+        // Finance Fields
+        financePaymentStatus: "En attente"
     });
 
     const [editingItem, setEditingItem] = useState(null);
@@ -157,7 +160,8 @@ const Tenders = () => {
                 logisticsBillingStatus: "En attente",
                 logisticsProvisionalPvStatus: "En attente",
                 logisticsWarrantyStatus: "",
-                logisticsFinalPvStatus: "En attente"
+                logisticsFinalPvStatus: "En attente",
+                financePaymentStatus: "En attente"
             });
         }
         setShowForm(true);
@@ -1444,6 +1448,44 @@ const Tenders = () => {
                                                 </select>
                                                 <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Section 3.9: Finance Service */}
+                            {(isCoordinator || isSuperAdmin) && (
+                                <div className="p-10 bg-amber-50 rounded-[3rem] border-4 border-amber-100 shadow-xl shadow-amber-50">
+                                    <div className="flex items-center gap-4 mb-8">
+                                        <div className="w-12 h-12 bg-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-200">
+                                            <DollarSign size={24} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Service Finance</h4>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Validation finale de l'encaissement</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="max-w-md">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-3 block">État de Paiement Global</label>
+                                        <div className="relative">
+                                            <select 
+                                                value={selectedTender.financePaymentStatus || "En attente"}
+                                                onChange={async (e) => {
+                                                    const updated = { ...selectedTender, financePaymentStatus: e.target.value };
+                                                    setSelectedTender(updated);
+                                                    await tenderService.saveTender(updated, currentUser.firstName);
+                                                }}
+                                                className={`w-full px-8 py-5 rounded-3xl border-2 text-sm font-black transition-all appearance-none ${
+                                                    selectedTender.financePaymentStatus === 'Totalement encaissé' ? 'bg-emerald-600 text-white border-emerald-600 shadow-xl shadow-emerald-200' : 
+                                                    selectedTender.financePaymentStatus === 'En attente' ? 'bg-white border-amber-100 text-amber-600' : 'bg-amber-100 border-amber-200 text-amber-700'
+                                                }`}
+                                            >
+                                                <option value="En attente">En attente</option>
+                                                <option value="Partiel">Paiement Partiel</option>
+                                                <option value="Totalement encaissé">Totalement encaissé</option>
+                                            </select>
+                                            <ChevronDown size={18} className={`absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none ${selectedTender.financePaymentStatus === 'Totalement encaissé' ? 'text-white/70' : 'text-amber-400'}`} />
                                         </div>
                                     </div>
                                 </div>
