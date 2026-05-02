@@ -5,13 +5,14 @@ import Home from './pages/Home';
 import NewOrder from './pages/NewOrder';
 import UsersPage from './pages/Users';
 import Login from './pages/Login';
-import { LayoutDashboard, PlusCircle, Users, LogOut, Key, User, Briefcase } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Users, LogOut, Key, User, Briefcase, HelpCircle } from 'lucide-react';
 import './index.css';
 
 import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import OrderDetails from './pages/OrderDetails';
 import Tenders from './pages/Tenders';
 import ChangePasswordModal from './components/ChangePasswordModal';
+import Guide from './pages/Guide';
 import logo from './assets/logo.png';
 
 function AppContent() {
@@ -44,6 +45,7 @@ function AppContent() {
         if (location.pathname === '/ods/new') return 'new';
         if (location.pathname === '/users') return 'users';
         if (location.pathname === '/tenders') return 'tenders';
+        if (location.pathname === '/guide') return 'guide';
         return '';
     };
 
@@ -102,6 +104,14 @@ function AppContent() {
                                     <span className="hidden lg:inline">Utilisateurs</span>
                                 </button>
                             )}
+
+                            <button 
+                                onClick={() => navigate('/guide')} 
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'guide' ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/30' : 'text-slate-600 hover:bg-white'}`}
+                            >
+                                <HelpCircle size={18} />
+                                <span className="hidden lg:inline">Aide</span>
+                            </button>
                         </nav>
 
                         {/* User Profile & Actions */}
@@ -136,6 +146,7 @@ function AppContent() {
                         <Route path="/ods/new" element={canCreateOds() ? <NewOrder onSave={() => navigate('/dashboard')} /> : <div className="text-center py-20 text-slate-400">Accès restreint</div>} />
                         <Route path="/users" element={isSuperAdmin() ? <UsersPage /> : <div className="text-center py-20 text-slate-400">Accès restreint</div>} />
                         <Route path="/order/:id" element={<OrderDetails />} />
+                        <Route path="/guide" element={<Guide />} />
                     </Routes>
                 </div>
             </main>
