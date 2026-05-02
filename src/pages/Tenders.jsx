@@ -700,8 +700,8 @@ const Tenders = () => {
 
                         {/* Content Area */}
                         <div className="flex-1 p-12 overflow-y-auto space-y-10 scroll-smooth">
-                            {/* Section 1: Documents Sources (Imene) */}
-                            {isCoordinator && (
+                            {/* Section 1: Documents Sources (Imene/Admin) */}
+                            {(isCoordinator || isSuperAdmin) && (
                                 <div className="space-y-6">
                                     <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
                                         <Paperclip className="text-indigo-600" /> Documents de Référence
@@ -760,7 +760,7 @@ const Tenders = () => {
                             )}
 
                             {/* Section 2: Worker Contribution (2 Files) */}
-                            {!isCoordinator && selectedTender.assignments?.some(a => a.email === currentUser.email) && (
+                            {((!isCoordinator && assignedWorker) || (isSuperAdmin && assignedWorker)) && (
                                 <div className="space-y-6 animate-in slide-in-from-right-10">
                                     <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
                                         <Send className="text-indigo-600" /> Mes Propositions
@@ -851,8 +851,8 @@ const Tenders = () => {
                                 </div>
                             )}
 
-                            {/* Section 3: Overview & Auto-Compilation (Imene) */}
-                            {isCoordinator && (
+                            {/* Section 3: Overview & Auto-Compilation (Imene/Admin) */}
+                            {(isCoordinator || isSuperAdmin) && (
                                 <div className="space-y-6">
                                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                         <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Suivi & Compilation</h4>
@@ -935,7 +935,7 @@ const Tenders = () => {
                             )}
 
                             {/* Section 3.5: Commercial Offer Details (Items Table) */}
-                            {(isCoordinator || selectedTender.assignments?.some(a => a.email === currentUser.email)) && (
+                            {(isCoordinator || isSuperAdmin || selectedTender.assignments?.some(a => a.email === currentUser.email)) && (
                                 <div className="space-y-8 p-10 bg-white rounded-[3rem] border border-slate-200 shadow-sm">
                                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                         <div className="flex items-center gap-4">
@@ -1095,7 +1095,7 @@ const Tenders = () => {
                             )}
 
                             {/* Section 3.6: Service des Marchés (Administrative Tracking) */}
-                            {isCoordinator && (
+                            {(isCoordinator || isSuperAdmin) && (
                                 <div className="space-y-8 p-10 bg-slate-900 rounded-[3rem] text-white shadow-2xl shadow-indigo-200">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg">
@@ -1209,7 +1209,7 @@ const Tenders = () => {
                             )}
 
                             {/* Section 3.7: Importation (Logistics Tracking) */}
-                            {(isCoordinator || selectedTender.items?.some(item => item.type === 'Importation')) && (
+                            {(isCoordinator || isSuperAdmin || selectedTender.items?.some(item => item.type === 'Importation')) && (
                                 <div className="space-y-8 p-10 bg-white rounded-[3rem] border-4 border-blue-100 shadow-xl shadow-blue-50">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
@@ -1298,8 +1298,8 @@ const Tenders = () => {
                                 </div>
                             )}
 
-                            {/* Section 4: Finalization (Imene) */}
-                            {isCoordinator && selectedTender.files?.global_offer && (
+                            {/* Section 4: Finalization (Imene/Admin) */}
+                            {(isCoordinator || isSuperAdmin) && selectedTender.files?.global_offer && (
                                 <div className="p-10 bg-slate-900 rounded-[3rem] text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-indigo-100">
                                     <div>
                                         <div className="flex items-center gap-2 mb-3">
