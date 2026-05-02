@@ -719,8 +719,8 @@ const Tenders = () => {
 
                         {/* Content Area */}
                         <div className="flex-1 p-12 overflow-y-auto space-y-10 scroll-smooth">
-                            {/* Section 1: Documents Sources (Imene/Admin) */}
-                            {(isCoordinator || isSuperAdmin) && (
+                            {/* Section 1: Documents Sources (Visible to all assigned or Admin) */}
+                            {(isCoordinator || isSuperAdmin || assignedWorker) && (
                                 <div className="space-y-6">
                                     <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
                                         <Paperclip className="text-indigo-600" /> Documents de Référence
@@ -779,7 +779,7 @@ const Tenders = () => {
                             )}
 
                             {/* Section 2: Worker Contribution (2 Files) */}
-                            {((!isCoordinator && assignedWorker) || (isSuperAdmin && assignedWorker)) && (
+                            {assignedWorker && (
                                 <div className="space-y-6 animate-in slide-in-from-right-10">
                                     <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
                                         <Send className="text-indigo-600" /> Mes Propositions
@@ -1114,7 +1114,7 @@ const Tenders = () => {
                             )}
 
                             {/* Section 3.6: Service des Marchés (Administrative Tracking) */}
-                            {(isCoordinator || isSuperAdmin) && (
+                            {(isCoordinator || isSuperAdmin || assignedWorker) && (
                                 <div className="space-y-8 p-10 bg-slate-900 rounded-[3rem] text-white shadow-2xl shadow-indigo-200">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg">
@@ -1228,7 +1228,7 @@ const Tenders = () => {
                             )}
 
                             {/* Section 3.7: Importation (Logistics Tracking) */}
-                            {(isCoordinator || isSuperAdmin || selectedTender.items?.some(item => item.type === 'Importation')) && (
+                            {(isCoordinator || isSuperAdmin || assignedWorker || selectedTender.items?.some(item => item.type === 'Importation')) && (
                                 <div className="space-y-8 p-10 bg-white rounded-[3rem] border-4 border-blue-100 shadow-xl shadow-blue-50">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
@@ -1318,7 +1318,7 @@ const Tenders = () => {
                             )}
 
                             {/* Section 3.8: Logistics Service */}
-                            {(isCoordinator || isSuperAdmin) && (
+                            {(isCoordinator || isSuperAdmin || assignedWorker) && (
                                 <div className="space-y-8 p-10 bg-white rounded-[3rem] border-4 border-emerald-100 shadow-xl shadow-emerald-50">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
@@ -1455,7 +1455,7 @@ const Tenders = () => {
                             )}
 
                             {/* Section 3.9: Finance Service */}
-                            {(isCoordinator || isSuperAdmin) && (
+                            {(isCoordinator || isSuperAdmin || assignedWorker) && (
                                 <div className="p-10 bg-amber-50 rounded-[3rem] border-4 border-amber-100 shadow-xl shadow-amber-50">
                                     <div className="flex items-center gap-4 mb-8">
                                         <div className="w-12 h-12 bg-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-200">
