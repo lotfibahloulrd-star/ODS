@@ -66,6 +66,8 @@ const Tenders = () => {
     const isSuper = isSuperAdmin();
     const isAdm = isAdmin();
     const isCoordinator = currentUser?.email === 'mouhoub.imene@esclab-algerie.com';
+    
+    const assignedWorker = selectedTender?.assignments?.find(a => a.email === currentUser?.email);
 
     const [tenders, setTenders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
