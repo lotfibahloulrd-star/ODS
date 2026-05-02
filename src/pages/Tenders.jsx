@@ -66,8 +66,7 @@ const Tenders = () => {
     const isSuper = isSuperAdmin();
     const isAdm = isAdmin();
     const isCoordinator = currentUser?.email === 'mouhoub.imene@esclab-algerie.com';
-    
-    const assignedWorker = selectedTender?.assignments?.find(a => a.email === currentUser?.email);
+
 
     const [tenders, setTenders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -76,6 +75,8 @@ const Tenders = () => {
     const [selectedTender, setSelectedTender] = useState(null);
     const [activeStatusFilter, setActiveStatusFilter] = useState("all");
     const [isUploading, setIsUploading] = useState(false);
+    
+    const assignedWorker = selectedTender?.assignments?.find(a => a.email === currentUser?.email);
 
     // Form states
     const [formData, setFormData] = useState({
@@ -522,7 +523,7 @@ const Tenders = () => {
 
                                         {/* Actions per user role */}
                                         <div className="mt-6 flex flex-col gap-2">
-                                            {isCoordinator ? (
+                                            {(isCoordinator || isSuper) ? (
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <button 
                                                         onClick={() => handleOpenForm(tender)}
