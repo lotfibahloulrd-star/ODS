@@ -90,7 +90,12 @@ const Tenders = () => {
         odsDate: "",
         stopOdsDate: "",
         restartOdsDate: "",
-        deliveryDeadline: ""
+        deliveryDeadline: "",
+
+        // Importation Fields
+        importLaunchStatus: "En attente",
+        importAuthStatus: "En attente",
+        importClearanceStatus: "En attente"
     });
 
     const [editingItem, setEditingItem] = useState(null);
@@ -135,7 +140,10 @@ const Tenders = () => {
                 odsDate: "",
                 stopOdsDate: "",
                 restartOdsDate: "",
-                deliveryDeadline: ""
+                deliveryDeadline: "",
+                importLaunchStatus: "En attente",
+                importAuthStatus: "En attente",
+                importClearanceStatus: "En attente"
             });
         }
         setShowForm(true);
@@ -1195,6 +1203,96 @@ const Tenders = () => {
                                                 }}
                                                 className="w-full px-6 py-4 bg-indigo-500/20 rounded-2xl border border-amber-500/30 text-xs font-black text-white focus:ring-2 focus:ring-amber-500 transition-all"
                                             />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Section 3.7: Importation (Logistics Tracking) */}
+                            {(isCoordinator || selectedTender.items?.some(item => item.type === 'Importation')) && (
+                                <div className="space-y-8 p-10 bg-white rounded-[3rem] border-4 border-blue-100 shadow-xl shadow-blue-50">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                                            <Plane size={24} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Suivi Importation & Logistique</h4>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Gestion des commandes internationales</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Statut Lancement Commande</label>
+                                            <div className="relative">
+                                                <select 
+                                                    value={selectedTender.importLaunchStatus || "En attente"}
+                                                    onChange={async (e) => {
+                                                        const updated = { ...selectedTender, importLaunchStatus: e.target.value };
+                                                        setSelectedTender(updated);
+                                                        await tenderService.saveTender(updated, currentUser.firstName);
+                                                    }}
+                                                    className={`w-full px-6 py-4 rounded-2xl border-2 text-xs font-black transition-all appearance-none ${
+                                                        selectedTender.importLaunchStatus === 'Terminé' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 
+                                                        selectedTender.importLaunchStatus === 'En attente' ? 'bg-slate-50 border-slate-100 text-slate-400' : 'bg-blue-50 border-blue-100 text-blue-600'
+                                                    }`}
+                                                >
+                                                    <option value="En attente">En attente</option>
+                                                    <option value="Lancé">Lancé</option>
+                                                    <option value="Partiel">Partiel</option>
+                                                    <option value="Terminé">Terminé</option>
+                                                </select>
+                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Statut Autorisation (ALGEX/Banque)</label>
+                                            <div className="relative">
+                                                <select 
+                                                    value={selectedTender.importAuthStatus || "En attente"}
+                                                    onChange={async (e) => {
+                                                        const updated = { ...selectedTender, importAuthStatus: e.target.value };
+                                                        setSelectedTender(updated);
+                                                        await tenderService.saveTender(updated, currentUser.firstName);
+                                                    }}
+                                                    className={`w-full px-6 py-4 rounded-2xl border-2 text-xs font-black transition-all appearance-none ${
+                                                        selectedTender.importAuthStatus === 'Accordée' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 
+                                                        selectedTender.importAuthStatus === 'En attente' ? 'bg-slate-50 border-slate-100 text-slate-400' : 'bg-amber-50 border-amber-100 text-amber-600'
+                                                    }`}
+                                                >
+                                                    <option value="En attente">En attente</option>
+                                                    <option value="Déposée">Déposée</option>
+                                                    <option value="En cours">En cours</option>
+                                                    <option value="Accordée">Accordée</option>
+                                                    <option value="Rejetée">Rejetée</option>
+                                                </select>
+                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Dédouanement</label>
+                                            <div className="relative">
+                                                <select 
+                                                    value={selectedTender.importClearanceStatus || "En attente"}
+                                                    onChange={async (e) => {
+                                                        const updated = { ...selectedTender, importClearanceStatus: e.target.value };
+                                                        setSelectedTender(updated);
+                                                        await tenderService.saveTender(updated, currentUser.firstName);
+                                                    }}
+                                                    className={`w-full px-6 py-4 rounded-2xl border-2 text-xs font-black transition-all appearance-none ${
+                                                        selectedTender.importClearanceStatus === 'Dédouané' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 
+                                                        selectedTender.importClearanceStatus === 'En attente' ? 'bg-slate-50 border-slate-100 text-slate-400' : 'bg-indigo-50 border-indigo-100 text-indigo-600'
+                                                    }`}
+                                                >
+                                                    <option value="En attente">En attente</option>
+                                                    <option value="Arrivage Port/Aéroport">Arrivage Port/Aéroport</option>
+                                                    <option value="Sous-douane">Sous-douane</option>
+                                                    <option value="Dédouané">Dédouané</option>
+                                                </select>
+                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
