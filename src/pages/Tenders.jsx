@@ -39,7 +39,8 @@ import {
     Globe,
     Tag,
     Package,
-    Calculator
+    Calculator,
+    Plane
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
