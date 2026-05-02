@@ -33,7 +33,13 @@ import {
     Check,
     Share2,
     Lock,
-    User
+    User,
+    ShoppingBag,
+    DollarSign,
+    Globe,
+    Tag,
+    Package,
+    Calculator
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -74,7 +80,20 @@ const Tenders = () => {
         object: "",
         organism: "",
         status: "En préparation",
-        assignments: [] // Array of { email, name, role, status: 'pending'|'done' }
+        assignments: [], // Array of { email, name, role, status: 'pending'|'done' }
+        items: [] // Array of { id, designation, reference, quantity, accessories, brand, type, priceHT, priceTTC }
+    });
+
+    const [editingItem, setEditingItem] = useState(null);
+    const [newItem, setNewItem] = useState({
+        designation: "",
+        reference: "",
+        quantity: 1,
+        accessories: "",
+        brand: "",
+        type: "Importation",
+        priceHT: 0,
+        priceTTC: 0
     });
 
     useEffect(() => {
@@ -99,7 +118,8 @@ const Tenders = () => {
                 object: "",
                 organism: "",
                 status: "En préparation",
-                assignments: []
+                assignments: [],
+                items: []
             });
         }
         setShowForm(true);
@@ -186,6 +206,53 @@ const Tenders = () => {
                 window.open(tenderService.getFileUrl(selectedTender.id, key), '_blank');
             }
         });
+    };
+
+    const handleAddItem = async () => {
+        if (!newItem.designation) return;
+        
+        const itemWithId = { ...newItem, id: Date.now() };
+        const updatedTender = {
+            ...selectedTender,
+            items: [...(selectedTender.items || []), itemWithId]
+        };
+        
+        const success = await tenderService.saveTender(updatedTender, currentUser.firstName);
+        if (success) {
+            setSelectedTender(updatedTender);
+            setNewItem({
+                designation: "",
+                reference: "",
+                quantity: 1,
+                accessories: "",
+                brand: "",
+                type: "Importation",
+                priceHT: 0,
+                priceTTC: 0
+            });
+            loadTenders();
+        }
+    };
+
+    const handleDeleteItem = async (itemId) => {
+        const updatedTender = {
+            ...selectedTender,
+            items: selectedTender.items.filter(item => item.id !== itemId)
+        };
+        
+        const success = await tenderService.saveTender(updatedTender, currentUser.firstName);
+        if (success) {
+            setSelectedTender(updatedTender);
+            loadTenders();
+        }
+    };
+
+    const calculateTotals = (items = []) => {
+        return items.reduce((acc, item) => {
+            acc.ht += (Number(item.priceHT) || 0) * (Number(item.quantity) || 1);
+            acc.ttc += (Number(item.priceTTC) || 0) * (Number(item.quantity) || 1);
+            return acc;
+        }, { ht: 0, ttc: 0 });
     };
 
     const filteredTenders = useMemo(() => {
@@ -840,6 +907,166 @@ const Tenders = () => {
                                             </tbody>
                                         </table>
                                     </div>
+                                </div>
+                            )}
+
+                            {/* Section 3.5: Commercial Offer Details (Items Table) */}
+                            {(isCoordinator || selectedTender.assignments?.some(a => a.email === currentUser.email)) && (
+                                <div className="space-y-8 p-10 bg-white rounded-[3rem] border border-slate-200 shadow-sm">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                                                <ShoppingBag size={24} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Détails de l'Offre Commerciale</h4>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Saisie des items du bordereau</p>
+                                            </div>
+                                        </div>
+                                        
+                                        {selectedTender.items?.length > 0 && (
+                                            <div className="flex gap-4">
+                                                <div className="bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100">
+                                                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Total HT</p>
+                                                    <p className="text-sm font-black text-slate-900">{calculateTotals(selectedTender.items).ht.toLocaleString()} DA</p>
+                                                </div>
+                                                <div className="bg-indigo-50 px-5 py-3 rounded-2xl border border-indigo-100">
+                                                    <p className="text-[8px] font-black text-indigo-400 uppercase mb-1">Total TTC</p>
+                                                    <p className="text-sm font-black text-indigo-600">{calculateTotals(selectedTender.items).ttc.toLocaleString()} DA</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Item Entry Form */}
+                                    <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                            <div className="md:col-span-2 space-y-2">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Désignation Produit</label>
+                                                <input 
+                                                    type="text"
+                                                    value={newItem.designation}
+                                                    onChange={(e) => setNewItem({...newItem, designation: e.target.value})}
+                                                    className="w-full px-6 py-4 bg-white rounded-2xl border-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                                                    placeholder="Nom de l'article..."
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Référence</label>
+                                                <input 
+                                                    type="text"
+                                                    value={newItem.reference}
+                                                    onChange={(e) => setNewItem({...newItem, reference: e.target.value})}
+                                                    className="w-full px-6 py-4 bg-white rounded-2xl border-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                                                    placeholder="Réf catalogue..."
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Quantité</label>
+                                                <input 
+                                                    type="number"
+                                                    value={newItem.quantity}
+                                                    onChange={(e) => setNewItem({...newItem, quantity: e.target.value})}
+                                                    className="w-full px-6 py-4 bg-white rounded-2xl border-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Accessoires</label>
+                                                <input 
+                                                    type="text"
+                                                    value={newItem.accessories}
+                                                    onChange={(e) => setNewItem({...newItem, accessories: e.target.value})}
+                                                    className="w-full px-6 py-4 bg-white rounded-2xl border-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                                                    placeholder="Options..."
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Marque / Fournisseur</label>
+                                                <input 
+                                                    type="text"
+                                                    value={newItem.brand}
+                                                    onChange={(e) => setNewItem({...newItem, brand: e.target.value})}
+                                                    className="w-full px-6 py-4 bg-white rounded-2xl border-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                                                    placeholder="Marque..."
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Origine</label>
+                                                <select 
+                                                    value={newItem.type}
+                                                    onChange={(e) => setNewItem({...newItem, type: e.target.value})}
+                                                    className="w-full px-6 py-4 bg-white rounded-2xl border-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all appearance-none"
+                                                >
+                                                    <option value="Importation">Importation</option>
+                                                    <option value="Produit Local">Produit Local</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Prix HT (DA)</label>
+                                                <input 
+                                                    type="number"
+                                                    value={newItem.priceHT}
+                                                    onChange={(e) => setNewItem({...newItem, priceHT: e.target.value, priceTTC: e.target.value * 1.19})}
+                                                    className="w-full px-6 py-4 bg-white rounded-2xl border-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                                                />
+                                            </div>
+                                            <div className="flex items-end">
+                                                <button 
+                                                    onClick={handleAddItem}
+                                                    className="w-full h-[52px] bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
+                                                >
+                                                    <Plus size={16} /> Ajouter Item
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Items Table */}
+                                    {selectedTender.items?.length > 0 && (
+                                        <div className="overflow-hidden border border-slate-100 rounded-[2rem] shadow-sm bg-white">
+                                            <table className="w-full text-left">
+                                                <thead className="bg-slate-50 border-b border-slate-100">
+                                                    <tr>
+                                                        <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Désignation</th>
+                                                        <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Référence</th>
+                                                        <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Qté</th>
+                                                        <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Marque</th>
+                                                        <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Prix HT</th>
+                                                        <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Prix TTC</th>
+                                                        <th className="p-6"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100">
+                                                    {selectedTender.items.map(item => (
+                                                        <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                                                            <td className="p-6">
+                                                                <p className="text-xs font-black text-slate-900 uppercase">{item.designation}</p>
+                                                                <div className="flex flex-wrap gap-2 mt-1">
+                                                                    <span className="text-[8px] font-black px-2 py-0.5 bg-slate-100 text-slate-400 rounded-md uppercase">{item.type}</span>
+                                                                    {item.accessories && (
+                                                                        <span className="text-[8px] font-black px-2 py-0.5 bg-indigo-50 text-indigo-400 rounded-md uppercase">Acc: {item.accessories}</span>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                            <td className="p-6 text-xs font-bold text-slate-600">{item.reference}</td>
+                                                            <td className="p-6 text-xs font-black text-slate-900">{item.quantity}</td>
+                                                            <td className="p-6 text-xs font-bold text-indigo-600 uppercase">{item.brand}</td>
+                                                            <td className="p-6 text-xs font-black text-slate-900 text-right">{item.priceHT?.toLocaleString()} DA</td>
+                                                            <td className="p-6 text-xs font-black text-emerald-600 text-right">{item.priceTTC?.toLocaleString()} DA</td>
+                                                            <td className="p-6 text-right">
+                                                                <button 
+                                                                    onClick={() => handleDeleteItem(item.id)}
+                                                                    className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
