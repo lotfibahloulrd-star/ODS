@@ -81,7 +81,16 @@ const Tenders = () => {
         organism: "",
         status: "En préparation",
         assignments: [], // Array of { email, name, role, status: 'pending'|'done' }
-        items: [] // Array of { id, designation, reference, quantity, accessories, brand, type, priceHT, priceTTC }
+        items: [], // Array of { id, designation, reference, quantity, accessories, brand, type, priceHT, priceTTC }
+        
+        // Service des Marchés Fields
+        contractNumber: "",
+        assignedCommercial: "",
+        deliveryDelay: "",
+        odsDate: "",
+        stopOdsDate: "",
+        restartOdsDate: "",
+        deliveryDeadline: ""
     });
 
     const [editingItem, setEditingItem] = useState(null);
@@ -119,7 +128,14 @@ const Tenders = () => {
                 organism: "",
                 status: "En préparation",
                 assignments: [],
-                items: []
+                items: [],
+                contractNumber: "",
+                assignedCommercial: "",
+                deliveryDelay: "",
+                odsDate: "",
+                stopOdsDate: "",
+                restartOdsDate: "",
+                deliveryDeadline: ""
             });
         }
         setShowForm(true);
@@ -1067,6 +1083,120 @@ const Tenders = () => {
                                             </table>
                                         </div>
                                     )}
+                                </div>
+                            )}
+
+                            {/* Section 3.6: Service des Marchés (Administrative Tracking) */}
+                            {isCoordinator && (
+                                <div className="space-y-8 p-10 bg-slate-900 rounded-[3rem] text-white shadow-2xl shadow-indigo-200">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                                            <ClipboardCheck size={24} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-black uppercase tracking-tight">Service des Marchés</h4>
+                                            <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">Suivi administratif et exécution du contrat</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-indigo-300 uppercase tracking-widest ml-1">N° Contrat</label>
+                                            <input 
+                                                type="text"
+                                                value={selectedTender.contractNumber || ""}
+                                                onChange={async (e) => {
+                                                    const updated = { ...selectedTender, contractNumber: e.target.value };
+                                                    setSelectedTender(updated);
+                                                    await tenderService.saveTender(updated, currentUser.firstName);
+                                                }}
+                                                className="w-full px-6 py-4 bg-white/10 rounded-2xl border-none text-xs font-bold text-white placeholder:text-white/20 focus:ring-2 focus:ring-indigo-500 transition-all"
+                                                placeholder="Référence contrat..."
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-indigo-300 uppercase tracking-widest ml-1">Commercial Responsable</label>
+                                            <select 
+                                                value={selectedTender.assignedCommercial || ""}
+                                                onChange={async (e) => {
+                                                    const updated = { ...selectedTender, assignedCommercial: e.target.value };
+                                                    setSelectedTender(updated);
+                                                    await tenderService.saveTender(updated, currentUser.firstName);
+                                                }}
+                                                className="w-full px-6 py-4 bg-white/10 rounded-2xl border-none text-xs font-bold text-white focus:ring-2 focus:ring-indigo-500 transition-all appearance-none"
+                                            >
+                                                <option value="" className="text-slate-900">Sélectionner...</option>
+                                                {PERSONNEL.map(p => <option key={p.email} value={p.name} className="text-slate-900">{p.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-indigo-300 uppercase tracking-widest ml-1">Délais de livraison</label>
+                                            <input 
+                                                type="text"
+                                                value={selectedTender.deliveryDelay || ""}
+                                                onChange={async (e) => {
+                                                    const updated = { ...selectedTender, deliveryDelay: e.target.value };
+                                                    setSelectedTender(updated);
+                                                    await tenderService.saveTender(updated, currentUser.firstName);
+                                                }}
+                                                className="w-full px-6 py-4 bg-white/10 rounded-2xl border-none text-xs font-bold text-white placeholder:text-white/20 focus:ring-2 focus:ring-indigo-500 transition-all"
+                                                placeholder="Ex: 30 jours..."
+                                            />
+                                        </div>
+                                        
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-indigo-300 uppercase tracking-widest ml-1">DATE Dépôts ; ODS</label>
+                                            <input 
+                                                type="date"
+                                                value={selectedTender.odsDate || ""}
+                                                onChange={async (e) => {
+                                                    const updated = { ...selectedTender, odsDate: e.target.value };
+                                                    setSelectedTender(updated);
+                                                    await tenderService.saveTender(updated, currentUser.firstName);
+                                                }}
+                                                className="w-full px-6 py-4 bg-white/10 rounded-2xl border-none text-xs font-bold text-white focus:ring-2 focus:ring-indigo-500 transition-all"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-rose-300 uppercase tracking-widest ml-1">DATE ODS D'ARRET</label>
+                                            <input 
+                                                type="date"
+                                                value={selectedTender.stopOdsDate || ""}
+                                                onChange={async (e) => {
+                                                    const updated = { ...selectedTender, stopOdsDate: e.target.value };
+                                                    setSelectedTender(updated);
+                                                    await tenderService.saveTender(updated, currentUser.firstName);
+                                                }}
+                                                className="w-full px-6 py-4 bg-white/10 rounded-2xl border border-rose-500/30 text-xs font-bold text-white focus:ring-2 focus:ring-rose-500 transition-all"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-emerald-300 uppercase tracking-widest ml-1">DATE ODS DE REPRISE</label>
+                                            <input 
+                                                type="date"
+                                                value={selectedTender.restartOdsDate || ""}
+                                                onChange={async (e) => {
+                                                    const updated = { ...selectedTender, restartOdsDate: e.target.value };
+                                                    setSelectedTender(updated);
+                                                    await tenderService.saveTender(updated, currentUser.firstName);
+                                                }}
+                                                className="w-full px-6 py-4 bg-white/10 rounded-2xl border border-emerald-500/30 text-xs font-bold text-white focus:ring-2 focus:ring-emerald-500 transition-all"
+                                            />
+                                        </div>
+                                        <div className="md:col-span-3 space-y-2">
+                                            <label className="text-[9px] font-black text-amber-300 uppercase tracking-widest ml-1">ECHEANCE DE LIVRAISON</label>
+                                            <input 
+                                                type="date"
+                                                value={selectedTender.deliveryDeadline || ""}
+                                                onChange={async (e) => {
+                                                    const updated = { ...selectedTender, deliveryDeadline: e.target.value };
+                                                    setSelectedTender(updated);
+                                                    await tenderService.saveTender(updated, currentUser.firstName);
+                                                }}
+                                                className="w-full px-6 py-4 bg-indigo-500/20 rounded-2xl border border-amber-500/30 text-xs font-black text-white focus:ring-2 focus:ring-amber-500 transition-all"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
