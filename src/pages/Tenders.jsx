@@ -95,7 +95,15 @@ const Tenders = () => {
         // Importation Fields
         importLaunchStatus: "En attente",
         importAuthStatus: "En attente",
-        importClearanceStatus: "En attente"
+        importClearanceStatus: "En attente",
+
+        // Logistics Fields
+        logisticsStockStatus: "En attente",
+        logisticsDeliveryStatus: "En attente",
+        logisticsBillingStatus: "En attente",
+        logisticsProvisionalPvStatus: "En attente",
+        logisticsWarrantyStatus: "",
+        logisticsFinalPvStatus: "En attente"
     });
 
     const [editingItem, setEditingItem] = useState(null);
@@ -143,7 +151,13 @@ const Tenders = () => {
                 deliveryDeadline: "",
                 importLaunchStatus: "En attente",
                 importAuthStatus: "En attente",
-                importClearanceStatus: "En attente"
+                importClearanceStatus: "En attente",
+                logisticsStockStatus: "En attente",
+                logisticsDeliveryStatus: "En attente",
+                logisticsBillingStatus: "En attente",
+                logisticsProvisionalPvStatus: "En attente",
+                logisticsWarrantyStatus: "",
+                logisticsFinalPvStatus: "En attente"
             });
         }
         setShowForm(true);
@@ -1290,6 +1304,143 @@ const Tenders = () => {
                                                     <option value="Arrivage Port/Aéroport">Arrivage Port/Aéroport</option>
                                                     <option value="Sous-douane">Sous-douane</option>
                                                     <option value="Dédouané">Dédouané</option>
+                                                </select>
+                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Section 3.8: Logistics Service */}
+                            {(isCoordinator || isSuperAdmin) && (
+                                <div className="space-y-8 p-10 bg-white rounded-[3rem] border-4 border-emerald-100 shadow-xl shadow-emerald-50">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
+                                            <Package size={24} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Service Logistique & Stock</h4>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Suivi de disponibilité et clôture technique</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        {/* Stock Availability */}
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Disponibilité en Stock</label>
+                                            <div className="relative">
+                                                <select 
+                                                    value={selectedTender.logisticsStockStatus || "En attente"}
+                                                    onChange={async (e) => {
+                                                        const updated = { ...selectedTender, logisticsStockStatus: e.target.value };
+                                                        setSelectedTender(updated);
+                                                        await tenderService.saveTender(updated, currentUser.firstName);
+                                                    }}
+                                                    className="w-full px-6 py-4 rounded-2xl border-2 bg-slate-50 border-slate-100 text-xs font-black transition-all appearance-none"
+                                                >
+                                                    <option value="En attente">En attente</option>
+                                                    <option value="Partiel">Partiel</option>
+                                                    <option value="Disponible">Disponible</option>
+                                                </select>
+                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+
+                                        {/* Delivery */}
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Livraison</label>
+                                            <div className="relative">
+                                                <select 
+                                                    value={selectedTender.logisticsDeliveryStatus || "En attente"}
+                                                    onChange={async (e) => {
+                                                        const updated = { ...selectedTender, logisticsDeliveryStatus: e.target.value };
+                                                        setSelectedTender(updated);
+                                                        await tenderService.saveTender(updated, currentUser.firstName);
+                                                    }}
+                                                    className="w-full px-6 py-4 rounded-2xl border-2 bg-slate-50 border-slate-100 text-xs font-black transition-all appearance-none"
+                                                >
+                                                    <option value="En attente">En attente</option>
+                                                    <option value="En cours">En cours</option>
+                                                    <option value="Effectuée">Effectuée</option>
+                                                </select>
+                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+
+                                        {/* Billing */}
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Facturation</label>
+                                            <div className="relative">
+                                                <select 
+                                                    value={selectedTender.logisticsBillingStatus || "En attente"}
+                                                    onChange={async (e) => {
+                                                        const updated = { ...selectedTender, logisticsBillingStatus: e.target.value };
+                                                        setSelectedTender(updated);
+                                                        await tenderService.saveTender(updated, currentUser.firstName);
+                                                    }}
+                                                    className="w-full px-6 py-4 rounded-2xl border-2 bg-slate-50 border-slate-100 text-xs font-black transition-all appearance-none"
+                                                >
+                                                    <option value="En attente">En attente</option>
+                                                    <option value="Facturé">Facturé</option>
+                                                    <option value="Encaissé">Encaissé</option>
+                                                </select>
+                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+
+                                        {/* PV Provisoire */}
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">PV de Réception Provisoire</label>
+                                            <div className="relative">
+                                                <select 
+                                                    value={selectedTender.logisticsProvisionalPvStatus || "En attente"}
+                                                    onChange={async (e) => {
+                                                        const updated = { ...selectedTender, logisticsProvisionalPvStatus: e.target.value };
+                                                        setSelectedTender(updated);
+                                                        await tenderService.saveTender(updated, currentUser.firstName);
+                                                    }}
+                                                    className="w-full px-6 py-4 rounded-2xl border-2 bg-slate-50 border-slate-100 text-xs font-black transition-all appearance-none"
+                                                >
+                                                    <option value="En attente">En attente</option>
+                                                    <option value="Reçu">Reçu</option>
+                                                    <option value="Signé">Signé</option>
+                                                </select>
+                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+
+                                        {/* Warranty */}
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Délai de Garantie</label>
+                                            <input 
+                                                type="text"
+                                                value={selectedTender.logisticsWarrantyStatus || ""}
+                                                placeholder="Ex: 12 mois"
+                                                onChange={async (e) => {
+                                                    const updated = { ...selectedTender, logisticsWarrantyStatus: e.target.value };
+                                                    setSelectedTender(updated);
+                                                    await tenderService.saveTender(updated, currentUser.firstName);
+                                                }}
+                                                className="w-full px-6 py-4 rounded-2xl border-2 bg-slate-50 border-slate-100 text-xs font-black transition-all outline-none focus:border-emerald-400"
+                                            />
+                                        </div>
+
+                                        {/* PV Définitif */}
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">PV de Réception Définitive</label>
+                                            <div className="relative">
+                                                <select 
+                                                    value={selectedTender.logisticsFinalPvStatus || "En attente"}
+                                                    onChange={async (e) => {
+                                                        const updated = { ...selectedTender, logisticsFinalPvStatus: e.target.value };
+                                                        setSelectedTender(updated);
+                                                        await tenderService.saveTender(updated, currentUser.firstName);
+                                                    }}
+                                                    className="w-full px-6 py-4 rounded-2xl border-2 bg-slate-50 border-slate-100 text-xs font-black transition-all appearance-none"
+                                                >
+                                                    <option value="En attente">En attente</option>
+                                                    <option value="Signé">Signé</option>
                                                 </select>
                                                 <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                             </div>
