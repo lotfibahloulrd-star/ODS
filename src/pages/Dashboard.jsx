@@ -38,7 +38,8 @@ import {
     Activity,
     ClipboardList,
     Users,
-    Check
+    Check,
+    Briefcase
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
