@@ -16,7 +16,10 @@ import {
     ArrowRight,
     Plus,
     FileUp,
-    Bell
+    Bell,
+    Plane,
+    Package,
+    DollarSign
 } from 'lucide-react';
 
 const Guide = () => {
@@ -99,6 +102,21 @@ const Guide = () => {
                                     <div className="absolute -left-[60px] top-0 w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white font-black text-sm shadow-lg">5</div>
                                     <h4 className="text-lg font-black text-slate-900 mb-2 uppercase">Suivi du Marché</h4>
                                     <p className="text-sm text-slate-500 font-medium">Si adjugé, la section **Service des Marchés** apparaît pour le suivi administratif : N° Contrat, ODS, Arrêt/Reprise et Échéance de livraison.</p>
+                                </div>
+                                <div className="relative">
+                                    <div className="absolute -left-[60px] top-0 w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-200">6</div>
+                                    <h4 className="text-lg font-black text-slate-900 mb-2 uppercase">Logistique Importation</h4>
+                                    <p className="text-sm text-slate-500 font-medium">Pour les articles étrangers, le **Service Import** suit le lancement des commandes, les autorisations (ALGEX/Banque) et le dédouanement au port.</p>
+                                </div>
+                                <div className="relative">
+                                    <div className="absolute -left-[60px] top-0 w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black text-sm shadow-lg shadow-emerald-200">7</div>
+                                    <h4 className="text-lg font-black text-slate-900 mb-2 uppercase">Réception & Stock</h4>
+                                    <p className="text-sm text-slate-500 font-medium">Suivi de la disponibilité réelle en magasin, gestion des livraisons partielles, émission des **PV Provisoires** et suivi de la période de **Garantie**.</p>
+                                </div>
+                                <div className="relative">
+                                    <div className="absolute -left-[60px] top-0 w-10 h-10 bg-amber-600 rounded-full flex items-center justify-center text-white font-black text-sm shadow-lg shadow-amber-200">8</div>
+                                    <h4 className="text-lg font-black text-slate-900 mb-2 uppercase">Clôture Financière</h4>
+                                    <p className="text-sm text-slate-500 font-medium">Dernière étape du cycle : la **Finance** valide l'encaissement total. Une fois le paiement confirmé, le dossier est considéré comme finalisé.</p>
                                 </div>
                             </div>
                         </div>
