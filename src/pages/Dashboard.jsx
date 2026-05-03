@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { notificationService } from '../services/notificationService';
 import { messageService } from '../services/messageService';
 import { logService } from '../services/logService';
+import { tenderService } from '../services/tenderService';
 import {
     FileText,
     FileCheck,
@@ -63,6 +64,7 @@ const Dashboard = () => {
     const [activeStatusFilter, setActiveStatusFilter] = useState(searchParams.get('status'));
     const [showRescueModal, setShowRescueModal] = useState(false);
     const [localSnapshots, setLocalSnapshots] = useState([]);
+    const [tendersCount, setTendersCount] = useState(0);
 
     // Update filters if URL changes
     useEffect(() => {
@@ -157,6 +159,15 @@ const Dashboard = () => {
             orderService._cleanupLegacyStorage();
             alert("Stockage optimisé ! Veuillez rafraîchir la page si le problème persiste.");
             loadOrders();
+        }
+    };
+
+    const loadTendersCount = async () => {
+        try {
+            const data = await tenderService.getAllTenders();
+            setTendersCount(Array.isArray(data) ? data.length : 0);
+        } catch (e) {
+            console.error("Error loading tenders count", e);
         }
     };
 
@@ -290,6 +301,7 @@ const Dashboard = () => {
         loadOrders();
         loadMessages();
         loadLogs();
+        loadTendersCount();
 
         // Intervalle de rafraîchissement des données (ODS, Messages, Logs)
         const orderInterval = setInterval(loadOrders, 30000);
@@ -1054,6 +1066,78 @@ const Dashboard = () => {
                                 </div>
                             </div>
                         )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Operational Cycle Section */}
+            <div className="mb-10 animate-in slide-in-from-top-10 duration-700">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-8 bg-slate-900 rounded-xl flex items-center justify-center text-white">
+                        <Activity size={16} />
+                    </div>
+                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-[0.2em]">Cycle Opérationnel</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Entry 1: Tenders (The Origin) */}
+                    <div 
+                        onClick={() => navigate('/tenders')}
+                        className="bg-indigo-900 p-8 rounded-[3rem] text-white flex items-center justify-between group cursor-pointer hover:scale-[1.02] transition-all shadow-2xl shadow-indigo-100 relative overflow-hidden"
+                    >
+                        <div className="absolute -right-10 -bottom-10 opacity-10 group-hover:rotate-12 transition-transform duration-700">
+                            <Briefcase size={200} />
+                        </div>
+                        <div className="space-y-4 relative z-10">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                                    <Briefcase size={20} className="text-indigo-300" />
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">Phase de Soumission</span>
+                            </div>
+                            <div>
+                                <h4 className="text-3xl font-black tracking-tight mb-2">Appels d'Offres</h4>
+                                <p className="text-xs text-indigo-200/70 font-medium max-w-xs">Gestion des CDC, offres techniques et suivi du workflow collaboratif.</p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <span className="px-4 py-2 bg-indigo-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/10">
+                                    {tendersCount} Dossiers en cours
+                                </span>
+                                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest group-hover:gap-4 transition-all">
+                                    Gérer <ArrowRight size={16} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Entry 2: ODS (The Execution) */}
+                    <div 
+                        onClick={() => window.scrollTo({ top: 800, behavior: 'smooth' })}
+                        className="bg-white p-8 rounded-[3rem] border-4 border-slate-100 flex items-center justify-between group cursor-pointer hover:border-blue-400 transition-all shadow-xl shadow-slate-100 relative overflow-hidden"
+                    >
+                        <div className="absolute -right-10 -bottom-10 opacity-5 group-hover:rotate-12 transition-transform duration-700">
+                            <Package size={200} />
+                        </div>
+                        <div className="space-y-4 relative z-10">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center">
+                                    <Package size={20} className="text-blue-600" />
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Phase d'Exécution</span>
+                            </div>
+                            <div>
+                                <h4 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Ordres de Service</h4>
+                                <p className="text-xs text-slate-500 font-medium max-w-xs">Suivi des livraisons, paiements et exécution des contrats adjugés.</p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <span className="px-4 py-2 bg-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 border border-slate-200">
+                                    {stats.total} Engagements suivis
+                                </span>
+                                <div className="flex items-center gap-2 text-xs font-black text-blue-600 uppercase tracking-widest group-hover:gap-4 transition-all">
+                                    Consulter <ArrowRight size={16} />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
