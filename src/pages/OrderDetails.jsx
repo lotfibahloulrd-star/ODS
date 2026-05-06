@@ -552,6 +552,7 @@ const OrderDetails = () => {
                                         <option value="En cours">En cours</option>
                                         <option value="En attente de paiement">En attente de paiement</option>
                                         <option value="Suivi financier">Suivi financier</option>
+                                        <option value="Pousser avec GitHub">Pousser avec GitHub</option>
                                     </select>
                                     <div className="flex gap-1">
                                         <button

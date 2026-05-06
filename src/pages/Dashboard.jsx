@@ -1274,6 +1274,7 @@ const Dashboard = () => {
                                         <thead>
                                             <tr className="bg-slate-50 border-b border-slate-100">
                                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Client / Maître d'Ouvrage</th>
+                                                <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">Statut ODS</th>
                                                 <th className="px-6 py-6 text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Responsable</th>
                                                 {financialFilter ? (
                                                     <>
@@ -1333,6 +1334,41 @@ const Dashboard = () => {
                                                             </div>
                                                             <div className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">
                                                                 {order.refOds || order.ref || "Sans Réf ODS"}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-7">
+                                                            <div className="relative group/status" onClick={(e) => e.stopPropagation()}>
+                                                                {auth.canEditAdminFields() ? (
+                                                                    <select
+                                                                        value={order.status || 'En cours'}
+                                                                        onChange={async (e) => {
+                                                                            await orderService.updateOrder(order.id, { status: e.target.value }, currentUser.firstName);
+                                                                            loadOrders();
+                                                                        }}
+                                                                        className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all cursor-pointer outline-none ${
+                                                                            (order.status === 'En attente de paiement' || order.status === 'Suivi financier') ? 'bg-amber-50 text-amber-600 border-amber-200' : 
+                                                                            order.status === 'En cours' ? 'bg-blue-50 text-blue-600 border-blue-200' : 
+                                                                            order.status === 'En attente d\'ods' || order.status === 'En attente d\'ODS' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 
+                                                                            'bg-slate-50 text-slate-600 border-slate-200'
+                                                                        }`}
+                                                                    >
+                                                                        <option value="Attribution en cours">Attribution en cours</option>
+                                                                        <option value="En attente d'ods">En attente d'ODS</option>
+                                                                        <option value="En cours">En cours</option>
+                                                                        <option value="En attente de paiement">En attente de paiement</option>
+                                                                        <option value="Suivi financier">Suivi financier</option>
+                                                                        <option value="Pousser avec GitHub">Pousser avec GitHub</option>
+                                                                    </select>
+                                                                ) : (
+                                                                    <div className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
+                                                                        (order.status === 'En attente de paiement' || order.status === 'Suivi financier' || order.status === 'Pousser avec GitHub') ? 'bg-amber-50 text-amber-600 border-amber-200' : 
+                                                                        order.status === 'En cours' ? 'bg-blue-50 text-blue-600 border-blue-200' : 
+                                                                        order.status === 'En attente d\'ods' || order.status === 'En attente d\'ODS' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 
+                                                                        'bg-slate-50 text-slate-600 border-slate-200'
+                                                                    }`}>
+                                                                        {order.status || 'En cours'}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-7">
