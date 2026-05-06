@@ -451,22 +451,29 @@ const Dashboard = () => {
     const groupedOrders = useMemo(() => {
         const sections = [
             { id: 'payment', label: 'En attente de paiement', color: 'bg-amber-600' },
+            { id: 'financial', label: 'Suivi financier', color: 'bg-emerald-600' },
             { id: 'ongoing', label: 'En cours', color: 'bg-blue-600' },
             { id: 'waiting_ods', label: 'En attente d\'ODS', color: 'bg-indigo-600' },
-            { id: 'attribution', label: 'Attribution en attente', color: 'bg-slate-600' }
+            { id: 'attribution', label: 'Attribution en cours', color: 'bg-slate-600' }
         ];
 
         const grouped = {
             'En attente de paiement': [],
+            'Suivi financier': [],
             'En cours': [],
             'En attente d\'ODS': [],
-            'Attribution en attente': []
+            'Attribution en cours': []
         };
 
         filteredOrders.forEach(o => {
             const status = o.status || 'En cours';
-            if (grouped[status]) {
-                grouped[status].push(o);
+            // Harmonisation pour le groupage
+            let groupStatus = status;
+            if (groupStatus === 'En attente d\'ods') groupStatus = 'En attente d\'ODS';
+            if (groupStatus === 'Attribution en attente') groupStatus = 'Attribution en cours';
+
+            if (grouped[groupStatus]) {
+                grouped[groupStatus].push(o);
             } else {
                 // Default fallback
                 grouped['En cours'].push(o);
@@ -645,9 +652,10 @@ const Dashboard = () => {
 
         const byStatus = {
             'En attente de paiement': orders.filter(o => o.status === 'En attente de paiement').length,
+            'Suivi financier': orders.filter(o => o.status === 'Suivi financier').length,
             'En cours': orders.filter(o => o.status === 'En cours' || !o.status).length,
-            'En attente d\'ODS': orders.filter(o => o.status === 'En attente d\'ODS').length,
-            'Attribution en attente': orders.filter(o => o.status === 'Attribution en attente').length
+            'En attente d\'ODS': orders.filter(o => o.status === 'En attente d\'ODS' || o.status === 'En attente d\'ods').length,
+            'Attribution en cours': orders.filter(o => o.status === 'Attribution en cours' || o.status === 'Attribution en attente').length
         };
 
         return { total, totalAmount, pendingAuth, overdue, byStatus };

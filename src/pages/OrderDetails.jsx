@@ -58,6 +58,8 @@ const OrderDetails = () => {
     const [editingArticleData, setEditingArticleData] = useState(null);
     const [isAddingArticle, setIsAddingArticle] = useState(false);
     const [isEditingFooter, setIsEditingFooter] = useState(false);
+    const [isEditingStatus, setIsEditingStatus] = useState(false);
+    const [tempStatus, setTempStatus] = useState("");
     const [newArticle, setNewArticle] = useState({ no: "", ref: "", designation: "", qte: "", pu: "", marque: "", site: "" });
     const [isAddingContact, setIsAddingContact] = useState(false);
     const [newContactData, setNewContactData] = useState({ name: "", position: "", phone: "", email: "" });
@@ -110,6 +112,7 @@ const OrderDetails = () => {
                 setTempProgress(found.manualProgress !== undefined ? found.manualProgress : "");
                 setTempDivision(found.division || "");
                 setTempManager(found.manager || "");
+                setTempStatus(found.status || "En cours");
                 const finData = found.financial || {
                     paymentStatus: 'Aucun',
                     paymentAmount: '',
@@ -533,6 +536,54 @@ const OrderDetails = () => {
                     >
                         {order.authorization === 'Oui' ? 'Autorisation confirmée' : 'Attente Autorisation'}
                     </button>
+
+                    {canEditAdminFields() && (
+                        <div className="flex items-center gap-2">
+                            {isEditingStatus ? (
+                                <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm p-1.5 rounded-2xl border border-indigo-200 shadow-xl animate-in zoom-in-95 duration-200">
+                                    <select
+                                        value={tempStatus}
+                                        onChange={e => setTempStatus(e.target.value)}
+                                        className="text-[10px] font-black uppercase outline-none px-3 py-1 bg-slate-50 rounded-xl border border-slate-100 focus:border-indigo-300 transition-all cursor-pointer"
+                                        autoFocus
+                                    >
+                                        <option value="Attribution en cours">Attribution en cours</option>
+                                        <option value="En attente d'ods">En attente d'ODS</option>
+                                        <option value="En cours">En cours</option>
+                                        <option value="En attente de paiement">En attente de paiement</option>
+                                        <option value="Suivi financier">Suivi financier</option>
+                                    </select>
+                                    <div className="flex gap-1">
+                                        <button
+                                            onClick={() => handleSaveAdminFields('status', tempStatus, setTempStatus, setIsEditingStatus, 'Statut')}
+                                            className="w-8 h-8 flex items-center justify-center text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                                            title="Enregistrer le statut"
+                                        >
+                                            <CheckCircle2 size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => setIsEditingStatus(false)}
+                                            className="w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                            title="Annuler"
+                                        >
+                                            <RotateCcw size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => {
+                                        setTempStatus(order.status || "En cours");
+                                        setIsEditingStatus(true);
+                                    }}
+                                    className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] transition-all flex items-center gap-2.5 bg-white border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 shadow-sm`}
+                                >
+                                    <Briefcase size={15} />
+                                    Statut: {order.status || "En cours"}
+                                </button>
+                            )}
+                        </div>
+                    )}
 
                     {canEditAdminFields() && (
                         <div className="flex items-center gap-2">

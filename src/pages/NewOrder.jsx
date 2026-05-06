@@ -42,6 +42,7 @@ const NewOrder = ({ onSave }) => {
         articles: [],
         contacts: [],
         manager: '', // Responsable du dossier
+        status: 'En cours',
         totals: { ht: 0, tva: 0, ttc: 0 }
     });
 
@@ -400,6 +401,7 @@ const NewOrder = ({ onSave }) => {
                 judicialProceedings: '',
                 articles: [],
                 manager: '',
+                status: 'En cours',
                 totals: { ht: 0, tva: 0, ttc: 0 }
             });
             if (onSave) onSave();
@@ -654,6 +656,20 @@ const NewOrder = ({ onSave }) => {
                                             <option value="BELATECHE TAKLIT">BELATECHE TAKLIT</option>
                                             <option value="NIHAD BOURAS">NIHAD BOURAS</option>
                                             <option value="HAMZA BRIKH">HAMZA BRIKH</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3 px-1">Statut Initial</label>
+                                        <select
+                                            className="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-[2rem] font-black text-indigo-600 outline-none focus:border-indigo-500 transition-all shadow-sm cursor-pointer"
+                                            value={formData.status}
+                                            onChange={e => setFormData({ ...formData, status: e.target.value })}
+                                        >
+                                            <option value="Attribution en cours">Attribution en cours</option>
+                                            <option value="En attente d'ods">En attente d'ODS</option>
+                                            <option value="En cours">En cours</option>
+                                            <option value="En attente de paiement">En attente de paiement</option>
+                                            <option value="Suivi financier">Suivi financier</option>
                                         </select>
                                     </div>
                                 </div>
