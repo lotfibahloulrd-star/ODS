@@ -470,7 +470,6 @@ const Dashboard = () => {
         const sections = [
             { id: 'payment', label: 'En attente de paiement', color: 'bg-amber-600' },
             { id: 'financial', label: 'Suivi financier', color: 'bg-emerald-600' },
-            { id: 'github', label: 'Pousser avec GitHub', color: 'bg-slate-900' },
             { id: 'ongoing', label: 'En cours', color: 'bg-blue-600' },
             { id: 'waiting_ods', label: 'En attente d\'ODS', color: 'bg-indigo-600' },
             { id: 'attribution', label: 'Attribution en cours', color: 'bg-slate-600' }
@@ -479,7 +478,6 @@ const Dashboard = () => {
         const grouped = {
             'En attente de paiement': [],
             'Suivi financier': [],
-            'Pousser avec GitHub': [],
             'En cours': [],
             'En attente d\'ODS': [],
             'Attribution en cours': []
@@ -673,7 +671,6 @@ const Dashboard = () => {
         const byStatus = {
             'En attente de paiement': orders.filter(o => o.status === 'En attente de paiement').length,
             'Suivi financier': orders.filter(o => o.status === 'Suivi financier').length,
-            'Pousser avec GitHub': orders.filter(o => o.status === 'Pousser avec GitHub').length,
             'En cours': orders.filter(o => o.status === 'En cours' || !o.status).length,
             'En attente d\'ODS': orders.filter(o => o.status === 'En attente d\'ODS' || o.status === 'En attente d\'ods').length,
             'Attribution en cours': orders.filter(o => o.status === 'Attribution en cours' || o.status === 'Attribution en attente').length
@@ -1269,7 +1266,6 @@ const Dashboard = () => {
                         {[
                             { label: 'En attente de paiement', color: 'bg-amber-600' },
                             { label: 'Suivi financier', color: 'bg-emerald-600' },
-                            { label: 'Pousser avec GitHub', color: 'bg-slate-900' },
                             { label: 'En cours', color: 'bg-blue-600' },
                             { label: 'En attente d\'ODS', color: 'bg-indigo-600' },
                             { label: 'Attribution en cours', color: 'bg-slate-600' }
