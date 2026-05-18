@@ -466,5 +466,67 @@ export const orderService = {
         localStorage.setItem(currentVersion, JSON.stringify(snapshotData));
         localStorage.setItem('ods_data_version', currentVersion);
         return true;
+    },
+
+    getDuplicateOrders: (orders) => {
+        if (!orders || !Array.isArray(orders)) return [];
+        
+        const groups = [];
+        const processedIds = new Set();
+        
+        for (let i = 0; i < orders.length; i++) {
+            const orderA = orders[i];
+            if (processedIds.has(orderA.id)) continue;
+            
+            const clientA = (orderA.client || '').trim().toLowerCase();
+            if (!clientA) continue;
+            
+            const refOdsA = (orderA.refOds || orderA.ref || '').trim().toLowerCase();
+            const refContractA = (orderA.refContract || '').trim().toLowerCase();
+            
+            const duplicates = [];
+            
+            for (let j = i + 1; j < orders.length; j++) {
+                const orderB = orders[j];
+                if (processedIds.has(orderB.id)) continue;
+                
+                const clientB = (orderB.client || '').trim().toLowerCase();
+                if (!clientB) continue;
+                
+                if (clientA !== clientB) continue;
+                
+                const refOdsB = (orderB.refOds || orderB.ref || '').trim().toLowerCase();
+                const refContractB = (orderB.refContract || '').trim().toLowerCase();
+                
+                let isDup = false;
+                let reason = '';
+                
+                if (refOdsA && refOdsB && refOdsA === refOdsB) {
+                    isDup = true;
+                    reason = `Même numéro d'ODS (${orderA.refOds || orderA.ref})`;
+                } else if (refContractA && refContractB && refContractA === refContractB) {
+                    isDup = true;
+                    reason = `Même numéro de contrat (${orderA.refContract})`;
+                }
+                
+                if (isDup) {
+                    duplicates.push({ order: orderB, reason });
+                }
+            }
+            
+            if (duplicates.length > 0) {
+                duplicates.unshift({ order: orderA, reason: 'Dossier original' });
+                groups.push({
+                    client: orderA.client,
+                    refOds: orderA.refOds || orderA.ref,
+                    refContract: orderA.refContract,
+                    duplicates: duplicates,
+                    key: `${clientA}_${refOdsA || 'no_ods'}_${refContractA || 'no_contract'}`
+                });
+                duplicates.forEach(d => processedIds.add(d.order.id));
+            }
+        }
+        
+        return groups;
     }
 };

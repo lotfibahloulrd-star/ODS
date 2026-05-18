@@ -39,7 +39,8 @@ import {
     ClipboardList,
     Users,
     Check,
-    Briefcase
+    Briefcase,
+    Copy
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -64,6 +65,7 @@ const Dashboard = () => {
     const [overdueFilter, setOverdueFilter] = useState(searchParams.get('overdue') === 'true');
     const [financialFilter, setFinancialFilter] = useState(searchParams.get('financial') === 'true');
     const [activeStatusFilter, setActiveStatusFilter] = useState(searchParams.get('status'));
+    const [dupInfo, setDupInfo] = useState(null);
     const [showRescueModal, setShowRescueModal] = useState(false);
     const [localSnapshots, setLocalSnapshots] = useState([]);
     const [tendersCount, setTendersCount] = useState(0);
@@ -1083,6 +1085,18 @@ const Dashboard = () => {
                             </button>
                         )}
 
+                        <button
+                            onClick={() => {
+                                const dups = orderService.getDuplicateOrders(orders);
+                                setDupInfo(dups);
+                            }}
+                            title="Vérifier les doublons"
+                            className="px-5 h-11 flex items-center gap-2.5 bg-rose-600 text-white rounded-2xl hover:bg-rose-700 transition-all shadow-lg shadow-rose-100 font-bold text-xs uppercase tracking-widest"
+                        >
+                            <Copy size={18} />
+                            <span className="hidden lg:inline">Vérifier Doublons</span>
+                        </button>
+
                         {currentUser && (
                             <div className="flex items-center gap-3 bg-white p-2.5 pr-5 rounded-2xl border border-slate-200 shadow-sm">
                                 <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-100">
@@ -1713,6 +1727,158 @@ const Dashboard = () => {
                         </div>
                         <div className="p-8 bg-slate-50 border-t border-slate-100 italic text-xs text-slate-400 font-medium leading-relaxed">
                             Note : Ces sauvegardes sont stockées localement sur votre ordinateur. Choisissez la version datant d'avant 14h00 (probablement v38 ou v39) pour récupérer votre saisie perdue.
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Modal de vérification des doublons */}
+            {dupInfo && (
+                <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+                    <div className="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[85vh]">
+                        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-rose-50/50 shrink-0">
+                            <div>
+                                <h3 className="text-2xl font-black text-rose-900 uppercase tracking-tight flex items-center gap-2">
+                                    <AlertTriangle className="text-rose-600 animate-pulse" size={28} />
+                                    Détection des Doublons
+                                </h3>
+                                <p className="text-rose-700 font-bold text-sm">
+                                    {dupInfo.length === 0 
+                                        ? "Aucun doublon détecté dans le système." 
+                                        : `${dupInfo.length} groupe(s) de doublons détecté(s) selon le Client et ODS/Contrat.`}
+                                </p>
+                            </div>
+                            <button 
+                                onClick={() => setDupInfo(null)} 
+                                className="w-10 h-10 rounded-full bg-rose-100 hover:bg-rose-600 hover:text-white transition-all font-black text-rose-900 flex items-center justify-center shadow-sm"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        
+                        <div className="p-8 overflow-y-auto flex-1 bg-slate-50/50">
+                            {dupInfo.length === 0 ? (
+                                <div className="text-center py-16">
+                                    <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                                        <CheckCircle2 size={40} />
+                                    </div>
+                                    <h4 className="text-lg font-black text-slate-800 uppercase tracking-wide">Base de données propre</h4>
+                                    <p className="text-slate-400 text-sm font-bold uppercase mt-1">Tous les dossiers sont uniques.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-8">
+                                    {dupInfo.map((group, groupIdx) => (
+                                        <div key={groupIdx} className="bg-white border border-rose-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all text-left">
+                                            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                                                <div>
+                                                    <span className="text-[10px] font-black text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full uppercase tracking-tighter">
+                                                        Doublon Potentiel
+                                                    </span>
+                                                    <h4 className="text-base font-black text-slate-900 uppercase tracking-tight mt-1">
+                                                        Client : {group.client}
+                                                    </h4>
+                                                </div>
+                                                <div className="text-right">
+                                                    {group.refOds && (
+                                                        <div className="text-xs text-slate-400 font-bold">
+                                                            Réf ODS : <span className="text-slate-900 font-black">{group.refOds}</span>
+                                                        </div>
+                                                    )}
+                                                    {group.refContract && (
+                                                        <div className="text-xs text-slate-400 font-bold">
+                                                            Réf Contrat : <span className="text-slate-900 font-black">{group.refContract}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="grid gap-4">
+                                                {group.duplicates.map((item, itemIdx) => {
+                                                    const { order, reason } = item;
+                                                    return (
+                                                        <div 
+                                                            key={itemIdx} 
+                                                            className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border transition-all ${
+                                                                itemIdx === 0 
+                                                                    ? 'bg-slate-50 border-slate-200' 
+                                                                    : 'bg-rose-50/20 border-rose-100 hover:bg-rose-50/40'
+                                                            }`}
+                                                        >
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${
+                                                                        itemIdx === 0 
+                                                                            ? 'bg-slate-200 text-slate-700' 
+                                                                            : 'bg-rose-100 text-rose-700'
+                                                                    }`}>
+                                                                        {itemIdx === 0 ? "Original" : "Doublon"}
+                                                                    </span>
+                                                                    <span className="text-xs text-slate-400 font-bold">
+                                                                        Créé le {new Date(order.createdAt).toLocaleDateString('fr-FR')} par {order.createdBy || 'Inconnu'}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="text-sm font-black text-slate-900">
+                                                                    {order.object || "Aucun objet"}
+                                                                </div>
+                                                                <div className="text-[11px] text-slate-500 font-medium">
+                                                                    ID : {order.id} | Statut : <span className="font-bold text-slate-700">{order.status || 'En cours'}</span> | Montant : <span className="font-bold text-slate-700">{order.amount || '0'} DA</span>
+                                                                </div>
+                                                                <div className="text-[10px] text-rose-600 font-bold italic">
+                                                                    {reason}
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div className="flex items-center gap-2 mt-4 sm:mt-0">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setDupInfo(null);
+                                                                        navigate(`/order/${order.id}`);
+                                                                    }}
+                                                                    className="px-4 py-2 bg-slate-900 hover:bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                                                                >
+                                                                    Ouvrir
+                                                                </button>
+                                                                
+                                                                {itemIdx > 0 && auth.canDeleteOds() && (
+                                                                    <button
+                                                                        onClick={async () => {
+                                                                            if (window.confirm(`⚠️ Supprimer définitivement ce doublon de "${order.client}" ?`)) {
+                                                                                try {
+                                                                                    await orderService.deleteOrder(order.id, currentUser.firstName);
+                                                                                    alert("Doublon supprimé avec succès !");
+                                                                                    const updatedOrders = orders.filter(o => o.id !== order.id);
+                                                                                    setOrders(updatedOrders);
+                                                                                    const updatedDups = orderService.getDuplicateOrders(updatedOrders);
+                                                                                    setDupInfo(updatedDups);
+                                                                                } catch (err) {
+                                                                                    alert("Erreur lors de la suppression: " + err.message);
+                                                                                }
+                                                                            }
+                                                                        }}
+                                                                        className="w-10 h-10 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl flex items-center justify-center transition-all"
+                                                                        title="Supprimer ce doublon"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="p-8 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-medium shrink-0">
+                            <span>Double-cliquez sur "Ouvrir" pour inspecter et comparer les documents et détails financiers d'un dossier.</span>
+                            <button
+                                onClick={() => setDupInfo(null)}
+                                className="px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-black rounded-xl uppercase tracking-wider transition-all"
+                            >
+                                Fermer
+                            </button>
                         </div>
                     </div>
                 </div>
