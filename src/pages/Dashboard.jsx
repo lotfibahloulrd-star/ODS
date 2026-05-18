@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { orderService } from '../services/orderService';
 import { useAuth } from '../context/AuthContext';
@@ -59,6 +59,7 @@ const Dashboard = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [syncStatus, setSyncStatus] = useState("");
+    const hasSyncedRef = useRef(false);
     const [authFilter, setAuthFilter] = useState(searchParams.get('auth') === 'true');
     const [overdueFilter, setOverdueFilter] = useState(searchParams.get('overdue') === 'true');
     const [financialFilter, setFinancialFilter] = useState(searchParams.get('financial') === 'true');
@@ -300,26 +301,41 @@ const Dashboard = () => {
         if (!currentUser) return;
         
         loadOrders();
-        loadMessages();
-        loadLogs();
         loadTendersCount();
+        loadMessages();
 
-        // Intervalle de rafraîchissement des données (ODS, Messages, Logs)
-        const orderInterval = setInterval(loadOrders, 30000);
-        const messageInterval = setInterval(loadMessages, 10000);
-        const logInterval = setInterval(loadLogs, 20000);
+        // Ralentissement global pour éviter les requêtes inutiles ("la boucle")
+        const orderInterval = setInterval(loadOrders, 90000);
+        const messageInterval = setInterval(loadMessages, 60000);
 
         return () => {
             clearInterval(orderInterval);
             clearInterval(messageInterval);
-            clearInterval(logInterval);
         };
     }, [currentUser?.email]);
 
-    // Système de secours : Migration automatique des fichiers locaux vers le serveur
+    // Rafraîchissement intensif SEULEMENT si la fenêtre de discussion est ouverte
     useEffect(() => {
+        if (!showMessages) return;
+        const activeMessageInterval = setInterval(loadMessages, 10000);
+        return () => clearInterval(activeMessageInterval);
+    }, [showMessages]);
+
+    // Chargement et rafraîchissement des logs SEULEMENT si la fenêtre des logs est ouverte
+    useEffect(() => {
+        if (!showLogs) return;
+        loadLogs(); // Charger les logs dès l'ouverture
+        const activeLogInterval = setInterval(loadLogs, 15000);
+        return () => clearInterval(activeLogInterval);
+    }, [showLogs]);
+
+    // Système de secours : Migration automatique des fichiers locaux vers le serveur (lancé une seule fois par session pour éviter les boucles infinies)
+    useEffect(() => {
+        if (!orders.length || hasSyncedRef.current) return;
+
+        hasSyncedRef.current = true;
         const syncMissingFiles = async () => {
-            if (!orders.length || syncStatus === "Terminé") return;
+            if (syncStatus === "Terminé") return;
 
             const stores = ['storage_ods', 'storage_contracts', 'storage_stops_req', 'storage_stops_res'];
             let totalMissing = 0;

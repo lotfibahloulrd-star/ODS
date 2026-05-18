@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Tesseract from 'tesseract.js';
 import * as pdfjsLib from 'pdfjs-dist';
@@ -9,6 +9,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `${import.meta.env.BASE_URL}pdf.worker.
 
 const NewOrder = ({ onSave }) => {
     const navigate = useNavigate();
+    const isSavingRef = useRef(false);
     const [step, setStep] = useState(1);
     const [file, setFile] = useState(null);
     const [contractFile, setContractFile] = useState(null);
@@ -335,6 +336,8 @@ const NewOrder = ({ onSave }) => {
     };
 
     const handleSave = async () => {
+        if (isSavingRef.current) return;
+        
         if (!formData.refOds && !formData.refContract) {
             alert("Veuillez remplir au moins la référence ODS ou Contrat.");
             return;
@@ -344,6 +347,7 @@ const NewOrder = ({ onSave }) => {
             return;
         }
 
+        isSavingRef.current = true;
         setIsLoading(true);
         try {
             const savedOrder = await orderService.createOrder(formData);
@@ -415,6 +419,7 @@ const NewOrder = ({ onSave }) => {
             }
         } finally {
             setIsLoading(false);
+            isSavingRef.current = false;
         }
     };
 

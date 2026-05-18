@@ -47,44 +47,13 @@ export const orderService = {
             const DATA_VERSION = 'ods_data_v45';
             const localVersion = localStorage.getItem('ods_data_version');
 
-            if (!Array.isArray(sharedOrders) || localVersion !== DATA_VERSION) {
+            if (!Array.isArray(sharedOrders)) {
                 console.log("Restauration intelligente des valeurs (Version " + DATA_VERSION + ")...");
 
                 const mergedMap = new Map();
 
-                // 1. Charger tout ce qui vient du serveur d'abord
-                if (Array.isArray(sharedOrders)) {
-                    sharedOrders.forEach(o => mergedMap.set(o.id, o));
-                }
-
-                // 2. Fusion intelligente avec INITIAL_ORDERS
-                INITIAL_ORDERS.forEach(o => {
-                    const existing = mergedMap.get(o.id);
-                    if (existing) {
-                        // On crée un objet fusionné champ par champ
-                        const smartMerged = { ...o }; // Base du code
-                        
-                        // On ne garde du serveur que les champs qui ont du CONTENU
-                        Object.keys(existing).forEach(key => {
-                            const val = existing[key];
-                            // Si le serveur a une valeur non vide (ou est un objet/array non vide), on la garde
-                            if (val !== null && val !== undefined && val !== "" && val !== 0 && val !== "0") {
-                                if (Array.isArray(val) && val.length === 0) return; // Ignore arrays vides
-                                if (typeof val === 'object' && Object.keys(val).length === 0) return; // Ignore objets vides
-                                smartMerged[key] = val;
-                            }
-                        });
-                        
-                        // Cas particulier : Toujours garder les fichiers et articles du serveur s'ils existent
-                        if (existing.files && Object.keys(existing.files).length > 0) smartMerged.files = existing.files;
-                        if (existing.articles && existing.articles.length > 0) smartMerged.articles = existing.articles;
-                        if (existing.financial) smartMerged.financial = { ...(o.financial || {}), ...existing.financial };
-
-                        mergedMap.set(o.id, smartMerged);
-                    } else {
-                        mergedMap.set(o.id, o);
-                    }
-                });
+                // Fusion intelligente avec INITIAL_ORDERS
+                INITIAL_ORDERS.forEach(o => mergedMap.set(o.id, o));
 
                 const finalOrders = Array.from(mergedMap.values())
                     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -93,6 +62,10 @@ export const orderService = {
                 localStorage.setItem('ods_data_version', DATA_VERSION);
                 await orderService.clearDeletedIds();
                 return finalOrders;
+            }
+
+            if (localVersion !== DATA_VERSION) {
+                localStorage.setItem('ods_data_version', DATA_VERSION);
             }
 
             // --- RÉPARATION AUTOMATIQUE DES LIENS FICHIERS V4.5 ---
@@ -299,7 +272,7 @@ export const orderService = {
             }
 
             const formData = new FormData();
-            formData.append('file', blob);
+            formData.append('file', blob, fileName);
             formData.append('orderId', orderId);
             formData.append('storageKey', storageKey);
             formData.append('fileName', fileName);

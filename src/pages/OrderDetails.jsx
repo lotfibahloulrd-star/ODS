@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText, FileCheck, ExternalLink, Calendar, User, Info, Clock, CheckCircle2, Package, Layers, FlaskConical, AlertCircle, PlayCircle, StopCircle, DollarSign, Plane, Truck, Anchor, Box, Ship, Upload, Plus, RotateCcw, Trash2, Trash, ShieldCheck, Mail, Phone, Briefcase } from 'lucide-react';
 import { orderService } from '../services/orderService';
@@ -14,6 +14,7 @@ const OrderDetails = () => {
     const [importData, setImportData] = useState({});
     const [stockData, setStockData] = useState({});
     const [localArticles, setLocalArticles] = useState([]);
+    const isSavingRef = useRef(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [isEditingAmount, setIsEditingAmount] = useState(false);
@@ -193,7 +194,7 @@ const OrderDetails = () => {
     const handleDeleteFile = async (orderId, storageKey) => {
         if (!canDeleteOds()) return;
         if (!window.confirm("Voulez-vous vraiment supprimer ce fichier ?")) return;
-        setIsSaving(true);
+        if (isSavingRef.current) return; isSavingRef.current = true; setIsSaving(true);
         try {
             await orderService.deleteFile(orderId, storageKey);
             loadOrder();
@@ -202,7 +203,7 @@ const OrderDetails = () => {
             console.error("Delete error:", error);
             alert("Erreur lors de la suppression : " + error.message);
         } finally {
-            setIsSaving(false);
+            setIsSaving(false); isSavingRef.current = false;
         }
     };
 
@@ -225,7 +226,7 @@ const OrderDetails = () => {
     }, [order, localArticles]);
 
     const handleSaveWorkflow = async () => {
-        setIsSaving(true);
+        if (isSavingRef.current) return; isSavingRef.current = true; setIsSaving(true);
         try {
             await orderService.updateOrder(order.id, {
                 importStatus: importData,
@@ -237,12 +238,12 @@ const OrderDetails = () => {
         } catch (e) {
             alert("Erreur lors de la mise à jour.");
         } finally {
-            setIsSaving(false);
+            setIsSaving(false); isSavingRef.current = false;
         }
     };
 
     const handleSaveAmount = async () => {
-        setIsSaving(true);
+        if (isSavingRef.current) return; isSavingRef.current = true; setIsSaving(true);
         try {
             await orderService.updateOrder(order.id, { 
                 amount: tempAmount,
@@ -254,12 +255,12 @@ const OrderDetails = () => {
         } catch (e) {
             alert("Erreur lors de la mise à jour du montant.");
         } finally {
-            setIsSaving(false);
+            setIsSaving(false); isSavingRef.current = false;
         }
     };
 
     const handleSaveRefOds = async () => {
-        setIsSaving(true);
+        if (isSavingRef.current) return; isSavingRef.current = true; setIsSaving(true);
         try {
             await orderService.updateOrder(order.id, { refOds: tempRefOds }, currentUser.firstName);
             setIsEditingRefOds(false);
@@ -268,12 +269,12 @@ const OrderDetails = () => {
         } catch (e) {
             alert("Erreur lors de la mise à jour de la référence ODS.");
         } finally {
-            setIsSaving(false);
+            setIsSaving(false); isSavingRef.current = false;
         }
     };
 
     const handleSaveRefContract = async () => {
-        setIsSaving(true);
+        if (isSavingRef.current) return; isSavingRef.current = true; setIsSaving(true);
         try {
             await orderService.updateOrder(order.id, { refContract: tempRefContract }, currentUser.firstName);
             setIsEditingRefContract(false);
@@ -282,24 +283,24 @@ const OrderDetails = () => {
         } catch (e) {
             alert("Erreur lors de la mise à jour de la référence Contrat.");
         } finally {
-            setIsSaving(false);
+            setIsSaving(false); isSavingRef.current = false;
         }
     };
 
     const handleUpdateContacts = async (newContacts) => {
-        setIsSaving(true);
+        if (isSavingRef.current) return; isSavingRef.current = true; setIsSaving(true);
         try {
             await orderService.updateOrder(order.id, { contacts: newContacts }, currentUser.firstName);
             loadOrder();
         } catch (e) {
             alert("Erreur lors de la mise à jour des contacts.");
         } finally {
-            setIsSaving(false);
+            setIsSaving(false); isSavingRef.current = false;
         }
     };
 
     const handleSaveFinancial = async () => {
-        setIsSaving(true);
+        if (isSavingRef.current) return; isSavingRef.current = true; setIsSaving(true);
         try {
             await orderService.updateOrder(order.id, { financial: tempFinancial }, currentUser.firstName);
             setIsEditingFinancial(false);
@@ -308,12 +309,12 @@ const OrderDetails = () => {
         } catch (e) {
             alert("Erreur lors de la mise à jour financière.");
         } finally {
-            setIsSaving(false);
+            setIsSaving(false); isSavingRef.current = false;
         }
     };
 
     const handleSaveAdminFields = async (field, value, tempSetter, editSetter, label) => {
-        setIsSaving(true);
+        if (isSavingRef.current) return; isSavingRef.current = true; setIsSaving(true);
         try {
             await orderService.updateOrder(order.id, { [field]: value }, currentUser.firstName);
             editSetter(false);
@@ -322,7 +323,7 @@ const OrderDetails = () => {
         } catch (e) {
             alert(`Erreur lors de la mise à jour de ${label}.`);
         } finally {
-            setIsSaving(false);
+            setIsSaving(false); isSavingRef.current = false;
         }
     };
 
@@ -332,7 +333,7 @@ const OrderDetails = () => {
             return;
         }
 
-        setIsSaving(true);
+        if (isSavingRef.current) return; isSavingRef.current = true; setIsSaving(true);
         try {
             const amount = parseFloat(newArticle.pu.toString().replace(',', '.')) || 0;
             const qte = parseFloat(newArticle.qte.toString().replace(',', '.')) || 0;
@@ -353,12 +354,12 @@ const OrderDetails = () => {
         } catch (e) {
             alert("Erreur lors de l'ajout de l'article.");
         } finally {
-            setIsSaving(false);
+            setIsSaving(false); isSavingRef.current = false;
         }
     };
 
     const handleUpdateArticle = async (index) => {
-        setIsSaving(true);
+        if (isSavingRef.current) return; isSavingRef.current = true; setIsSaving(true);
         try {
             const newArticles = [...localArticles];
             const updatedArt = { 
@@ -377,14 +378,14 @@ const OrderDetails = () => {
         } catch (e) {
             alert("Erreur lors de la mise à jour.");
         } finally {
-            setIsSaving(false);
+            setIsSaving(false); isSavingRef.current = false;
         }
     };
 
     const handleDeleteArticle = async (index) => {
         if (!window.confirm("Voulez-vous vraiment supprimer cet article ?")) return;
 
-        setIsSaving(true);
+        if (isSavingRef.current) return; isSavingRef.current = true; setIsSaving(true);
         try {
             const updatedArticles = localArticles.filter((_, i) => i !== index);
             await orderService.updateOrder(order.id, { articles: updatedArticles }, currentUser.firstName);
@@ -393,7 +394,7 @@ const OrderDetails = () => {
         } catch (e) {
             alert("Erreur lors de la suppression de l'article.");
         } finally {
-            setIsSaving(false);
+            setIsSaving(false); isSavingRef.current = false;
         }
     };
 
