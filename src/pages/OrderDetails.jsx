@@ -72,26 +72,10 @@ const OrderDetails = () => {
         executionDeposit: { amount: '', payDate: '', recoveryDate: '', reference: '', warrantyPeriod: '' }
     });
 
-    const [allOrders, setAllOrders] = useState([]);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [isSearchFocused, setIsSearchFocused] = useState(false);
-
-    const searchResults = useMemo(() => {
-        if (!searchTerm.trim()) return [];
-        const term = searchTerm.toLowerCase();
-        return allOrders.filter(o => 
-            (o.client || "").toLowerCase().includes(term) ||
-            (o.object || "").toLowerCase().includes(term) ||
-            (o.refOds || o.ref || "").toLowerCase().includes(term) ||
-            (o.refContract || "").toLowerCase().includes(term)
-        ).slice(0, 8);
-    }, [allOrders, searchTerm]);
-
     const loadOrder = async () => {
         setIsLoading(true);
         try {
             const data = await orderService.getAllOrders();
-            setAllOrders(Array.isArray(data) ? data : []);
             const found = data.find(o => String(o.id) === String(id));
             if (found) {
                 setOrder(found);
@@ -526,72 +510,13 @@ const OrderDetails = () => {
     return (
         <div className="space-y-10 animate-fade-in">
             {/* Header / Top Navigation */}
-            <div className="flex items-center justify-between gap-6 flex-wrap md:flex-nowrap">
-                <div className="flex items-center gap-6 flex-1 min-w-0">
-                    <button onClick={() => navigate('/')} className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all group shrink-0">
-                        <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center group-hover:border-blue-200 group-hover:bg-blue-50 transition-all">
-                            <ArrowLeft size={18} />
-                        </div>
-                        <span className="hidden sm:inline">Retour au tableau</span>
-                    </button>
-                    
-                    {/* Search Bar */}
-                    <div className="relative flex-1 max-w-md z-30">
-                        <div className="relative group">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
-                            <input
-                                type="text"
-                                placeholder="Rechercher un autre ODS..."
-                                className="pl-11 pr-6 py-2.5 bg-white border border-slate-200 rounded-xl w-full shadow-sm focus:ring-4 focus:ring-blue-100 transition-all outline-none text-xs text-slate-700 font-semibold"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                onFocus={() => setIsSearchFocused(true)}
-                                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                            />
-                        </div>
-                        {isSearchFocused && searchTerm.trim() && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-slate-100 shadow-2xl overflow-hidden max-h-90 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 z-[100]">
-                                {searchResults.length === 0 ? (
-                                    <div className="p-4 text-center text-xs font-bold text-slate-400 uppercase">Aucun ODS trouvé</div>
-                                ) : (
-                                    <div className="divide-y divide-slate-50">
-                                        {searchResults.map(o => (
-                                            <div
-                                                key={o.id}
-                                                onClick={() => {
-                                                    navigate(`/order/${o.id}`);
-                                                    setSearchTerm("");
-                                                }}
-                                                className="p-4 hover:bg-slate-50 transition-colors cursor-pointer text-left"
-                                            >
-                                                <div className="flex justify-between items-start gap-2">
-                                                    <span className="font-black text-slate-900 text-xs uppercase truncate max-w-[200px]">
-                                                        {o.client || "Client Inconnu"}
-                                                    </span>
-                                                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider shrink-0 ${
-                                                        o.status === 'En cours' ? 'bg-blue-50 text-blue-600' :
-                                                        (o.status === 'En attente de paiement' || o.status === 'Suivi financier') ? 'bg-amber-50 text-amber-600' :
-                                                        'bg-slate-50 text-slate-500'
-                                                    }`}>
-                                                        {o.status || 'En cours'}
-                                                    </span>
-                                                </div>
-                                                <div className="text-[10px] text-slate-500 font-bold uppercase mt-1 truncate">
-                                                    {o.refOds || o.ref || "Sans Référence"} | {o.refContract || "Sans Contrat"}
-                                                </div>
-                                                {o.object && (
-                                                    <div className="text-[9px] text-slate-400 truncate mt-0.5">
-                                                        {o.object}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
+            <div className="flex items-center justify-between">
+                <button onClick={() => navigate('/')} className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-black text-xs uppercase tracking-widest transition-all group">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center group-hover:border-blue-200 group-hover:bg-blue-50 transition-all">
+                        <ArrowLeft size={18} />
                     </div>
-                </div>
+                    Retour au tableau
+                </button>
                 <div className="flex items-center gap-3">
                     {canEditAdminFields() && (
                         <button

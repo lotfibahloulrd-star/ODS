@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
 import NewOrder from './pages/NewOrder';
 import UsersPage from './pages/Users';
 import Login from './pages/Login';
-import { LayoutDashboard, PlusCircle, Users, LogOut, Key, User, Briefcase, HelpCircle } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Users, LogOut, Key, User, Briefcase, HelpCircle, Search } from 'lucide-react';
 import './index.css';
 
 import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
@@ -14,12 +14,44 @@ import Tenders from './pages/Tenders';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import Guide from './pages/Guide';
 import logo from './assets/logo.png';
+import { orderService } from './services/orderService';
 
 function AppContent() {
-    const { currentUser, logout, changePassword, isAdmin, isSuperAdmin, canCreateOds } = useAuth();
+    const { currentUser, logout, changePassword, isAdmin, isSuperAdmin, canCreateOds, canViewOrder } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [isPassModalOpen, setIsPassModalOpen] = useState(false);
+
+    const [allOrders, setAllOrders] = useState([]);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+    useEffect(() => {
+        if (!currentUser) return;
+        const loadOrders = async () => {
+            try {
+                const data = await orderService.getAllOrders();
+                setAllOrders(Array.isArray(data) ? data : []);
+            } catch (error) {
+                console.error("Global search error:", error);
+            }
+        };
+        loadOrders();
+    }, [currentUser, location.pathname]);
+
+    const searchResults = useMemo(() => {
+        if (!searchTerm.trim()) return [];
+        const term = searchTerm.toLowerCase();
+        return allOrders
+            .filter(o => !canViewOrder || canViewOrder(o))
+            .filter(o => 
+                (o.client || "").toLowerCase().includes(term) ||
+                (o.object || "").toLowerCase().includes(term) ||
+                (o.refOds || o.ref || "").toLowerCase().includes(term) ||
+                (o.refContract || "").toLowerCase().includes(term)
+            )
+            .slice(0, 8);
+    }, [allOrders, searchTerm, canViewOrder]);
     
     // Extract query params
     const searchParams = new URL(window.location.href).searchParams;
@@ -66,6 +98,63 @@ function AppContent() {
                         <div className="flex items-center gap-2 shrink-0 cursor-pointer" onClick={() => navigate('/')}>
                             <img src={logo} alt="ESCLAB Logo" className="w-auto h-12 object-contain" />
                             <h1 className="text-xl font-black text-slate-900 tracking-tight hidden md:block">ESCLAB-Contract <span className="text-blue-600">Hub</span> <span className="text-[10px] font-bold text-slate-400 align-top">v4.5</span></h1>
+                        </div>
+
+                        {/* Global Search Bar */}
+                        <div className="relative flex-1 max-w-xs md:max-w-sm hidden sm:block z-30">
+                            <div className="relative group">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={16} />
+                                <input
+                                    type="text"
+                                    placeholder="Rechercher un ODS, un client, un contrat..."
+                                    className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-full w-full shadow-sm focus:bg-white focus:ring-4 focus:ring-blue-100 transition-all outline-none text-xs text-slate-600 font-medium"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onFocus={() => setIsSearchFocused(true)}
+                                    onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                                />
+                            </div>
+                            {isSearchFocused && searchTerm.trim() && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-slate-100 shadow-2xl overflow-hidden max-h-80 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 z-[100]">
+                                    {searchResults.length === 0 ? (
+                                        <div className="p-4 text-center text-xs font-bold text-slate-400 uppercase">Aucun ODS trouvé</div>
+                                    ) : (
+                                        <div className="divide-y divide-slate-50">
+                                            {searchResults.map(o => (
+                                                <div
+                                                    key={o.id}
+                                                    onClick={() => {
+                                                        navigate(`/order/${o.id}`);
+                                                        setSearchTerm("");
+                                                    }}
+                                                    className="p-4 hover:bg-slate-50 transition-colors cursor-pointer text-left"
+                                                >
+                                                    <div className="flex justify-between items-start gap-2">
+                                                        <span className="font-black text-slate-900 text-xs uppercase truncate max-w-[180px]">
+                                                            {o.client || "Client Inconnu"}
+                                                        </span>
+                                                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider shrink-0 ${
+                                                            o.status === 'En cours' ? 'bg-blue-50 text-blue-600' :
+                                                            (o.status === 'En attente de paiement' || o.status === 'Suivi financier') ? 'bg-amber-50 text-amber-600' :
+                                                            'bg-slate-50 text-slate-500'
+                                                        }`}>
+                                                            {o.status || 'En cours'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-500 font-bold uppercase mt-1 truncate">
+                                                        {o.refOds || o.ref || "Sans Référence"} | {o.refContract || "Sans Contrat"}
+                                                    </div>
+                                                    {o.object && (
+                                                        <div className="text-[9px] text-slate-400 truncate mt-0.5">
+                                                            {o.object}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         <nav className="hidden md:flex items-center gap-1 bg-slate-100/50 p-1 rounded-2xl border border-slate-200">
