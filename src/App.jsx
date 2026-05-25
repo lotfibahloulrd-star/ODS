@@ -5,7 +5,7 @@ import Home from './pages/Home';
 import NewOrder from './pages/NewOrder';
 import UsersPage from './pages/Users';
 import Login from './pages/Login';
-import { LayoutDashboard, PlusCircle, Users, LogOut, Key, User, Briefcase, HelpCircle, Search } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Users, LogOut, Key, User, Briefcase, HelpCircle, Search, X } from 'lucide-react';
 import './index.css';
 
 import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
@@ -25,6 +25,7 @@ function AppContent() {
     const [allOrders, setAllOrders] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false);
 
     useEffect(() => {
         if (!currentUser) return;
@@ -100,64 +101,7 @@ function AppContent() {
                             <h1 className="text-xl font-black text-slate-900 tracking-tight hidden md:block">ESCLAB-Contract <span className="text-blue-600">Hub</span> <span className="text-[10px] font-bold text-slate-400 align-top">v4.5</span></h1>
                         </div>
 
-                        {/* Global Search Bar */}
-                        <div className="relative flex-1 max-w-xs md:max-w-sm hidden sm:block z-30">
-                            <div className="relative group">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={16} />
-                                <input
-                                    type="text"
-                                    placeholder="Rechercher un ODS, un client, un contrat..."
-                                    className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-full w-full shadow-sm focus:bg-white focus:ring-4 focus:ring-blue-100 transition-all outline-none text-xs text-slate-600 font-medium"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    onFocus={() => setIsSearchFocused(true)}
-                                    onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                                />
-                            </div>
-                            {isSearchFocused && searchTerm.trim() && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-slate-100 shadow-2xl overflow-hidden max-h-80 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 z-[100]">
-                                    {searchResults.length === 0 ? (
-                                        <div className="p-4 text-center text-xs font-bold text-slate-400 uppercase">Aucun ODS trouvé</div>
-                                    ) : (
-                                        <div className="divide-y divide-slate-50">
-                                            {searchResults.map(o => (
-                                                <div
-                                                    key={o.id}
-                                                    onClick={() => {
-                                                        navigate(`/order/${o.id}`);
-                                                        setSearchTerm("");
-                                                    }}
-                                                    className="p-4 hover:bg-slate-50 transition-colors cursor-pointer text-left"
-                                                >
-                                                    <div className="flex justify-between items-start gap-2">
-                                                        <span className="font-black text-slate-900 text-xs uppercase truncate max-w-[180px]">
-                                                            {o.client || "Client Inconnu"}
-                                                        </span>
-                                                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider shrink-0 ${
-                                                            o.status === 'En cours' ? 'bg-blue-50 text-blue-600' :
-                                                            (o.status === 'En attente de paiement' || o.status === 'Suivi financier') ? 'bg-amber-50 text-amber-600' :
-                                                            'bg-slate-50 text-slate-500'
-                                                        }`}>
-                                                            {o.status || 'En cours'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="text-[10px] text-slate-500 font-bold uppercase mt-1 truncate">
-                                                        {o.refOds || o.ref || "Sans Référence"} | {o.refContract || "Sans Contrat"}
-                                                    </div>
-                                                    {o.object && (
-                                                        <div className="text-[9px] text-slate-400 truncate mt-0.5">
-                                                            {o.object}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
 
-                        <nav className="hidden md:flex items-center gap-1 bg-slate-100/50 p-1 rounded-2xl border border-slate-200">
                             <button 
                                 onClick={() => navigate('/dashboard')} 
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-600 hover:bg-white'}`}
@@ -202,6 +146,10 @@ function AppContent() {
                                 <span className="hidden lg:inline">Aide</span>
                             </button>
                         </nav>
+                    {/* Search Drawer Trigger */}
+                    <button onClick={() => setIsSearchDrawerOpen(true)} className="flex items-center gap-2 p-2 text-slate-500 hover:text-blue-600 transition-colors">
+                        <Search size={20} />
+                    </button>
 
                         {/* User Profile & Actions */}
                         <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-100 shrink-0">
@@ -223,6 +171,57 @@ function AppContent() {
                     </div>
                 </div>
             </header>
+            {/* Search Drawer */}
+            {isSearchDrawerOpen && (
+                <div className="fixed inset-0 z-50 flex">
+                    <div className="bg-white w-80 max-w-xs p-6 shadow-xl overflow-y-auto">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-lg font-bold">Recherche ODS</h2>
+                            <button onClick={() => setIsSearchDrawerOpen(false)} className="text-slate-500 hover:text-slate-800">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                            <input
+                                type="text"
+                                placeholder="Rechercher un ODS, un client, un contrat..."
+                                className="pl-10 pr-4 py-2 w-full border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        {searchTerm.trim() && (
+                            <div className="mt-2 max-h-80 overflow-y-auto">
+                                {searchResults.length === 0 ? (
+                                    <div className="p-4 text-center text-xs text-slate-400">Aucun ODS trouvé</div>
+                                ) : (
+                                    <div className="divide-y divide-slate-100">
+                                        {searchResults.map(o => (
+                                            <div
+                                                key={o.id}
+                                                onClick={() => {
+                                                    navigate(`/order/${o.id}`);
+                                                    setSearchTerm('');
+                                                    setIsSearchDrawerOpen(false);
+                                                }}
+                                                className="p-2 hover:bg-slate-50 cursor-pointer"
+                                            >
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="font-medium">{o.client || 'Client Inconnu'}</span>
+                                                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${o.status === 'En cours' ? 'bg-blue-50 text-blue-600' : (o.status === 'En attente de paiement' || o.status === 'Suivi financier') ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-500'}`}>${o.status || 'En cours'}</span>
+                                                </div>
+                                                <div className="text-[10px] text-slate-500">{o.refOds || o.ref || 'Sans Référence'} | {o.refContract || 'Sans Contrat'}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex-1 bg-black bg-opacity-30" onClick={() => setIsSearchDrawerOpen(false)} />
+                </div>
+            )}
 
             {/* Main Content Area */}
             <main className="max-w-[1600px] mx-auto px-6 py-10">

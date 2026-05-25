@@ -1082,6 +1082,7 @@ const Dashboard = () => {
                             </button>
                         )}
 
+{auth.isSuperAdmin && (
                         <button
                             onClick={() => {
                                 const dups = orderService.getDuplicateOrders(orders);
@@ -1093,6 +1094,7 @@ const Dashboard = () => {
                             <Copy size={18} />
                             <span className="hidden lg:inline">Vérifier Doublons</span>
                         </button>
+)}
 
                         {currentUser && (
                             <div className="flex items-center gap-3 bg-white p-2.5 pr-5 rounded-2xl border border-slate-200 shadow-sm">
