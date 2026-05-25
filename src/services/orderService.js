@@ -199,6 +199,7 @@ export const orderService = {
             orderId: newOrder.id
         });
 
+        // Return the newly created order so callers can access its id and other properties
         return newOrder;
     },
 
