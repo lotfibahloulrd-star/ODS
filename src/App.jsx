@@ -102,7 +102,7 @@ function AppContent() {
                         </div>
 
 
-                            <button 
+                            <nav className="flex items-center gap-2"><button 
                                 onClick={() => navigate('/dashboard')} 
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-600 hover:bg-white'}`}
                             >
