@@ -3,7 +3,7 @@ import { notificationService } from './notificationService';
 import { logService } from './logService';
 
 const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-const API_URL = baseUrl + '/api.php';
+const API_URL = 'http://localhost:8080/api.php';
 
 export const orderService = {
     _cleanupLegacyStorage: () => {
@@ -157,11 +157,16 @@ export const orderService = {
                 }
             }
 
-            await fetch(`${API_URL}?action=save_orders`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(orders)
-            });
+            try {
+                await fetch(`${API_URL}?action=save_orders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orders)
+                });
+            } catch (e) {
+                console.error('Failed to save orders to server, falling back to localStorage', e);
+            }
+            // Always persist locally to keep UI functional
             localStorage.setItem(DATA_VERSION, JSON.stringify(orders));
         } catch (e) {
             localStorage.setItem(DATA_VERSION, JSON.stringify(orders));
