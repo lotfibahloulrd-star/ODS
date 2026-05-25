@@ -1082,7 +1082,7 @@ const Dashboard = () => {
                             </button>
                         )}
 
-{auth.isSuperAdmin && (
+{isSuperAdmin && (
                         <button
                             onClick={() => {
                                 const dups = orderService.getDuplicateOrders(orders);
