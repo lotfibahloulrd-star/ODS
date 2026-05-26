@@ -231,7 +231,7 @@ function AppContent() {
                         <Route path="/home" element={<Home />} />
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/tenders" element={<Tenders />} />
-                        <Route path="/ods/new" element={canCreateOds() ? <NewOrder onSave={() => navigate('/dashboard')} /> : <div className="text-center py-20 text-slate-400">Accès restreint</div>} />
+                        <Route path="/ods/new" element={canCreateOds() ? <NewOrder /> : <div className="text-center py-20 text-slate-400">Accès restreint</div>} />
                         <Route path="/users" element={isSuperAdmin() ? <UsersPage /> : <div className="text-center py-20 text-slate-400">Accès restreint</div>} />
                         <Route path="/order/:id" element={<OrderDetails />} />
                         <Route path="/guide" element={<Guide />} />

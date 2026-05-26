@@ -7,7 +7,7 @@ import { orderService } from '../services/orderService';
 // Config Worker PDF Local
 pdfjsLib.GlobalWorkerOptions.workerSrc = `${import.meta.env.BASE_URL}pdf.worker.min.js`;
 
-const NewOrder = ({ onSave }) => {
+const NewOrder = () => {
     const navigate = useNavigate();
     const isSavingRef = useRef(false);
     const [step, setStep] = useState(1);
