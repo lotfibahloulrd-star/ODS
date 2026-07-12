@@ -306,12 +306,21 @@ export const orderService = {
                 }
             }
 
-            await logService.saveLog({
-                userName: userName,
-                action: "Upload Document",
-                details: `Fichier ${fileName} ajouté (${storageKey})`,
-                orderId: orderId
-            });
+            // Update order's file metadata in local storage
+            const allOrders = await orderService.getAllOrders();
+            const targetOrder = allOrders.find(o => o.id === orderId);
+            if (targetOrder) {
+                if (!targetOrder.files) targetOrder.files = {};
+                targetOrder.files[storageKey] = {
+                    exists: true,
+                    name: fileName,
+                    at: new Date().toISOString(),
+                    ext: fileName.split('.').pop(),
+                    linkedId: orderId
+                };
+                // Persist updated order list
+                await orderService._saveAllToShared(allOrders);
+            }
 
             return true;
         } catch (e) {
