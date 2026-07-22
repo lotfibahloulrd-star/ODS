@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { notificationService } from '../services/notificationService';
 import { logService } from '../services/logService';
 import { tenderService } from '../services/tenderService';
+import * as XLSX from 'xlsx';
+
 
 const Ods = () => {
   const auth = useAuth();
@@ -121,6 +123,28 @@ const Ods = () => {
     } catch { return String(amount); }
   };
 
+  const exportToExcel = () => {
+    const data = filteredOrders.map(o => ({
+      Réf: o.refOds || o.ref || '-',
+      Client: o.client || '-',
+      Objet: o.object || '-',
+      Montant: formatAmount(o.amount),
+      Date: formatDate(o.createdAt),
+      Statut: o.status || '-',
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'ODS');
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ods_export.xlsx';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50/50 pb-12">
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -145,6 +169,14 @@ const Ods = () => {
             <option value="En attente d'ODS">En attente d'ODS</option>
             <option value="Attribution en cours">Attribution en cours</option>
           </select>
+          {auth.canExportData && auth.canExportData() && (
+            <button
+              onClick={exportToExcel}
+              className="bg-green-600 text-white px-6 py-2 rounded-[2rem] font-black flex items-center gap-2 hover:bg-green-700 transition-all"
+            >
+              Exporter Excel
+            </button>
+          )}
         </div>
       </div>
       {isLoading ? (
