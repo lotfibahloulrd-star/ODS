@@ -3,11 +3,9 @@ import { useAuth } from '../context/AuthContext';
 import { tenderService } from '../services/tenderService';
 import { logService } from '../services/logService';
 import {
-    FileSearch,
+    Briefcase,
     Calendar,
     Users,
-    Briefcase,
-    Building2,
     CheckCircle2,
     Clock,
     AlertCircle,
@@ -18,29 +16,23 @@ import {
     Trash2,
     ArrowRight,
     ClipboardCheck,
-    Send,
-    ChevronDown,
-    MoreVertical,
     FileText,
     Activity,
     X,
     LayoutDashboard,
-    MessageSquare,
-    Bell,
     Paperclip,
     FileUp,
     Eye,
     Check,
     Share2,
-    Lock,
-    User,
     ShoppingBag,
     DollarSign,
-    Globe,
-    Tag,
-    Package,
-    Calculator,
-    Plane
+    FolderOpen,
+    TrendingUp,
+    ShieldAlert,
+    Sparkles,
+    Building2,
+    ArrowLeftRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -67,7 +59,6 @@ const Tenders = () => {
     const isAdm = isAdmin();
     const isCoordinator = currentUser?.email === 'mouhoub.imene@esclab-algerie.com';
 
-
     const [tenders, setTenders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -75,10 +66,9 @@ const Tenders = () => {
     const [selectedTender, setSelectedTender] = useState(null);
     const [activeStatusFilter, setActiveStatusFilter] = useState("all");
     const [isUploading, setIsUploading] = useState(false);
-    
-    const assignedWorker = selectedTender?.assignments?.find(a => a.email === currentUser?.email);
+    const [activeTab, setActiveTab] = useState("docs"); // docs, dqe, cautions, administrative, logistics
 
-    // Form states
+    // Form states for creating/editing tenders
     const [formData, setFormData] = useState({
         dispatchDate: new Date().toISOString().split('T')[0],
         deadlineDate: "",
@@ -88,6 +78,7 @@ const Tenders = () => {
         status: "En préparation",
         assignments: [], // Array of { email, name, role, status: 'pending'|'done' }
         items: [], // Array of { id, designation, reference, quantity, accessories, brand, type, priceHT, priceTTC }
+        cautions: [], // Array of { id, type, amount, bank, date, status }
         
         // Service des Marchés Fields
         contractNumber: "",
@@ -115,7 +106,7 @@ const Tenders = () => {
         financePaymentStatus: "En attente"
     });
 
-    const [editingItem, setEditingItem] = useState(null);
+    // Sub-form state for adding items to DQE
     const [newItem, setNewItem] = useState({
         designation: "",
         reference: "",
@@ -125,6 +116,15 @@ const Tenders = () => {
         type: "Importation",
         priceHT: 0,
         priceTTC: 0
+    });
+
+    // Sub-form state for adding cautions
+    const [newCaution, setNewCaution] = useState({
+        type: "Provisoire",
+        amount: "",
+        bank: "BNA",
+        date: new Date().toISOString().split('T')[0],
+        status: "Déposée"
     });
 
     useEffect(() => {
@@ -140,7 +140,12 @@ const Tenders = () => {
 
     const handleOpenForm = (tender = null) => {
         if (tender) {
-            setFormData({ ...tender });
+            setFormData({
+                ...tender,
+                assignments: tender.assignments || [],
+                items: tender.items || [],
+                cautions: tender.cautions || []
+            });
         } else {
             setFormData({
                 dispatchDate: new Date().toISOString().split('T')[0],
@@ -151,6 +156,7 @@ const Tenders = () => {
                 status: "En préparation",
                 assignments: [],
                 items: [],
+                cautions: [],
                 contractNumber: "",
                 assignedCommercial: "",
                 deliveryDelay: "",
@@ -183,7 +189,7 @@ const Tenders = () => {
         } else {
             setFormData({
                 ...formData,
-                assignments: [...formData.assignments, { ...person, status: 'pending' }]
+                assignments: [...formData.assignments, { ...person, status: 'pending', techStatus: 'pending', finStatus: 'pending' }]
             });
         }
     };
@@ -195,7 +201,9 @@ const Tenders = () => {
             setShowForm(false);
             loadTenders();
         }
-    };    const handleFileUpload = async (e, tenderId, storageKey) => {
+    };
+
+    const handleFileUpload = async (e, tenderId, storageKey) => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -203,7 +211,7 @@ const Tenders = () => {
         try {
             const res = await tenderService.saveFile(tenderId, storageKey, file, file.name);
             if (res.success) {
-                // Determine if this is a worker contribution
+                // Check if worker contribution
                 const isTech = storageKey.startsWith('tech_');
                 const isFin = storageKey.startsWith('fin_');
                 
@@ -214,11 +222,9 @@ const Tenders = () => {
                         const tender = updatedTenders[tIndex];
                         const aIndex = tender.assignments.findIndex(a => a.email === currentUser.email);
                         if (aIndex !== -1) {
-                            // Update assignment status
                             if (isTech) tender.assignments[aIndex].techStatus = 'done';
                             if (isFin) tender.assignments[aIndex].finStatus = 'done';
                             
-                            // Overall status is 'done' if both are done
                             if (tender.assignments[aIndex].techStatus === 'done' && tender.assignments[aIndex].finStatus === 'done') {
                                 tender.assignments[aIndex].status = 'done';
                             }
@@ -227,26 +233,33 @@ const Tenders = () => {
                         }
                     }
                 }
-                loadTenders();
-                alert("Fichier transmis avec succès !");
+                
+                // Force state update for the active view
+                const allData = await tenderService.getAllTenders();
+                setTenders(allData);
+                const currentTender = allData.find(t => t.id === tenderId);
+                if (currentTender) {
+                    setSelectedTender(currentTender);
+                }
+                alert("Fichier téléversé et enregistré avec succès !");
             } else {
-                alert("Erreur lors de l'upload.");
+                alert("Erreur lors du téléversement du fichier.");
             }
         } catch (err) {
-            alert("Erreur serveur.");
+            console.error(err);
+            alert("Erreur serveur pendant le transfert.");
         } finally {
             setIsUploading(false);
         }
     };
 
     const handleBatchDownload = (type) => {
-        // Simple implementation: alert with instructions since we can't easily merge PDFs in browser without lib
         const count = selectedTender.assignments?.filter(a => a[`${type}Status`] === 'done').length;
         if (count === 0) {
             alert(`Aucune offre ${type === 'tech' ? 'technique' : 'financière'} disponible pour la compilation.`);
             return;
         }
-        alert(`Compilation automatique : ${count} fichiers détectés. \nLe système prépare le téléchargement groupé pour votre traitement manuel.`);
+        alert(`Compilation automatique en cours : ${count} fichier(s) détecté(s).\nOuverture dans de nouveaux onglets...`);
         
         selectedTender.assignments.forEach(a => {
             if (a[`${type}Status`] === 'done') {
@@ -256,6 +269,7 @@ const Tenders = () => {
         });
     };
 
+    // Products DQE Management
     const handleAddItem = async () => {
         if (!newItem.designation) return;
         
@@ -285,9 +299,66 @@ const Tenders = () => {
     const handleDeleteItem = async (itemId) => {
         const updatedTender = {
             ...selectedTender,
-            items: selectedTender.items.filter(item => item.id !== itemId)
+            items: (selectedTender.items || []).filter(item => item.id !== itemId)
         };
         
+        const success = await tenderService.saveTender(updatedTender, currentUser.firstName);
+        if (success) {
+            setSelectedTender(updatedTender);
+            loadTenders();
+        }
+    };
+
+    // Bank Cautions Management
+    const handleAddCaution = async () => {
+        if (!newCaution.amount) return;
+
+        const cautionWithId = { 
+            ...newCaution, 
+            id: Date.now().toString(),
+            amount: parseFloat(newCaution.amount) || 0
+        };
+        const updatedTender = {
+            ...selectedTender,
+            cautions: [...(selectedTender.cautions || []), cautionWithId]
+        };
+
+        const success = await tenderService.saveTender(updatedTender, currentUser.firstName);
+        if (success) {
+            setSelectedTender(updatedTender);
+            setNewCaution({
+                type: "Provisoire",
+                amount: "",
+                bank: "BNA",
+                date: new Date().toISOString().split('T')[0],
+                status: "Déposée"
+            });
+            loadTenders();
+        }
+    };
+
+    const handleDeleteCaution = async (cautionId) => {
+        const updatedTender = {
+            ...selectedTender,
+            cautions: (selectedTender.cautions || []).filter(c => c.id !== cautionId)
+        };
+
+        const success = await tenderService.saveTender(updatedTender, currentUser.firstName);
+        if (success) {
+            setSelectedTender(updatedTender);
+            loadTenders();
+        }
+    };
+
+    const handleUpdateCautionStatus = async (cautionId, newStatus) => {
+        const updatedCautions = (selectedTender.cautions || []).map(c => 
+            c.id === cautionId ? { ...c, status: newStatus } : c
+        );
+        const updatedTender = {
+            ...selectedTender,
+            cautions: updatedCautions
+        };
+
         const success = await tenderService.saveTender(updatedTender, currentUser.firstName);
         if (success) {
             setSelectedTender(updatedTender);
@@ -303,10 +374,14 @@ const Tenders = () => {
         }, { ht: 0, ttc: 0 });
     };
 
+    const calculateCautionsTotal = (cautions = []) => {
+        return cautions.reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+    };
+
     const filteredTenders = useMemo(() => {
         return tenders.filter(t => {
-            // Workers only see their assigned tenders
-            if (!isCoordinator) {
+            // Non-coordinator users only see tenders they are assigned to
+            if (!isCoordinator && !isSuper && !isAdm) {
                 const isAssigned = t.assignments?.some(a => a.email === currentUser?.email);
                 if (!isAssigned) return false;
             }
@@ -319,307 +394,335 @@ const Tenders = () => {
             const matchesStatus = activeStatusFilter === "all" || t.status === activeStatusFilter;
             return matchesSearch && matchesStatus;
         });
-    }, [tenders, searchTerm, activeStatusFilter, isCoordinator, currentUser]);
+    }, [tenders, searchTerm, activeStatusFilter, isCoordinator, currentUser, isSuper, isAdm]);
+
+    // Statistics calculations
+    const stats = useMemo(() => {
+        const total = tenders.length;
+        const prep = tenders.filter(t => t.status === 'En préparation').length;
+        const submitted = tenders.filter(t => t.status === 'Déposé').length;
+        const won = tenders.filter(t => t.status === 'Adjugé').length;
+        const lost = tenders.filter(t => t.status === 'Perdu').length;
+
+        // Total won amount
+        const wonAmount = tenders
+            .filter(t => t.status === 'Adjugé')
+            .reduce((sum, t) => sum + calculateTotals(t.items).ttc, 0);
+
+        // Active provisional cautions amount
+        const activeCautions = tenders
+            .reduce((sum, t) => {
+                const provCautions = (t.cautions || []).filter(c => c.type === 'Provisoire' && c.status === 'Déposée');
+                return sum + calculateCautionsTotal(provCautions);
+            }, 0);
+
+        return { total, prep, submitted, won, lost, wonAmount, activeCautions };
+    }, [tenders]);
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'En préparation': return 'bg-amber-100 text-amber-700 border-amber-200';
-            case 'Déposé': return 'bg-blue-100 text-blue-700 border-blue-200';
-            case 'Adjugé': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-            case 'Perdu': return 'bg-rose-100 text-rose-700 border-rose-200';
-            default: return 'bg-slate-100 text-slate-700 border-slate-200';
+            case 'En préparation': return 'bg-amber-50 text-amber-600 border-amber-200';
+            case 'Déposé': return 'bg-blue-50 text-blue-600 border-blue-200';
+            case 'Adjugé': return 'bg-emerald-50 text-emerald-600 border-emerald-200';
+            case 'Perdu': return 'bg-rose-50 text-rose-600 border-rose-200';
+            default: return 'bg-slate-50 text-slate-600 border-slate-200';
         }
     };
 
     return (
-        <div className="min-h-screen bg-slate-50/50 pb-12">
-            {/* Nav Header */}
-            <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-8">
-                        <h1 className="text-xl font-black text-slate-900 tracking-tighter flex items-center gap-2">
-                            <span className="bg-indigo-600 text-white p-1.5 rounded-lg"><Briefcase size={18}/></span>
-                            ESCLAB <span className="text-indigo-600">TENDERS</span>
-                        </h1>
-                        <div className="hidden md:flex items-center gap-1">
-                            <button onClick={() => navigate('/dashboard')} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">Dashboard ODS</button>
-                            <button className="px-4 py-2 text-sm font-black text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50">Appels d'Offres</button>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="text-right mr-3 hidden sm:block">
-                            <p className="text-[10px] font-black text-slate-400 uppercase leading-none">Session</p>
-                            <p className="text-xs font-black text-slate-900">{currentUser?.firstName} {currentUser?.lastName}</p>
-                        </div>
-                        <div className="w-10 h-10 bg-indigo-900 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-200">
-                            {currentUser?.firstName?.[0]}{currentUser?.lastName?.[0]}
-                        </div>
-                    </div>
+        <div className="max-w-[1600px] mx-auto pb-20 px-6">
+            
+            {/* Header Dashboard */}
+            <div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mt-6">
+                <div>
+                    <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-2">
+                        Appels d'Offres <span className="text-indigo-600">& CDC</span>
+                    </h2>
+                    <p className="text-slate-500 font-medium">
+                        Pilotez vos cahiers des charges, gérez les cautions bancaires et consolidez les offres commerciales.
+                    </p>
                 </div>
-            </nav>
 
-            <main className="max-w-7xl mx-auto px-6 pt-8">
-                {/* Header Section */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+                {isCoordinator && (
+                    <button 
+                        onClick={() => handleOpenForm()}
+                        className="bg-indigo-600 text-white px-8 py-4.5 rounded-[2rem] font-black flex items-center gap-3 shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all active:translate-y-0 text-sm tracking-widest uppercase"
+                    >
+                        <Plus size={20} strokeWidth={3} />
+                        Initialiser un CDC
+                    </button>
+                )}
+            </div>
+
+            {/* KPI Cards Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6 mb-12">
+                <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-4">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total CDC</span>
+                        <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600"><FolderOpen size={16} /></div>
+                    </div>
                     <div>
-                        <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-2">Gestion des Appels d'Offres</h2>
-                        <div className="flex items-center gap-3">
-                            <span className="flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                <Activity size={12} className="text-indigo-500" /> Workflow CDC
-                            </span>
-                            {isCoordinator && (
-                                <span className="px-3 py-1 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md">
-                                    Coordinatrice (Admin)
-                                </span>
-                            )}
-                        </div>
+                        <p className="text-3xl font-black text-slate-900 leading-none mb-1">{stats.total}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">Dossiers enregistrés</p>
                     </div>
+                </div>
 
-                    {isCoordinator && (
-                        <button 
-                            onClick={() => handleOpenForm()}
-                            className="bg-indigo-600 text-white px-8 py-4 rounded-[2rem] font-black flex items-center gap-3 shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 hover:-translate-y-1 transition-all active:translate-y-0"
+                <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-4">
+                        <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">En Préparation</span>
+                        <div className="w-8 h-8 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600"><Clock size={16} /></div>
+                    </div>
+                    <div>
+                        <p className="text-3xl font-black text-amber-600 leading-none mb-1">{stats.prep}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">Offres en rédaction</p>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-4">
+                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Soumis</span>
+                        <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600"><ClipboardCheck size={16} /></div>
+                    </div>
+                    <div>
+                        <p className="text-3xl font-black text-blue-600 leading-none mb-1">{stats.submitted}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">Dossiers déposés</p>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-4">
+                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Adjugés</span>
+                        <div className="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600"><CheckCircle2 size={16} /></div>
+                    </div>
+                    <div>
+                        <p className="text-3xl font-black text-emerald-600 leading-none mb-1">{stats.won}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">Marchés remportés</p>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-between lg:col-span-2 xl:col-span-2">
+                    <div className="flex items-center justify-between mb-4">
+                        <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Garanties Provisoires</span>
+                        <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600"><DollarSign size={16} /></div>
+                    </div>
+                    <div>
+                        <p className="text-2xl font-black text-slate-900 leading-none mb-1">
+                            {new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2 }).format(stats.activeCautions)} <span className="text-sm font-black text-indigo-600">DA</span>
+                        </p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">Cautions provisoires engagées</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Filters and Search Panel */}
+            <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm mb-8 flex flex-col lg:flex-row justify-between items-center gap-6">
+                <div className="relative w-full lg:w-96">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input 
+                        type="text" 
+                        placeholder="Rechercher par référence, organisme..."
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-xs font-bold shadow-inner focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+
+                <div className="flex items-center gap-2 overflow-x-auto w-full lg:w-auto scrollbar-hide py-1">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 flex items-center gap-1 shrink-0"><Filter size={12} /> Statut :</span>
+                    {['all', 'En préparation', 'Déposé', 'Adjugé', 'Perdu'].map((status) => (
+                        <button
+                            key={status}
+                            onClick={() => setActiveStatusFilter(status)}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shrink-0 ${
+                                activeStatusFilter === status 
+                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
+                                : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                            }`}
                         >
-                            <Plus size={22} />
-                            Nouveau CDC
+                            {status === 'all' ? 'Tout voir' : status}
                         </button>
-                    )}
+                    ))}
                 </div>
+            </div>
 
-                {/* Filters */}
-                <div className="flex flex-col md:flex-row gap-4 mb-8">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                        <input 
-                            type="text" 
-                            placeholder="Référence, Objet, Organisme..."
-                            className="w-full pl-14 pr-6 py-4.5 bg-white border border-slate-200 rounded-[2rem] text-sm font-bold shadow-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <div className="flex p-1.5 bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-x-auto">
-                        {['all', 'En préparation', 'Déposé', 'Adjugé'].map((status) => (
-                            <button
-                                key={status}
-                                onClick={() => setActiveStatusFilter(status)}
-                                className={`px-6 py-3 rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest transition-all ${
-                                    activeStatusFilter === status 
-                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
-                                    : 'text-slate-500 hover:bg-slate-50'
-                                }`}
-                            >
-                                {status === 'all' ? 'Tout voir' : status}
-                            </button>
-                        ))}
-                    </div>
+            {/* Tenders Grid */}
+            {isLoading ? (
+                <div className="bg-white p-20 rounded-[3rem] border border-slate-100 text-center shadow-sm">
+                    <Clock size={40} className="mx-auto text-indigo-300 animate-spin mb-4" />
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Chargement des Appels d'Offres...</p>
                 </div>
-
-                {/* List of Tenders */}
-                <div className="grid grid-cols-1 gap-6">
-                    {isLoading ? (
-                        <div className="bg-white p-20 rounded-[3rem] border border-slate-200 text-center animate-pulse">
-                            <Clock size={48} className="mx-auto text-indigo-200 mb-4" />
-                            <p className="font-black text-slate-400 uppercase tracking-widest">Chargement des dossiers...</p>
-                        </div>
-                    ) : filteredTenders.length === 0 ? (
-                        <div className="bg-white p-20 rounded-[3rem] border border-slate-200 text-center">
-                            <FileSearch size={64} className="mx-auto text-slate-200 mb-6" />
-                            <p className="text-xl font-black text-slate-900 mb-2">Aucun appel d'offre trouvé</p>
-                            <p className="text-slate-400 font-bold italic">Ajustez vos filtres ou créez un nouveau dossier</p>
-                        </div>
-                    ) : (
-                        filteredTenders.map(tender => (
+            ) : filteredTenders.length === 0 ? (
+                <div className="bg-white p-24 rounded-[3rem] border border-slate-100 text-center shadow-sm">
+                    <Briefcase size={56} className="mx-auto text-slate-200 mb-6" />
+                    <h3 className="text-xl font-black text-slate-900 mb-2">Aucun dossier trouvé</h3>
+                    <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">Ajustez vos filtres ou créez une opportunité</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                    {filteredTenders.map((tender) => {
+                        const { ht, ttc } = calculateTotals(tender.items);
+                        const cautionsCount = tender.cautions?.length || 0;
+                        
+                        return (
                             <div 
-                                key={tender.id} 
-                                className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm hover:border-indigo-300 transition-all group"
+                                key={tender.id}
+                                className="bg-white rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-100/50 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 flex flex-col p-8 group relative overflow-hidden"
                             >
-                                <div className="flex flex-col lg:flex-row gap-8">
-                                    {/* Main Info */}
-                                    <div className="flex-1 space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatusColor(tender.status)}`}>
-                                                {tender.status}
-                                            </span>
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                                Créé le {new Date(tender.createdAt).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                        <div>
-                                            <h3 className="text-2xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">
-                                                {tender.refCdc || "SANS RÉFÉRENCE"}
-                                            </h3>
-                                            <p className="text-slate-500 font-bold text-sm mt-1 uppercase italic">{tender.organism}</p>
-                                        </div>
-                                        <p className="text-slate-700 font-medium leading-relaxed line-clamp-2">{tender.object}</p>
-                                        
-                                        <div className="flex flex-wrap gap-6 pt-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
-                                                    <Calendar size={18} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Date Limite</p>
-                                                    <p className="text-sm font-black text-slate-900">{tender.deadlineDate || 'Non définie'}</p>
-                                                </div>
-                                            </div>
-                                            {tender.files?.cdc && (
-                                                <a 
-                                                    href={tenderService.getFileUrl(tender.id, 'cdc')} 
-                                                    target="_blank" 
-                                                    className="flex items-center gap-3 px-4 py-2 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition-all"
-                                                >
-                                                    <FileText size={18} className="text-indigo-500" />
-                                                    <span className="text-xs font-black text-slate-700 uppercase tracking-tight">Cahier des Charges</span>
-                                                </a>
-                                            )}
-                                        </div>
+                                {/* Upper Header Card */}
+                                <div className="flex items-center justify-between mb-6">
+                                    <span className={`px-4.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusColor(tender.status)}`}>
+                                        {tender.status}
+                                    </span>
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                        <Calendar size={12} /> {tender.deadlineDate ? `Limite : ${new Date(tender.deadlineDate).toLocaleDateString('fr-FR')}` : 'Pas de date limite'}
+                                    </span>
+                                </div>
+
+                                {/* Tender Title & Organism */}
+                                <div className="mb-4">
+                                    <h4 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase leading-tight tracking-tight mb-1 truncate">
+                                        {tender.refCdc || "SANS RÉFÉRENCE"}
+                                    </h4>
+                                    <p className="text-xs font-black text-indigo-500 uppercase tracking-wider flex items-center gap-1.5">
+                                        <Building2 size={13} /> {tender.organism || "Organisme Inconnu"}
+                                    </p>
+                                </div>
+
+                                {/* Objet text */}
+                                <p className="text-slate-500 font-medium text-xs leading-relaxed line-clamp-3 mb-6 flex-1">
+                                    {tender.object || "Aucune description renseignée."}
+                                </p>
+
+                                {/* Badges list */}
+                                <div className="grid grid-cols-3 gap-3 border-t border-b border-slate-50 py-4 mb-6">
+                                    <div className="text-center">
+                                        <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Offre TTC</p>
+                                        <p className="text-xs font-black text-slate-900">{ttc > 0 ? `${ttc.toLocaleString('fr-FR')} DA` : '--'}</p>
                                     </div>
-
-                                    {/* Assignments & Progress */}
-                                    <div className="w-full lg:w-[400px] bg-slate-50 rounded-[2.5rem] p-6 border border-slate-100">
-                                        <div className="flex items-center justify-between mb-6">
-                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Intervenants & Statut</h4>
-                                            <Users size={16} className="text-slate-400" />
-                                        </div>
-                                        <div className="space-y-3">
-                                            {tender.assignments?.map(a => {
-                                                const isDone = a.status === 'done';
-                                                const isMe = a.email === currentUser?.email;
-                                                return (
-                                                    <div key={a.email} className="flex items-center justify-between bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black ${isDone ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
-                                                                {a.name[0]}
-                                                            </div>
-                                                            <div>
-                                                                <p className={`text-xs font-black uppercase tracking-tight ${isMe ? 'text-indigo-600' : 'text-slate-900'}`}>
-                                                                    {a.name} {isMe && "(Moi)"}
-                                                                </p>
-                                                                <p className="text-[9px] font-bold text-slate-400 uppercase">{a.role}</p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex gap-1">
-                                                            <div 
-                                                                title="Offre Technique"
-                                                                className={`w-5 h-5 rounded-lg flex items-center justify-center text-[8px] font-black ${a.techStatus === 'done' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400'}`}
-                                                            >
-                                                                T
-                                                            </div>
-                                                            <div 
-                                                                title="Offre Financière"
-                                                                className={`w-5 h-5 rounded-lg flex items-center justify-center text-[8px] font-black ${a.finStatus === 'done' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400'}`}
-                                                            >
-                                                                F
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                            {(!tender.assignments || tender.assignments.length === 0) && (
-                                                <p className="text-center text-[10px] font-bold text-slate-400 py-4 italic uppercase">Aucun intervenant assigné</p>
-                                            )}
-                                        </div>
-
-                                        {/* Actions per user role */}
-                                        <div className="mt-6 flex flex-col gap-2">
-                                            {(isCoordinator || isSuper) ? (
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    <button 
-                                                        onClick={() => handleOpenForm(tender)}
-                                                        className="flex items-center justify-center gap-2 py-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase hover:bg-slate-50 transition-all"
-                                                    >
-                                                        <Edit3 size={14} /> Modifier
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => {
-                                                            setSelectedTender(tender);
-                                                            // For manual build, we just set the tender
-                                                        }}
-                                                        className="flex items-center justify-center gap-2 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
-                                                    >
-                                                        <LayoutDashboard size={14} /> Gérer
-                                                    </button>
-                                                </div>
-                                            ) : tender.assignments?.some(a => a.email === currentUser?.email) && (
-                                                <button 
-                                                    onClick={() => setSelectedTender(tender)}
-                                                    className="w-full flex items-center justify-center gap-3 py-4 bg-indigo-600 text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100"
-                                                >
-                                                    <FileUp size={16} /> Déposer mes offres
-                                                </button>
-                                            )}
-                                        </div>
+                                    <div className="text-center border-l border-r border-slate-100">
+                                        <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Cautions</p>
+                                        <p className="text-xs font-black text-indigo-600">{cautionsCount} Caution(s)</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Produits</p>
+                                        <p className="text-xs font-black text-slate-900">{tender.items?.length || 0} Item(s)</p>
                                     </div>
                                 </div>
-                            </div>
-                        ))
-                    )}
-                </div>
-            </main>
 
-            {/* Creation Form Modal (Coordinator) */}
+                                {/* Team assignments summary */}
+                                <div className="mb-8">
+                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-3">Assignations & Statut</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {tender.assignments?.slice(0, 4).map((a, idx) => (
+                                            <div key={idx} className="flex items-center gap-1 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 text-[10px] font-bold text-slate-600">
+                                                <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full shrink-0"></span>
+                                                <span className="truncate max-w-[80px] uppercase font-black">{a.name.split(' ')[0]}</span>
+                                            </div>
+                                        ))}
+                                        {(!tender.assignments || tender.assignments.length === 0) && (
+                                            <span className="text-[9px] text-slate-400 font-bold italic uppercase">Aucun collaborateur assigné</span>
+                                        )}
+                                        {tender.assignments?.length > 4 && (
+                                            <div className="bg-slate-100 px-2 py-1.5 rounded-xl text-[9px] font-black text-slate-500 uppercase">
+                                                +{tender.assignments.length - 4}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Bottom actions */}
+                                <div className="flex gap-4 mt-auto">
+                                    {isCoordinator && (
+                                        <button 
+                                            onClick={() => handleOpenForm(tender)}
+                                            className="px-4 py-3 bg-slate-50 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 hover:text-slate-800 transition-all shadow-sm border border-slate-100"
+                                        >
+                                            Éditer
+                                        </button>
+                                    )}
+                                    <button 
+                                        onClick={() => {
+                                            setSelectedTender(tender);
+                                            setActiveTab("docs");
+                                        }}
+                                        className="flex-1 py-3 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.15em] hover:bg-indigo-600 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 shadow-md shadow-slate-950/10"
+                                    >
+                                        Gérer le dossier <ArrowRight size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* CDC Form Creation / Modification Modal */}
             {showForm && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowForm(false)}></div>
-                    <div className="relative bg-white w-full max-w-4xl rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                        <div className="p-10 bg-indigo-900 text-white flex justify-between items-center">
+                    <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" onClick={() => setShowForm(false)}></div>
+                    <div className="relative bg-white w-full max-w-4xl rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-8 bg-indigo-900 text-white flex justify-between items-center">
                             <div>
-                                <h3 className="text-2xl font-black uppercase tracking-tight">Nouveau Dossier CDC</h3>
-                                <p className="text-xs text-indigo-300 font-bold uppercase mt-1">Initiation du workflow d'appel d'offre</p>
+                                <h3 className="text-xl font-black uppercase tracking-tight">{formData.id ? "Modifier le Dossier" : "Créer un Dossier CDC"}</h3>
+                                <p className="text-xs text-indigo-300 font-bold uppercase mt-1">Saisie des informations de base pour l'Appel d'Offres</p>
                             </div>
-                            <button onClick={() => setShowForm(false)} className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-colors border border-white/10">
-                                <X size={24} />
+                            <button onClick={() => setShowForm(false)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-all border border-white/10">
+                                <X size={20} />
                             </button>
                         </div>
                         
-                        <form onSubmit={handleSubmit} className="p-10 max-h-[75vh] overflow-y-auto bg-white">
+                        <form onSubmit={handleSubmit} className="p-10 max-h-[75vh] overflow-y-auto bg-white space-y-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {/* Left Column: Info */}
+                                {/* Left side: General Info */}
                                 <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Référence du CDC</label>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Référence du CDC / Appel d'Offres</label>
                                         <input 
                                             required
-                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-sm outline-none focus:border-indigo-400 focus:bg-white transition-all"
+                                            type="text"
+                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-slate-800 text-xs outline-none focus:border-indigo-400 focus:bg-white transition-all shadow-inner"
                                             value={formData.refCdc}
                                             onChange={(e) => setFormData({...formData, refCdc: e.target.value})}
+                                            placeholder="Ex: CDC N°03/2026"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Organisme / Client</label>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Organisme Public / Client</label>
                                         <input 
                                             required
-                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-sm outline-none focus:border-indigo-400 focus:bg-white transition-all"
+                                            type="text"
+                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-slate-800 text-xs outline-none focus:border-indigo-400 focus:bg-white transition-all shadow-inner"
                                             value={formData.organism}
                                             onChange={(e) => setFormData({...formData, organism: e.target.value})}
+                                            placeholder="Ex: Ministère de la Santé"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Objet</label>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Objet des prestations</label>
                                         <textarea 
                                             required
-                                            rows="3"
-                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-sm outline-none focus:border-indigo-400 focus:bg-white transition-all resize-none"
+                                            rows="4"
+                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 text-xs outline-none focus:border-indigo-400 focus:bg-white transition-all resize-none shadow-inner leading-relaxed"
                                             value={formData.object}
                                             onChange={(e) => setFormData({...formData, object: e.target.value})}
+                                            placeholder="Décrivez l'objet global du marché..."
                                         ></textarea>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Date d'envoi</label>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date d'Envoi</label>
                                             <input 
                                                 type="date"
-                                                className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-sm outline-none focus:border-indigo-400 focus:bg-white transition-all"
+                                                className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-slate-800 text-xs outline-none focus:border-indigo-400 focus:bg-white transition-all shadow-inner"
                                                 value={formData.dispatchDate}
                                                 onChange={(e) => setFormData({...formData, dispatchDate: e.target.value})}
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Date Limite</label>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date Limite de Dépôt</label>
                                             <input 
                                                 type="date"
-                                                className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-sm outline-none focus:border-indigo-400 focus:bg-white transition-all"
+                                                className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-slate-800 text-xs outline-none focus:border-indigo-400 focus:bg-white transition-all shadow-inner"
                                                 value={formData.deadlineDate}
                                                 onChange={(e) => setFormData({...formData, deadlineDate: e.target.value})}
                                             />
@@ -627,13 +730,13 @@ const Tenders = () => {
                                     </div>
                                 </div>
 
-                                {/* Right Column: Assignments */}
+                                {/* Right side: Assignments */}
                                 <div className="space-y-6">
-                                    <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-200">
+                                    <div className="p-6 bg-slate-50 rounded-[2.5rem] border border-slate-200 shadow-inner">
                                         <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                            <Users size={14} /> Sélection des intervenants
+                                            <Users size={14} /> Collaborateurs Assignés
                                         </h4>
-                                        <div className="space-y-2 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                                             {PERSONNEL.filter(p => p.email !== 'mouhoub.imene@esclab-algerie.com').map(person => {
                                                 const isSelected = formData.assignments.some(a => a.email === person.email);
                                                 return (
@@ -641,7 +744,7 @@ const Tenders = () => {
                                                         key={person.email}
                                                         type="button"
                                                         onClick={() => toggleAssignment(person)}
-                                                        className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
+                                                        className={`w-full flex items-center justify-between p-3.5 rounded-xl border-2 transition-all ${
                                                             isSelected 
                                                             ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100' 
                                                             : 'bg-white border-slate-100 text-slate-600 hover:border-indigo-200'
@@ -649,34 +752,48 @@ const Tenders = () => {
                                                     >
                                                         <div className="text-left">
                                                             <p className="text-xs font-black uppercase tracking-tight">{person.name}</p>
-                                                            <p className={`text-[9px] font-bold uppercase ${isSelected ? 'text-indigo-200' : 'text-slate-400'}`}>
+                                                            <p className={`text-[8px] font-bold uppercase ${isSelected ? 'text-indigo-200' : 'text-slate-400'}`}>
                                                                 {person.role}
                                                             </p>
                                                         </div>
                                                         <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 ${isSelected ? 'bg-white text-indigo-600 border-white' : 'border-slate-200'}`}>
-                                                            {isSelected && <Check size={12} strokeWidth={4} />}
+                                                            {isSelected && <Check size={10} strokeWidth={4} />}
                                                         </div>
                                                     </button>
                                                 );
                                             })}
                                         </div>
                                     </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Statut Initial</label>
+                                        <select 
+                                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-slate-800 text-xs outline-none focus:border-indigo-400 focus:bg-white transition-all shadow-inner"
+                                            value={formData.status}
+                                            onChange={(e) => setFormData({...formData, status: e.target.value})}
+                                        >
+                                            <option value="En préparation">En préparation</option>
+                                            <option value="Déposé">Déposé</option>
+                                            <option value="Adjugé">Adjugé</option>
+                                            <option value="Perdu">Perdu</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div className="mt-12 flex gap-6">
+                            <div className="pt-6 border-t border-slate-100 flex gap-4 justify-end">
                                 <button 
                                     type="button"
                                     onClick={() => setShowForm(false)}
-                                    className="flex-1 px-8 py-5 bg-slate-100 text-slate-500 rounded-[2rem] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                                    className="px-8 py-4 bg-slate-50 text-slate-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all border border-slate-200 shadow-sm"
                                 >
                                     Annuler
                                 </button>
                                 <button 
                                     type="submit"
-                                    className="flex-[2] px-8 py-5 bg-indigo-600 text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 transition-all"
+                                    className="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all"
                                 >
-                                    {formData.id ? "Enregistrer" : "Lancer le Workflow"}
+                                    {formData.id ? "Enregistrer" : "Créer le Dossier"}
                                 </button>
                             </div>
                         </form>
@@ -684,847 +801,656 @@ const Tenders = () => {
                 </div>
             )}
 
-            {/* Workflow Management / Offer Submission Modal */}
+            {/* Main Immersive Management Modal (Tender Details & Cautions Workflow) */}
             {selectedTender && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-xl" onClick={() => setSelectedTender(null)}></div>
-                    <div className="relative bg-slate-50 w-full max-w-5xl rounded-[4rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 duration-500 flex flex-col md:flex-row h-[85vh]">
+                    <div className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm" onClick={() => setSelectedTender(null)}></div>
+                    <div className="relative bg-white w-full max-w-6xl rounded-[3.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-300 flex flex-col md:flex-row h-[85vh]">
                         
-                        {/* Sidebar: Status & Info */}
-                        <div className="w-full md:w-[320px] bg-indigo-900 p-10 text-white space-y-10 shrink-0">
-                            <button onClick={() => setSelectedTender(null)} className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/10 hover:bg-white/20 transition-colors mb-4">
-                                <X size={24} />
-                            </button>
-                            <div>
-                                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] block mb-2">Dossier en cours</span>
-                                <h3 className="text-2xl font-black tracking-tight leading-tight">{selectedTender.refCdc}</h3>
-                                <p className="text-xs font-bold text-indigo-300 mt-2 line-clamp-3">{selectedTender.object}</p>
+                        {/* Sidebar inside modal */}
+                        <div className="w-full md:w-[320px] bg-slate-900 p-8 text-white flex flex-col justify-between shrink-0 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 to-transparent opacity-50"></div>
+                            
+                            <div className="relative z-10 space-y-8">
+                                <button 
+                                    onClick={() => setSelectedTender(null)} 
+                                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-all border border-white/10"
+                                >
+                                    <X size={18} />
+                                </button>
+                                
+                                <div>
+                                    <span className="px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border border-white/20 bg-white/5 inline-block mb-3">
+                                        Réf : {selectedTender.refCdc || "Aucune"}
+                                    </span>
+                                    <h3 className="text-2xl font-black tracking-tight leading-tight uppercase mb-2">{selectedTender.organism || "Organisme"}</h3>
+                                    <p className="text-slate-400 font-bold text-xs line-clamp-3 leading-relaxed">{selectedTender.object}</p>
+                                </div>
+
+                                <div className="space-y-4 pt-4 border-t border-white/10">
+                                    <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Statut Marché</p>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse"></span>
+                                            <span className="text-xs font-black uppercase">{selectedTender.status}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Compteurs</p>
+                                        <p className="text-xs font-black">
+                                            {selectedTender.items?.length || 0} Produits | {selectedTender.cautions?.length || 0} Cautions
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="space-y-6">
-                                <div className="p-5 bg-white/5 rounded-3xl border border-white/10">
-                                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">Statut Global</p>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-3 h-3 bg-indigo-500 rounded-full animate-pulse shadow-lg shadow-indigo-500/50"></div>
-                                        <span className="text-sm font-black uppercase">{selectedTender.status}</span>
-                                    </div>
-                                </div>
-                                <div className="p-5 bg-white/5 rounded-3xl border border-white/10">
-                                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">Intervenants</p>
-                                    <div className="flex -space-x-2">
-                                        {selectedTender.assignments?.map(a => (
-                                            <div key={a.email} title={a.name} className="w-8 h-8 rounded-full bg-indigo-700 border-2 border-indigo-900 flex items-center justify-center text-[10px] font-black uppercase">
-                                                {a.name[0]}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+                            <div className="relative z-10 pt-6 border-t border-white/10 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                                ESCLAB Tenders Manager v4.5
                             </div>
                         </div>
 
-                        {/* Content Area */}
-                        <div className="flex-1 p-12 overflow-y-auto space-y-10 scroll-smooth">
-                            {/* Section 1: Documents Sources (Visible to all assigned or Admin) */}
-                            {(isCoordinator || isSuper || assignedWorker) && (
-                                <div className="space-y-6">
-                                    <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
-                                        <Paperclip className="text-indigo-600" /> Documents de Référence
-                                    </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="p-8 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 hover:border-indigo-400 transition-all group flex flex-col items-center text-center">
-                                            <FileUp size={32} className="text-slate-300 group-hover:text-indigo-500 transition-colors mb-4" />
-                                            <p className="text-xs font-black text-slate-900 uppercase tracking-widest mb-2">Cahier des Charges (CDC)</p>
-                                            <p className="text-[10px] text-slate-400 font-bold mb-4 uppercase">PDF ou XLSX accepté</p>
-                                            <input 
-                                                type="file" 
-                                                id="upload-cdc" 
-                                                accept=".pdf,.xlsx,.xls"
-                                                className="hidden" 
-                                                onChange={(e) => handleFileUpload(e, selectedTender.id, 'cdc')}
-                                            />
-                                            <label 
-                                                htmlFor="upload-cdc" 
-                                                className="px-6 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
-                                            >
-                                                {selectedTender.files?.cdc ? "Mettre à jour le CDC" : "Choisir un fichier"}
-                                            </label>
-                                            {selectedTender.files?.cdc && (
-                                                <div className="mt-4 flex items-center gap-2">
-                                                    <CheckCircle2 size={14} className="text-emerald-500" />
-                                                    <span className="text-[10px] font-black text-slate-600 truncate max-w-[150px]">{selectedTender.files.cdc.name}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        
-                                        <div className="p-8 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 hover:border-indigo-400 transition-all group flex flex-col items-center text-center">
-                                            <Share2 size={32} className="text-slate-300 group-hover:text-indigo-500 transition-colors mb-4" />
-                                            <p className="text-xs font-black text-slate-900 uppercase tracking-widest mb-2">Offre Globale Finalisée</p>
-                                            <p className="text-[10px] text-slate-400 font-bold mb-4 uppercase">Compilation Manuelle Finale</p>
-                                            <input 
-                                                type="file" 
-                                                id="upload-global" 
-                                                className="hidden" 
-                                                onChange={(e) => handleFileUpload(e, selectedTender.id, 'global_offer')}
-                                            />
-                                            <label 
-                                                htmlFor="upload-global" 
-                                                className="px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-indigo-600 transition-all shadow-lg"
-                                            >
-                                                {selectedTender.files?.global_offer ? "Remplacer l'offre globale" : "Uploader l'offre finale"}
-                                            </label>
-                                            {selectedTender.files?.global_offer && (
-                                                <div className="mt-4 flex items-center gap-2">
-                                                    <CheckCircle2 size={14} className="text-emerald-500" />
-                                                    <span className="text-[10px] font-black text-slate-600 truncate max-w-[150px]">{selectedTender.files.global_offer.name}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                        {/* Content Area with tabs */}
+                        <div className="flex-1 flex flex-col h-full bg-slate-50/50">
+                            {/* Tabs Navigation */}
+                            <div className="bg-white px-8 border-b border-slate-100 flex gap-2 overflow-x-auto scrollbar-hide shrink-0 pt-4">
+                                {[
+                                    { id: 'docs', label: 'Soumission Offres', icon: <Paperclip size={14} /> },
+                                    { id: 'dqe', label: 'DQE / Commercial', icon: <ShoppingBag size={14} /> },
+                                    { id: 'cautions', label: 'Cautions Bancaires', icon: <DollarSign size={14} /> },
+                                    { id: 'administrative', label: 'Service des Marchés', icon: <ClipboardCheck size={14} /> }
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`px-5 py-4 border-b-2 font-black text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all ${
+                                            activeTab === tab.id 
+                                            ? 'border-indigo-600 text-indigo-600' 
+                                            : 'border-transparent text-slate-400 hover:text-slate-600'
+                                        }`}
+                                    >
+                                        {tab.icon}
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
 
-                            {/* Section 2: Worker Contribution (2 Files) */}
-                            {assignedWorker && (
-                                <div className="space-y-6 animate-in slide-in-from-right-10">
-                                    <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
-                                        <Send className="text-indigo-600" /> Mes Propositions
-                                    </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* Technical Offer */}
-                                        <div className="bg-indigo-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100 relative overflow-hidden">
-                                            <div className="relative z-10">
-                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-indigo-200">Partie 1</p>
-                                                <div className="flex items-center justify-between mb-4">
-                                                    <h5 className="text-lg font-black uppercase">Offre Technique</h5>
-                                                    {selectedTender.files?.[`tech_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`] && (
-                                                        <div className="flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full border border-white/20">
-                                                            <CheckCircle2 size={12} className="text-emerald-300" />
-                                                            <span className="text-[9px] font-black uppercase">Présent</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="flex flex-col gap-4">
-                                                    <input 
-                                                        type="file" 
-                                                        id="worker-upload-tech" 
-                                                        accept=".pdf,.xlsx,.xls"
-                                                        className="hidden" 
-                                                        onChange={(e) => handleFileUpload(e, selectedTender.id, `tech_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`)}
-                                                    />
-                                                    <label 
-                                                        htmlFor="worker-upload-tech" 
-                                                        className="inline-flex items-center justify-center gap-3 px-6 py-3 bg-white text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest cursor-pointer hover:scale-105 transition-all shadow-lg"
-                                                    >
-                                                        <FileUp size={16} /> {selectedTender.files?.[`tech_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`] ? 'Remplacer le fichier' : 'Déposer mon fichier'}
-                                                    </label>
+                            {/* Scrollable Tab Content */}
+                            <div className="flex-1 p-8 overflow-y-auto space-y-8">
+                                
+                                {/* TAB 1: Documents & File Submission */}
+                                {activeTab === 'docs' && (
+                                    <div className="space-y-6">
+                                        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                                            <h4 className="text-sm font-black text-slate-900 uppercase mb-4 flex items-center gap-2">
+                                                <FileText size={16} className="text-indigo-600" /> Documents Source
+                                            </h4>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200/60 hover:border-indigo-400 transition-all flex flex-col justify-between items-center text-center">
+                                                    <FileUp size={24} className="text-slate-400 mb-2" />
+                                                    <p className="text-xs font-black text-slate-800 uppercase mb-1">Cahier des Charges</p>
+                                                    <p className="text-[9px] text-slate-400 font-bold mb-4">PDF, XLS, DOC</p>
                                                     
-                                                    {selectedTender.files?.[`tech_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`] && (
-                                                        <a 
-                                                            href={tenderService.getFileUrl(selectedTender.id, `tech_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`)} 
-                                                            target="_blank"
-                                                            className="text-[10px] font-bold text-indigo-100 hover:text-white underline flex items-center gap-2"
-                                                        >
-                                                            <Eye size={12} /> Consulter mon dépôt
-                                                        </a>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Financial Offer */}
-                                        <div className="bg-emerald-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-emerald-100 relative overflow-hidden">
-                                            <div className="relative z-10">
-                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-emerald-200">Partie 2</p>
-                                                <div className="flex items-center justify-between mb-4">
-                                                    <h5 className="text-lg font-black uppercase">Offre Financière</h5>
-                                                    {selectedTender.files?.[`fin_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`] && (
-                                                        <div className="flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full border border-white/20">
-                                                            <CheckCircle2 size={12} className="text-emerald-300" />
-                                                            <span className="text-[9px] font-black uppercase">Présent</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="flex flex-col gap-4">
                                                     <input 
                                                         type="file" 
-                                                        id="worker-upload-fin" 
-                                                        accept=".pdf,.xlsx,.xls"
+                                                        id="cdc-file" 
                                                         className="hidden" 
-                                                        onChange={(e) => handleFileUpload(e, selectedTender.id, `fin_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`)}
+                                                        onChange={(e) => handleFileUpload(e, selectedTender.id, 'cdc')} 
                                                     />
-                                                    <label 
-                                                        htmlFor="worker-upload-fin" 
-                                                        className="inline-flex items-center justify-center gap-3 px-6 py-3 bg-white text-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest cursor-pointer hover:scale-105 transition-all shadow-lg"
-                                                    >
-                                                        <FileUp size={16} /> {selectedTender.files?.[`fin_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`] ? 'Remplacer le fichier' : 'Déposer mon fichier'}
-                                                    </label>
+                                                    
+                                                    <div className="flex gap-2">
+                                                        <label htmlFor="cdc-file" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase cursor-pointer hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100">
+                                                            {selectedTender.files?.cdc ? 'Remplacer' : 'Déposer'}
+                                                        </label>
+                                                        {selectedTender.files?.cdc && (
+                                                            <a href={tenderService.getFileUrl(selectedTender.id, 'cdc')} target="_blank" className="px-4 py-2 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase flex items-center gap-1">
+                                                                <Eye size={10} /> Voir
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </div>
 
-                                                    {selectedTender.files?.[`fin_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`] && (
-                                                        <a 
-                                                            href={tenderService.getFileUrl(selectedTender.id, `fin_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`)} 
-                                                            target="_blank"
-                                                            className="text-[10px] font-bold text-emerald-100 hover:text-white underline flex items-center gap-2"
-                                                        >
-                                                            <Eye size={12} /> Consulter mon dépôt
-                                                        </a>
-                                                    )}
+                                                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200/60 flex flex-col justify-between items-center text-center">
+                                                    <FileUp size={24} className="text-slate-400 mb-2" />
+                                                    <p className="text-xs font-black text-slate-800 uppercase mb-1">Offre Globale Validée</p>
+                                                    <p className="text-[9px] text-slate-400 font-bold mb-4">Dossier final transmis</p>
+                                                    
+                                                    <input 
+                                                        type="file" 
+                                                        id="final-cdc" 
+                                                        className="hidden" 
+                                                        onChange={(e) => handleFileUpload(e, selectedTender.id, 'final_submission')} 
+                                                    />
+                                                    
+                                                    <div className="flex gap-2">
+                                                        <label htmlFor="final-cdc" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase cursor-pointer hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100">
+                                                            {selectedTender.files?.final_submission ? 'Remplacer' : 'Déposer'}
+                                                        </label>
+                                                        {selectedTender.files?.final_submission && (
+                                                            <a href={tenderService.getFileUrl(selectedTender.id, 'final_submission')} target="_blank" className="px-4 py-2 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase flex items-center gap-1">
+                                                                <Eye size={10} /> Voir
+                                                            </a>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            )}
 
-                            {/* Section 3: Overview & Auto-Compilation (Imene/Admin) */}
-                            {(isCoordinator || isSuperAdmin) && (
-                                <div className="space-y-6">
-                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                        <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Suivi & Compilation</h4>
-                                        <div className="flex gap-2">
-                                            <button 
-                                                onClick={() => handleBatchDownload('tech')}
-                                                className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-200 transition-all flex items-center gap-2"
-                                            >
-                                                <Share2 size={12} /> Compiler Tech.
-                                            </button>
-                                            <button 
-                                                onClick={() => handleBatchDownload('fin')}
-                                                className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-200 transition-all flex items-center gap-2"
-                                            >
-                                                <Share2 size={12} /> Compiler Fin.
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
-                                        <table className="w-full text-left">
-                                            <thead className="bg-slate-50">
-                                                <tr>
-                                                    <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Intervenant</th>
-                                                    <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Offre Tech.</th>
-                                                    <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Offre Fin.</th>
-                                                    <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Global</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100">
-                                                {selectedTender.assignments?.map(a => {
-                                                    const techKey = `tech_${a.email.replace(/[^a-zA-Z0-9]/g, '_')}`;
-                                                    const finKey = `fin_${a.email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                                        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h4 className="text-sm font-black text-slate-900 uppercase flex items-center gap-2">
+                                                    <Users size={16} className="text-indigo-600" /> Dépôt des Offres par Collaborateur
+                                                </h4>
+                                                {(isCoordinator || isSuper) && (
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => handleBatchDownload('tech')} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase hover:bg-indigo-100">Compiler Tech</button>
+                                                        <button onClick={() => handleBatchDownload('fin')} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase hover:bg-emerald-100">Compiler Fin</button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            <div className="space-y-3">
+                                                {selectedTender.assignments?.map((a) => {
+                                                    const cleanEmail = a.email.replace(/[^a-zA-Z0-9]/g, '_');
+                                                    const techKey = `tech_${cleanEmail}`;
+                                                    const finKey = `fin_${cleanEmail}`;
                                                     const hasTech = selectedTender.files?.[techKey];
                                                     const hasFin = selectedTender.files?.[finKey];
+                                                    const isMe = a.email === currentUser.email;
+
                                                     return (
-                                                        <tr key={a.email} className="hover:bg-slate-50/50 transition-colors">
-                                                            <td className="p-6">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400">
-                                                                        {a.name[0]}
-                                                                    </div>
-                                                                    <div>
-                                                                        <p className="text-xs font-black text-slate-900 uppercase">{a.name}</p>
-                                                                        <p className="text-[8px] font-bold text-slate-400 uppercase">{a.role}</p>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td className="p-6">
-                                                                {hasTech ? (
-                                                                    <a href={tenderService.getFileUrl(selectedTender.id, techKey)} target="_blank" className="flex items-center gap-2 text-indigo-600 hover:underline text-[9px] font-black uppercase">
-                                                                        <Eye size={12} /> {hasTech.ext.toUpperCase()}
-                                                                    </a>
-                                                                ) : <span className="text-[8px] text-slate-300 font-bold uppercase italic">Manquant</span>}
-                                                            </td>
-                                                            <td className="p-6">
-                                                                {hasFin ? (
-                                                                    <a href={tenderService.getFileUrl(selectedTender.id, finKey)} target="_blank" className="flex items-center gap-2 text-emerald-600 hover:underline text-[9px] font-black uppercase">
-                                                                        <Eye size={12} /> {hasFin.ext.toUpperCase()}
-                                                                    </a>
-                                                                ) : <span className="text-[8px] text-slate-300 font-bold uppercase italic">Manquant</span>}
-                                                            </td>
-                                                            <td className="p-6">
-                                                                {a.status === 'done' ? (
-                                                                    <div className="w-5 h-5 bg-emerald-500 text-white rounded flex items-center justify-center shadow-md">
-                                                                        <Check size={12} strokeWidth={4} />
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="w-5 h-5 bg-slate-200 text-slate-400 rounded flex items-center justify-center">
-                                                                        <Clock size={12} />
-                                                                    </div>
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            )}
+                                                        <div key={a.email} className={`p-4 rounded-xl border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${isMe ? 'bg-indigo-50/50 border-indigo-100' : 'bg-slate-50/50 border-slate-100'}`}>
+                                                            <div>
+                                                                <p className="text-xs font-black text-slate-800 uppercase">{a.name} {isMe && "(Moi)"}</p>
+                                                                <p className="text-[9px] font-bold text-slate-400 uppercase">{a.role}</p>
+                                                            </div>
 
-                            {/* Section 3.5: Commercial Offer Details (Items Table) */}
-                            {(isCoordinator || isSuperAdmin || selectedTender.assignments?.some(a => a.email === currentUser.email)) && (
-                                <div className="space-y-8 p-10 bg-white rounded-[3rem] border border-slate-200 shadow-sm">
-                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
-                                                <ShoppingBag size={24} />
-                                            </div>
-                                            <div>
-                                                <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Détails de l'Offre Commerciale</h4>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Saisie des items du bordereau</p>
-                                            </div>
-                                        </div>
-                                        
-                                        {selectedTender.items?.length > 0 && (
-                                            <div className="flex gap-4">
-                                                <div className="bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100">
-                                                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Total HT</p>
-                                                    <p className="text-sm font-black text-slate-900">{calculateTotals(selectedTender.items).ht.toLocaleString()} DA</p>
-                                                </div>
-                                                <div className="bg-indigo-50 px-5 py-3 rounded-2xl border border-indigo-100">
-                                                    <p className="text-[8px] font-black text-indigo-400 uppercase mb-1">Total TTC</p>
-                                                    <p className="text-sm font-black text-indigo-600">{calculateTotals(selectedTender.items).ttc.toLocaleString()} DA</p>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Item Entry Form */}
-                                    <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
-                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                            <div className="md:col-span-2 space-y-2">
-                                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Désignation Produit</label>
-                                                <input 
-                                                    type="text"
-                                                    value={newItem.designation}
-                                                    onChange={(e) => setNewItem({...newItem, designation: e.target.value})}
-                                                    className="w-full px-6 py-4 bg-white rounded-2xl border-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all"
-                                                    placeholder="Nom de l'article..."
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Référence</label>
-                                                <input 
-                                                    type="text"
-                                                    value={newItem.reference}
-                                                    onChange={(e) => setNewItem({...newItem, reference: e.target.value})}
-                                                    className="w-full px-6 py-4 bg-white rounded-2xl border-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all"
-                                                    placeholder="Réf catalogue..."
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Quantité</label>
-                                                <input 
-                                                    type="number"
-                                                    value={newItem.quantity}
-                                                    onChange={(e) => setNewItem({...newItem, quantity: e.target.value})}
-                                                    className="w-full px-6 py-4 bg-white rounded-2xl border-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Accessoires</label>
-                                                <input 
-                                                    type="text"
-                                                    value={newItem.accessories}
-                                                    onChange={(e) => setNewItem({...newItem, accessories: e.target.value})}
-                                                    className="w-full px-6 py-4 bg-white rounded-2xl border-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all"
-                                                    placeholder="Options..."
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Marque / Fournisseur</label>
-                                                <input 
-                                                    type="text"
-                                                    value={newItem.brand}
-                                                    onChange={(e) => setNewItem({...newItem, brand: e.target.value})}
-                                                    className="w-full px-6 py-4 bg-white rounded-2xl border-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all"
-                                                    placeholder="Marque..."
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Origine</label>
-                                                <select 
-                                                    value={newItem.type}
-                                                    onChange={(e) => setNewItem({...newItem, type: e.target.value})}
-                                                    className="w-full px-6 py-4 bg-white rounded-2xl border-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all appearance-none"
-                                                >
-                                                    <option value="Importation">Importation</option>
-                                                    <option value="Produit Local">Produit Local</option>
-                                                </select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Prix HT (DA)</label>
-                                                <input 
-                                                    type="number"
-                                                    value={newItem.priceHT}
-                                                    onChange={(e) => setNewItem({...newItem, priceHT: e.target.value, priceTTC: e.target.value * 1.19})}
-                                                    className="w-full px-6 py-4 bg-white rounded-2xl border-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all"
-                                                />
-                                            </div>
-                                            <div className="flex items-end">
-                                                <button 
-                                                    onClick={handleAddItem}
-                                                    className="w-full h-[52px] bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
-                                                >
-                                                    <Plus size={16} /> Ajouter Item
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Items Table */}
-                                    {selectedTender.items?.length > 0 && (
-                                        <div className="overflow-hidden border border-slate-100 rounded-[2rem] shadow-sm bg-white">
-                                            <table className="w-full text-left">
-                                                <thead className="bg-slate-50 border-b border-slate-100">
-                                                    <tr>
-                                                        <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Désignation</th>
-                                                        <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Référence</th>
-                                                        <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Qté</th>
-                                                        <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Marque</th>
-                                                        <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Prix HT</th>
-                                                        <th className="p-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Prix TTC</th>
-                                                        <th className="p-6"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-100">
-                                                    {selectedTender.items.map(item => (
-                                                        <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                                                            <td className="p-6">
-                                                                <p className="text-xs font-black text-slate-900 uppercase">{item.designation}</p>
-                                                                <div className="flex flex-wrap gap-2 mt-1">
-                                                                    <span className="text-[8px] font-black px-2 py-0.5 bg-slate-100 text-slate-400 rounded-md uppercase">{item.type}</span>
-                                                                    {item.accessories && (
-                                                                        <span className="text-[8px] font-black px-2 py-0.5 bg-indigo-50 text-indigo-400 rounded-md uppercase">Acc: {item.accessories}</span>
+                                                            <div className="flex flex-wrap items-center gap-4">
+                                                                {/* Technical offer input */}
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[9px] font-black text-slate-400 uppercase">Technique :</span>
+                                                                    {isMe ? (
+                                                                        <>
+                                                                            <input type="file" id={`upload-t-${cleanEmail}`} className="hidden" onChange={(e) => handleFileUpload(e, selectedTender.id, techKey)} />
+                                                                            <label htmlFor={`upload-t-${cleanEmail}`} className="px-3 py-1.5 bg-white border border-slate-200 rounded text-[9px] font-black uppercase cursor-pointer hover:bg-slate-50">
+                                                                                {hasTech ? 'Remplacer' : 'Uploader'}
+                                                                            </label>
+                                                                        </>
+                                                                    ) : (
+                                                                        <span className={`text-[8px] font-black px-2 py-1 rounded uppercase ${hasTech ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-400'}`}>
+                                                                            {hasTech ? 'Prêt' : 'En attente'}
+                                                                        </span>
+                                                                    )}
+                                                                    {hasTech && (
+                                                                        <a href={tenderService.getFileUrl(selectedTender.id, techKey)} target="_blank" className="p-1.5 bg-slate-900 text-white rounded hover:bg-slate-800"><Eye size={10} /></a>
                                                                     )}
                                                                 </div>
-                                                            </td>
-                                                            <td className="p-6 text-xs font-bold text-slate-600">{item.reference}</td>
-                                                            <td className="p-6 text-xs font-black text-slate-900">{item.quantity}</td>
-                                                            <td className="p-6 text-xs font-bold text-indigo-600 uppercase">{item.brand}</td>
-                                                            <td className="p-6 text-xs font-black text-slate-900 text-right">{item.priceHT?.toLocaleString()} DA</td>
-                                                            <td className="p-6 text-xs font-black text-emerald-600 text-right">{item.priceTTC?.toLocaleString()} DA</td>
-                                                            <td className="p-6 text-right">
-                                                                <button 
-                                                                    onClick={() => handleDeleteItem(item.id)}
-                                                                    className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
-                                                                >
-                                                                    <Trash2 size={16} />
-                                                                </button>
-                                                            </td>
+
+                                                                {/* Financial offer input */}
+                                                                <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
+                                                                    <span className="text-[9px] font-black text-slate-400 uppercase">Financière :</span>
+                                                                    {isMe ? (
+                                                                        <>
+                                                                            <input type="file" id={`upload-f-${cleanEmail}`} className="hidden" onChange={(e) => handleFileUpload(e, selectedTender.id, finKey)} />
+                                                                            <label htmlFor={`upload-f-${cleanEmail}`} className="px-3 py-1.5 bg-white border border-slate-200 rounded text-[9px] font-black uppercase cursor-pointer hover:bg-slate-50">
+                                                                                {hasFin ? 'Remplacer' : 'Uploader'}
+                                                                            </label>
+                                                                        </>
+                                                                    ) : (
+                                                                        <span className={`text-[8px] font-black px-2 py-1 rounded uppercase ${hasFin ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-400'}`}>
+                                                                            {hasFin ? 'Prêt' : 'En attente'}
+                                                                        </span>
+                                                                    )}
+                                                                    {hasFin && (
+                                                                        <a href={tenderService.getFileUrl(selectedTender.id, finKey)} target="_blank" className="p-1.5 bg-slate-900 text-white rounded hover:bg-slate-800"><Eye size={10} /></a>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* TAB 2: DQE Products table */}
+                                {activeTab === 'dqe' && (
+                                    <div className="space-y-6">
+                                        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-6">
+                                            <div className="flex justify-between items-center">
+                                                <h4 className="text-sm font-black text-slate-900 uppercase">Bordereau des Prix (DQE)</h4>
+                                                <div className="flex gap-4">
+                                                    <div className="text-right">
+                                                        <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Total TTC Marché</p>
+                                                        <p className="text-base font-black text-indigo-600">
+                                                            {calculateTotals(selectedTender.items).ttc.toLocaleString()} DA
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Add Item form */}
+                                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] font-black text-slate-400 uppercase">Désignation Article</label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={newItem.designation} 
+                                                        onChange={(e) => setNewItem({...newItem, designation: e.target.value})}
+                                                        placeholder="Désignation..."
+                                                        className="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold outline-none"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] font-black text-slate-400 uppercase">Référence</label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={newItem.reference} 
+                                                        onChange={(e) => setNewItem({...newItem, reference: e.target.value})}
+                                                        placeholder="Réf..."
+                                                        className="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold outline-none"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] font-black text-slate-400 uppercase">Quantité</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={newItem.quantity} 
+                                                        onChange={(e) => setNewItem({...newItem, quantity: parseInt(e.target.value) || 1})}
+                                                        className="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold outline-none"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] font-black text-slate-400 uppercase">Prix HT (DA)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={newItem.priceHT} 
+                                                        onChange={(e) => {
+                                                            const ht = parseFloat(e.target.value) || 0;
+                                                            setNewItem({...newItem, priceHT: ht, priceTTC: Math.round(ht * 1.19 * 100) / 100});
+                                                        }}
+                                                        className="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold outline-none"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] font-black text-slate-400 uppercase">Marque</label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={newItem.brand} 
+                                                        onChange={(e) => setNewItem({...newItem, brand: e.target.value})}
+                                                        placeholder="Marque..."
+                                                        className="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold outline-none"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] font-black text-slate-400 uppercase">Origine</label>
+                                                    <select 
+                                                        value={newItem.type} 
+                                                        onChange={(e) => setNewItem({...newItem, type: e.target.value})}
+                                                        className="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold outline-none"
+                                                    >
+                                                        <option value="Importation">Importation</option>
+                                                        <option value="Produit Local">Produit Local</option>
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-1 sm:col-span-2 flex items-end">
+                                                    <button 
+                                                        onClick={handleAddItem}
+                                                        className="w-full h-11 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase hover:bg-indigo-600 transition-all shadow"
+                                                    >
+                                                        Ajouter au tableau
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Table list */}
+                                            <div className="overflow-x-auto border border-slate-100 rounded-xl bg-white">
+                                                <table className="w-full text-left">
+                                                    <thead className="bg-slate-50">
+                                                        <tr>
+                                                            <th className="p-4 text-[9px] font-black text-slate-400 uppercase">Désignation</th>
+                                                            <th className="p-4 text-[9px] font-black text-slate-400 uppercase">Réf</th>
+                                                            <th className="p-4 text-[9px] font-black text-slate-400 uppercase text-center">Qté</th>
+                                                            <th className="p-4 text-[9px] font-black text-slate-400 uppercase">Marque</th>
+                                                            <th className="p-4 text-[9px] font-black text-slate-400 uppercase text-right">Prix HT</th>
+                                                            <th className="p-4 text-[9px] font-black text-slate-400 uppercase text-right">Total TTC</th>
+                                                            <th className="p-4"></th>
                                                         </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Section 3.6: Service des Marchés (Administrative Tracking) */}
-                            {(isCoordinator || isSuper || assignedWorker) && (
-                                <div className="space-y-8 p-10 bg-slate-900 rounded-[3rem] text-white shadow-2xl shadow-indigo-200">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg">
-                                            <ClipboardCheck size={24} />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-xl font-black uppercase tracking-tight">Service des Marchés</h4>
-                                            <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">Suivi administratif et exécution du contrat</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-indigo-300 uppercase tracking-widest ml-1">N° Contrat</label>
-                                            <input 
-                                                type="text"
-                                                value={selectedTender.contractNumber || ""}
-                                                onChange={async (e) => {
-                                                    const updated = { ...selectedTender, contractNumber: e.target.value };
-                                                    setSelectedTender(updated);
-                                                    await tenderService.saveTender(updated, currentUser.firstName);
-                                                }}
-                                                className="w-full px-6 py-4 bg-white/10 rounded-2xl border-none text-xs font-bold text-white placeholder:text-white/20 focus:ring-2 focus:ring-indigo-500 transition-all"
-                                                placeholder="Référence contrat..."
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-indigo-300 uppercase tracking-widest ml-1">Commercial Responsable</label>
-                                            <select 
-                                                value={selectedTender.assignedCommercial || ""}
-                                                onChange={async (e) => {
-                                                    const updated = { ...selectedTender, assignedCommercial: e.target.value };
-                                                    setSelectedTender(updated);
-                                                    await tenderService.saveTender(updated, currentUser.firstName);
-                                                }}
-                                                className="w-full px-6 py-4 bg-white/10 rounded-2xl border-none text-xs font-bold text-white focus:ring-2 focus:ring-indigo-500 transition-all appearance-none"
-                                            >
-                                                <option value="" className="text-slate-900">Sélectionner...</option>
-                                                {PERSONNEL.map(p => <option key={p.email} value={p.name} className="text-slate-900">{p.name}</option>)}
-                                            </select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-indigo-300 uppercase tracking-widest ml-1">Délais de livraison</label>
-                                            <input 
-                                                type="text"
-                                                value={selectedTender.deliveryDelay || ""}
-                                                onChange={async (e) => {
-                                                    const updated = { ...selectedTender, deliveryDelay: e.target.value };
-                                                    setSelectedTender(updated);
-                                                    await tenderService.saveTender(updated, currentUser.firstName);
-                                                }}
-                                                className="w-full px-6 py-4 bg-white/10 rounded-2xl border-none text-xs font-bold text-white placeholder:text-white/20 focus:ring-2 focus:ring-indigo-500 transition-all"
-                                                placeholder="Ex: 30 jours..."
-                                            />
-                                        </div>
-                                        
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-indigo-300 uppercase tracking-widest ml-1">DATE Dépôts ; ODS</label>
-                                            <input 
-                                                type="date"
-                                                value={selectedTender.odsDate || ""}
-                                                onChange={async (e) => {
-                                                    const updated = { ...selectedTender, odsDate: e.target.value };
-                                                    setSelectedTender(updated);
-                                                    await tenderService.saveTender(updated, currentUser.firstName);
-                                                }}
-                                                className="w-full px-6 py-4 bg-white/10 rounded-2xl border-none text-xs font-bold text-white focus:ring-2 focus:ring-indigo-500 transition-all"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-rose-300 uppercase tracking-widest ml-1">DATE ODS D'ARRET</label>
-                                            <input 
-                                                type="date"
-                                                value={selectedTender.stopOdsDate || ""}
-                                                onChange={async (e) => {
-                                                    const updated = { ...selectedTender, stopOdsDate: e.target.value };
-                                                    setSelectedTender(updated);
-                                                    await tenderService.saveTender(updated, currentUser.firstName);
-                                                }}
-                                                className="w-full px-6 py-4 bg-white/10 rounded-2xl border border-rose-500/30 text-xs font-bold text-white focus:ring-2 focus:ring-rose-500 transition-all"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-emerald-300 uppercase tracking-widest ml-1">DATE ODS DE REPRISE</label>
-                                            <input 
-                                                type="date"
-                                                value={selectedTender.restartOdsDate || ""}
-                                                onChange={async (e) => {
-                                                    const updated = { ...selectedTender, restartOdsDate: e.target.value };
-                                                    setSelectedTender(updated);
-                                                    await tenderService.saveTender(updated, currentUser.firstName);
-                                                }}
-                                                className="w-full px-6 py-4 bg-white/10 rounded-2xl border border-emerald-500/30 text-xs font-bold text-white focus:ring-2 focus:ring-emerald-500 transition-all"
-                                            />
-                                        </div>
-                                        <div className="md:col-span-3 space-y-2">
-                                            <label className="text-[9px] font-black text-amber-300 uppercase tracking-widest ml-1">ECHEANCE DE LIVRAISON</label>
-                                            <input 
-                                                type="date"
-                                                value={selectedTender.deliveryDeadline || ""}
-                                                onChange={async (e) => {
-                                                    const updated = { ...selectedTender, deliveryDeadline: e.target.value };
-                                                    setSelectedTender(updated);
-                                                    await tenderService.saveTender(updated, currentUser.firstName);
-                                                }}
-                                                className="w-full px-6 py-4 bg-indigo-500/20 rounded-2xl border border-amber-500/30 text-xs font-black text-white focus:ring-2 focus:ring-amber-500 transition-all"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Section 3.7: Importation (Logistics Tracking) */}
-                            {(isCoordinator || isSuper || assignedWorker || selectedTender.items?.some(item => item.type === 'Importation')) && (
-                                <div className="space-y-8 p-10 bg-white rounded-[3rem] border-4 border-blue-100 shadow-xl shadow-blue-50">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
-                                            <Plane size={24} />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Suivi Importation & Logistique</h4>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Gestion des commandes internationales</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                        <div className="space-y-3">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Statut Lancement Commande</label>
-                                            <div className="relative">
-                                                <select 
-                                                    value={selectedTender.importLaunchStatus || "En attente"}
-                                                    onChange={async (e) => {
-                                                        const updated = { ...selectedTender, importLaunchStatus: e.target.value };
-                                                        setSelectedTender(updated);
-                                                        await tenderService.saveTender(updated, currentUser.firstName);
-                                                    }}
-                                                    className={`w-full px-6 py-4 rounded-2xl border-2 text-xs font-black transition-all appearance-none ${
-                                                        selectedTender.importLaunchStatus === 'Terminé' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 
-                                                        selectedTender.importLaunchStatus === 'En attente' ? 'bg-slate-50 border-slate-100 text-slate-400' : 'bg-blue-50 border-blue-100 text-blue-600'
-                                                    }`}
-                                                >
-                                                    <option value="En attente">En attente</option>
-                                                    <option value="Lancé">Lancé</option>
-                                                    <option value="Partiel">Partiel</option>
-                                                    <option value="Terminé">Terminé</option>
-                                                </select>
-                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-3">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Statut Autorisation (ALGEX/Banque)</label>
-                                            <div className="relative">
-                                                <select 
-                                                    value={selectedTender.importAuthStatus || "En attente"}
-                                                    onChange={async (e) => {
-                                                        const updated = { ...selectedTender, importAuthStatus: e.target.value };
-                                                        setSelectedTender(updated);
-                                                        await tenderService.saveTender(updated, currentUser.firstName);
-                                                    }}
-                                                    className={`w-full px-6 py-4 rounded-2xl border-2 text-xs font-black transition-all appearance-none ${
-                                                        selectedTender.importAuthStatus === 'Accordée' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 
-                                                        selectedTender.importAuthStatus === 'En attente' ? 'bg-slate-50 border-slate-100 text-slate-400' : 'bg-amber-50 border-amber-100 text-amber-600'
-                                                    }`}
-                                                >
-                                                    <option value="En attente">En attente</option>
-                                                    <option value="Déposée">Déposée</option>
-                                                    <option value="En cours">En cours</option>
-                                                    <option value="Accordée">Accordée</option>
-                                                    <option value="Rejetée">Rejetée</option>
-                                                </select>
-                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-3">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Dédouanement</label>
-                                            <div className="relative">
-                                                <select 
-                                                    value={selectedTender.importClearanceStatus || "En attente"}
-                                                    onChange={async (e) => {
-                                                        const updated = { ...selectedTender, importClearanceStatus: e.target.value };
-                                                        setSelectedTender(updated);
-                                                        await tenderService.saveTender(updated, currentUser.firstName);
-                                                    }}
-                                                    className={`w-full px-6 py-4 rounded-2xl border-2 text-xs font-black transition-all appearance-none ${
-                                                        selectedTender.importClearanceStatus === 'Dédouané' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 
-                                                        selectedTender.importClearanceStatus === 'En attente' ? 'bg-slate-50 border-slate-100 text-slate-400' : 'bg-indigo-50 border-indigo-100 text-indigo-600'
-                                                    }`}
-                                                >
-                                                    <option value="En attente">En attente</option>
-                                                    <option value="Arrivage Port/Aéroport">Arrivage Port/Aéroport</option>
-                                                    <option value="Sous-douane">Sous-douane</option>
-                                                    <option value="Dédouané">Dédouané</option>
-                                                </select>
-                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100 text-xs">
+                                                        {(selectedTender.items || []).map((item) => (
+                                                            <tr key={item.id}>
+                                                                <td className="p-4 font-black uppercase text-slate-800">{item.designation}</td>
+                                                                <td className="p-4 text-slate-500 font-bold">{item.reference || '--'}</td>
+                                                                <td className="p-4 text-center font-bold">{item.quantity}</td>
+                                                                <td className="p-4 font-black text-indigo-600 uppercase">{item.brand || '--'}</td>
+                                                                <td className="p-4 text-right font-bold">{(item.priceHT || 0).toLocaleString()} DA</td>
+                                                                <td className="p-4 text-right font-black text-emerald-600">{(item.priceTTC * item.quantity || 0).toLocaleString()} DA</td>
+                                                                <td className="p-4 text-right">
+                                                                    <button onClick={() => handleDeleteItem(item.id)} className="text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-colors"><Trash2 size={12} /></button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                        {(selectedTender.items || []).length === 0 && (
+                                                            <tr>
+                                                                <td colSpan="7" className="p-8 text-center text-slate-400 font-medium italic">Le bordereau de prix est vide.</td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
-                            {/* Section 3.8: Logistics Service */}
-                            {(isCoordinator || isSuper || assignedWorker) && (
-                                <div className="space-y-8 p-10 bg-white rounded-[3rem] border-4 border-emerald-100 shadow-xl shadow-emerald-50">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
-                                            <Package size={24} />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Service Logistique & Stock</h4>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Suivi de disponibilité et clôture technique</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                        {/* Stock Availability */}
-                                        <div className="space-y-3">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Disponibilité en Stock</label>
-                                            <div className="relative">
-                                                <select 
-                                                    value={selectedTender.logisticsStockStatus || "En attente"}
-                                                    onChange={async (e) => {
-                                                        const updated = { ...selectedTender, logisticsStockStatus: e.target.value };
-                                                        setSelectedTender(updated);
-                                                        await tenderService.saveTender(updated, currentUser.firstName);
-                                                    }}
-                                                    className="w-full px-6 py-4 rounded-2xl border-2 bg-slate-50 border-slate-100 text-xs font-black transition-all appearance-none"
-                                                >
-                                                    <option value="En attente">En attente</option>
-                                                    <option value="Partiel">Partiel</option>
-                                                    <option value="Disponible">Disponible</option>
-                                                </select>
-                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                {/* TAB 3: Tenders Bank Cautions workflow */}
+                                {activeTab === 'cautions' && (
+                                    <div className="space-y-6">
+                                        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-6">
+                                            <div className="flex justify-between items-center">
+                                                <h4 className="text-sm font-black text-slate-900 uppercase">Suivi des Garanties & Cautions Bancaires</h4>
+                                                <div className="text-right">
+                                                    <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Somme des Cautions</p>
+                                                    <p className="text-base font-black text-indigo-600">
+                                                        {calculateCautionsTotal(selectedTender.cautions).toLocaleString()} DA
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        {/* Delivery */}
-                                        <div className="space-y-3">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Livraison</label>
-                                            <div className="relative">
-                                                <select 
-                                                    value={selectedTender.logisticsDeliveryStatus || "En attente"}
-                                                    onChange={async (e) => {
-                                                        const updated = { ...selectedTender, logisticsDeliveryStatus: e.target.value };
-                                                        setSelectedTender(updated);
-                                                        await tenderService.saveTender(updated, currentUser.firstName);
-                                                    }}
-                                                    className="w-full px-6 py-4 rounded-2xl border-2 bg-slate-50 border-slate-100 text-xs font-black transition-all appearance-none"
-                                                >
-                                                    <option value="En attente">En attente</option>
-                                                    <option value="En cours">En cours</option>
-                                                    <option value="Effectuée">Effectuée</option>
-                                                </select>
-                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                            {/* Add Caution Form */}
+                                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] font-black text-slate-400 uppercase">Type de Caution</label>
+                                                    <select 
+                                                        value={newCaution.type} 
+                                                        onChange={(e) => setNewCaution({...newCaution, type: e.target.value})}
+                                                        className="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold outline-none"
+                                                    >
+                                                        <option value="Provisoire">Provisoire (Dépôt CDC)</option>
+                                                        <option value="Définitive">Définitive (Bonne exécution)</option>
+                                                        <option value="Restitution d'acompte">Restitution d'acompte</option>
+                                                        <option value="Garantie">Garantie matériel</option>
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] font-black text-slate-400 uppercase">Montant (DA)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={newCaution.amount} 
+                                                        onChange={(e) => setNewCaution({...newCaution, amount: e.target.value})}
+                                                        placeholder="Montant..."
+                                                        className="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold outline-none"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] font-black text-slate-400 uppercase">Banque Émettrice</label>
+                                                    <select 
+                                                        value={newCaution.bank} 
+                                                        onChange={(e) => setNewCaution({...newCaution, bank: e.target.value})}
+                                                        className="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold outline-none"
+                                                    >
+                                                        <option value="BNA">BNA</option>
+                                                        <option value="BEA">BEA</option>
+                                                        <option value="CPA">CPA</option>
+                                                        <option value="BDL">BDL</option>
+                                                        <option value="BADR">BADR</option>
+                                                        <option value="AGB">AGB</option>
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] font-black text-slate-400 uppercase">Date d'Émission</label>
+                                                    <input 
+                                                        type="date" 
+                                                        value={newCaution.date} 
+                                                        onChange={(e) => setNewCaution({...newCaution, date: e.target.value})}
+                                                        className="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold outline-none"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1 flex items-end">
+                                                    <button 
+                                                        onClick={handleAddCaution}
+                                                        className="w-full h-11 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase hover:bg-indigo-600 transition-all shadow"
+                                                    >
+                                                        Enregistrer Caution
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        {/* Billing */}
-                                        <div className="space-y-3">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Facturation</label>
-                                            <div className="relative">
-                                                <select 
-                                                    value={selectedTender.logisticsBillingStatus || "En attente"}
-                                                    onChange={async (e) => {
-                                                        const updated = { ...selectedTender, logisticsBillingStatus: e.target.value };
-                                                        setSelectedTender(updated);
-                                                        await tenderService.saveTender(updated, currentUser.firstName);
-                                                    }}
-                                                    className="w-full px-6 py-4 rounded-2xl border-2 bg-slate-50 border-slate-100 text-xs font-black transition-all appearance-none"
-                                                >
-                                                    <option value="En attente">En attente</option>
-                                                    <option value="Facturé">Facturé</option>
-                                                    <option value="Encaissé">Encaissé</option>
-                                                </select>
-                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                            </div>
-                                        </div>
-
-                                        {/* PV Provisoire */}
-                                        <div className="space-y-3">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">PV de Réception Provisoire</label>
-                                            <div className="relative">
-                                                <select 
-                                                    value={selectedTender.logisticsProvisionalPvStatus || "En attente"}
-                                                    onChange={async (e) => {
-                                                        const updated = { ...selectedTender, logisticsProvisionalPvStatus: e.target.value };
-                                                        setSelectedTender(updated);
-                                                        await tenderService.saveTender(updated, currentUser.firstName);
-                                                    }}
-                                                    className="w-full px-6 py-4 rounded-2xl border-2 bg-slate-50 border-slate-100 text-xs font-black transition-all appearance-none"
-                                                >
-                                                    <option value="En attente">En attente</option>
-                                                    <option value="Reçu">Reçu</option>
-                                                    <option value="Signé">Signé</option>
-                                                </select>
-                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                            </div>
-                                        </div>
-
-                                        {/* Warranty */}
-                                        <div className="space-y-3">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Délai de Garantie</label>
-                                            <input 
-                                                type="text"
-                                                value={selectedTender.logisticsWarrantyStatus || ""}
-                                                placeholder="Ex: 12 mois"
-                                                onChange={async (e) => {
-                                                    const updated = { ...selectedTender, logisticsWarrantyStatus: e.target.value };
-                                                    setSelectedTender(updated);
-                                                    await tenderService.saveTender(updated, currentUser.firstName);
-                                                }}
-                                                className="w-full px-6 py-4 rounded-2xl border-2 bg-slate-50 border-slate-100 text-xs font-black transition-all outline-none focus:border-emerald-400"
-                                            />
-                                        </div>
-
-                                        {/* PV Définitif */}
-                                        <div className="space-y-3">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">PV de Réception Définitive</label>
-                                            <div className="relative">
-                                                <select 
-                                                    value={selectedTender.logisticsFinalPvStatus || "En attente"}
-                                                    onChange={async (e) => {
-                                                        const updated = { ...selectedTender, logisticsFinalPvStatus: e.target.value };
-                                                        setSelectedTender(updated);
-                                                        await tenderService.saveTender(updated, currentUser.firstName);
-                                                    }}
-                                                    className="w-full px-6 py-4 rounded-2xl border-2 bg-slate-50 border-slate-100 text-xs font-black transition-all appearance-none"
-                                                >
-                                                    <option value="En attente">En attente</option>
-                                                    <option value="Signé">Signé</option>
-                                                </select>
-                                                <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                            {/* Cautions List Table */}
+                                            <div className="overflow-x-auto border border-slate-100 rounded-xl bg-white">
+                                                <table className="w-full text-left">
+                                                    <thead className="bg-slate-50">
+                                                        <tr>
+                                                            <th className="p-4 text-[9px] font-black text-slate-400 uppercase">Type de Caution</th>
+                                                            <th className="p-4 text-[9px] font-black text-slate-400 uppercase text-right">Montant</th>
+                                                            <th className="p-4 text-[9px] font-black text-slate-400 uppercase text-center">Banque</th>
+                                                            <th className="p-4 text-[9px] font-black text-slate-400 uppercase text-center">Date Émission</th>
+                                                            <th className="p-4 text-[9px] font-black text-slate-400 uppercase text-center">Statut</th>
+                                                            <th className="p-4"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100 text-xs">
+                                                        {(selectedTender.cautions || []).map((caution) => (
+                                                            <tr key={caution.id} className="hover:bg-slate-50/20 transition-colors">
+                                                                <td className="p-4 font-black text-slate-800">{caution.type}</td>
+                                                                <td className="p-4 text-right font-black text-slate-950">{(caution.amount || 0).toLocaleString()} DA</td>
+                                                                <td className="p-4 text-center font-bold text-slate-600">{caution.bank}</td>
+                                                                <td className="p-4 text-center text-slate-500 font-bold">{new Date(caution.date).toLocaleDateString('fr-FR')}</td>
+                                                                <td className="p-4 text-center">
+                                                                    <select 
+                                                                        value={caution.status}
+                                                                        onChange={(e) => handleUpdateCautionStatus(caution.id, e.target.value)}
+                                                                        className={`p-1.5 text-[9px] font-black rounded-lg border-none shadow-sm cursor-pointer outline-none uppercase ${
+                                                                            caution.status === 'Libérée' 
+                                                                            ? 'bg-emerald-50 text-emerald-600' 
+                                                                            : caution.status === 'Déposée' 
+                                                                            ? 'bg-blue-50 text-blue-600' 
+                                                                            : 'bg-rose-50 text-rose-600'
+                                                                        }`}
+                                                                    >
+                                                                        <option value="Déposée">Déposée</option>
+                                                                        <option value="Libérée">Libérée</option>
+                                                                        <option value="Confisquée">Confisquée</option>
+                                                                        <option value="Annulée">Annulée</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td className="p-4 text-right">
+                                                                    <button onClick={() => handleDeleteCaution(caution.id)} className="text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-colors"><Trash2 size={12} /></button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                        {(selectedTender.cautions || []).length === 0 && (
+                                                            <tr>
+                                                                <td colSpan="6" className="p-8 text-center text-slate-400 font-medium italic">Aucune caution bancaire enregistrée pour ce CDC.</td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
-                            {/* Section 3.9: Finance Service */}
-                            {(isCoordinator || isSuper || assignedWorker) && (
-                                <div className="p-10 bg-amber-50 rounded-[3rem] border-4 border-amber-100 shadow-xl shadow-amber-50">
-                                    <div className="flex items-center gap-4 mb-8">
-                                        <div className="w-12 h-12 bg-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-200">
-                                            <DollarSign size={24} />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Service Finance</h4>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Validation finale de l'encaissement</p>
-                                        </div>
-                                    </div>
+                                {/* TAB 4: Service des Marchés & Administration */}
+                                {activeTab === 'administrative' && (
+                                    <div className="space-y-6">
+                                        <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-8">
+                                            <h4 className="text-sm font-black text-slate-900 uppercase flex items-center gap-2">
+                                                <ClipboardCheck size={16} className="text-indigo-600" /> Informations Administratives
+                                            </h4>
+                                            
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Numéro du Contrat / Marché</label>
+                                                    <input 
+                                                        type="text"
+                                                        value={selectedTender.contractNumber || ""}
+                                                        onChange={async (e) => {
+                                                            const updated = { ...selectedTender, contractNumber: e.target.value };
+                                                            setSelectedTender(updated);
+                                                            await tenderService.saveTender(updated, currentUser.firstName);
+                                                        }}
+                                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:bg-white outline-none focus:border-indigo-400 transition-all shadow-inner"
+                                                        placeholder="Ex: MARCHÉ N°10/2026..."
+                                                    />
+                                                </div>
 
-                                    <div className="max-w-md">
-                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-3 block">État de Paiement Global</label>
-                                        <div className="relative">
-                                            <select 
-                                                value={selectedTender.financePaymentStatus || "En attente"}
-                                                onChange={async (e) => {
-                                                    const updated = { ...selectedTender, financePaymentStatus: e.target.value };
-                                                    setSelectedTender(updated);
-                                                    await tenderService.saveTender(updated, currentUser.firstName);
-                                                }}
-                                                className={`w-full px-8 py-5 rounded-3xl border-2 text-sm font-black transition-all appearance-none ${
-                                                    selectedTender.financePaymentStatus === 'Totalement encaissé' ? 'bg-emerald-600 text-white border-emerald-600 shadow-xl shadow-emerald-200' : 
-                                                    selectedTender.financePaymentStatus === 'En attente' ? 'bg-white border-amber-100 text-amber-600' : 'bg-amber-100 border-amber-200 text-amber-700'
-                                                }`}
-                                            >
-                                                <option value="En attente">En attente</option>
-                                                <option value="Partiel">Paiement Partiel</option>
-                                                <option value="Totalement encaissé">Totalement encaissé</option>
-                                            </select>
-                                            <ChevronDown size={18} className={`absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none ${selectedTender.financePaymentStatus === 'Totalement encaissé' ? 'text-white/70' : 'text-amber-400'}`} />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Commercial Responsable</label>
+                                                    <select 
+                                                        value={selectedTender.assignedCommercial || ""}
+                                                        onChange={async (e) => {
+                                                            const updated = { ...selectedTender, assignedCommercial: e.target.value };
+                                                            setSelectedTender(updated);
+                                                            await tenderService.saveTender(updated, currentUser.firstName);
+                                                        }}
+                                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:bg-white outline-none focus:border-indigo-400 transition-all shadow-inner"
+                                                    >
+                                                        <option value="">Sélectionner...</option>
+                                                        {PERSONNEL.map(p => <option key={p.email} value={p.name}>{p.name}</option>)}
+                                                    </select>
+                                                </div>
 
-                            {/* Section 4: Finalization (Imene/Admin) */}
-                            {(isCoordinator || isSuperAdmin) && selectedTender.files?.global_offer && (
-                                <div className="p-10 bg-slate-900 rounded-[3rem] text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-indigo-100">
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <Lock size={16} className="text-indigo-400" />
-                                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Offre Globale Finalisée</p>
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Délais de Livraison Contractuel</label>
+                                                    <input 
+                                                        type="text"
+                                                        value={selectedTender.deliveryDelay || ""}
+                                                        onChange={async (e) => {
+                                                            const updated = { ...selectedTender, deliveryDelay: e.target.value };
+                                                            setSelectedTender(updated);
+                                                            await tenderService.saveTender(updated, currentUser.firstName);
+                                                        }}
+                                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:bg-white outline-none focus:border-indigo-400 transition-all shadow-inner"
+                                                        placeholder="Ex: 60 jours..."
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Date d'Enregistrement / ODS</label>
+                                                    <input 
+                                                        type="date"
+                                                        value={selectedTender.odsDate || ""}
+                                                        onChange={async (e) => {
+                                                            const updated = { ...selectedTender, odsDate: e.target.value };
+                                                            setSelectedTender(updated);
+                                                            await tenderService.saveTender(updated, currentUser.firstName);
+                                                        }}
+                                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:bg-white outline-none focus:border-indigo-400 transition-all shadow-inner"
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-black text-rose-400 uppercase tracking-widest ml-1">Date ODS d'Arrêt</label>
+                                                    <input 
+                                                        type="date"
+                                                        value={selectedTender.stopOdsDate || ""}
+                                                        onChange={async (e) => {
+                                                            const updated = { ...selectedTender, stopOdsDate: e.target.value };
+                                                            setSelectedTender(updated);
+                                                            await tenderService.saveTender(updated, currentUser.firstName);
+                                                        }}
+                                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:bg-white outline-none focus:border-indigo-400 transition-all shadow-inner"
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-black text-emerald-400 uppercase tracking-widest ml-1">Date ODS de Reprise</label>
+                                                    <input 
+                                                        type="date"
+                                                        value={selectedTender.restartOdsDate || ""}
+                                                        onChange={async (e) => {
+                                                            const updated = { ...selectedTender, restartOdsDate: e.target.value };
+                                                            setSelectedTender(updated);
+                                                            await tenderService.saveTender(updated, currentUser.firstName);
+                                                        }}
+                                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:bg-white outline-none focus:border-indigo-400 transition-all shadow-inner"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Sub-workflow cards */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-slate-100">
+                                                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200/60 space-y-4">
+                                                    <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-2"><ArrowLeftRight size={14} /> Service Importation</h5>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[8px] font-black text-slate-400 uppercase">Autorisation d'Import</label>
+                                                            <select 
+                                                                value={selectedTender.importAuthStatus || "En attente"}
+                                                                onChange={async (e) => {
+                                                                    const updated = { ...selectedTender, importAuthStatus: e.target.value };
+                                                                    setSelectedTender(updated);
+                                                                    await tenderService.saveTender(updated, currentUser.firstName);
+                                                                }}
+                                                                className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-[9px] font-black uppercase outline-none"
+                                                            >
+                                                                <option value="En attente">En attente</option>
+                                                                <option value="Accordée">Accordée</option>
+                                                                <option value="Refusée">Refusée</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[8px] font-black text-slate-400 uppercase">Statut Dédouanement</label>
+                                                            <select 
+                                                                value={selectedTender.importClearanceStatus || "En attente"}
+                                                                onChange={async (e) => {
+                                                                    const updated = { ...selectedTender, importClearanceStatus: e.target.value };
+                                                                    setSelectedTender(updated);
+                                                                    await tenderService.saveTender(updated, currentUser.firstName);
+                                                                }}
+                                                                className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-[9px] font-black uppercase outline-none"
+                                                            >
+                                                                <option value="En attente">En attente</option>
+                                                                <option value="En cours">En cours</option>
+                                                                <option value="Dédouané">Dédouané</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200/60 space-y-4">
+                                                    <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-2"><Building2 size={14} /> Service Logistique</h5>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[8px] font-black text-slate-400 uppercase">Réception Stock</label>
+                                                            <select 
+                                                                value={selectedTender.logisticsStockStatus || "En attente"}
+                                                                onChange={async (e) => {
+                                                                    const updated = { ...selectedTender, logisticsStockStatus: e.target.value };
+                                                                    setSelectedTender(updated);
+                                                                    await tenderService.saveTender(updated, currentUser.firstName);
+                                                                }}
+                                                                className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-[9px] font-black uppercase outline-none"
+                                                            >
+                                                                <option value="En attente">En attente</option>
+                                                                <option value="Reçu Partiel">Reçu Partiel</option>
+                                                                <option value="Reçu Total">Reçu Total</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[8px] font-black text-slate-400 uppercase">PV Provisoire</label>
+                                                            <select 
+                                                                value={selectedTender.logisticsProvisionalPvStatus || "En attente"}
+                                                                onChange={async (e) => {
+                                                                    const updated = { ...selectedTender, logisticsProvisionalPvStatus: e.target.value };
+                                                                    setSelectedTender(updated);
+                                                                    await tenderService.saveTender(updated, currentUser.firstName);
+                                                                }}
+                                                                className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-[9px] font-black uppercase outline-none"
+                                                            >
+                                                                <option value="En attente">En attente</option>
+                                                                <option value="Signé">Signé</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <h4 className="text-2xl font-black tracking-tight mb-2">Prêt pour diffusion ?</h4>
-                                        <p className="text-sm font-bold text-slate-400">Le dossier est prêt. Vous pouvez le partager avec les cadres des marchés.</p>
                                     </div>
-                                    <div className="flex gap-4">
-                                        <a 
-                                            href={tenderService.getFileUrl(selectedTender.id, 'global_offer')} 
-                                            target="_blank"
-                                            className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all shadow-xl"
-                                        >
-                                            Consulter le dossier final
-                                        </a>
-                                        <button 
-                                            onClick={() => alert("Partage activé.")}
-                                            className="w-14 h-14 bg-indigo-600 text-white flex items-center justify-center rounded-2xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/20"
-                                        >
-                                            <Share2 size={22} />
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
