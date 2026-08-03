@@ -13,9 +13,10 @@ import {
   CheckCircle2, 
   AlertCircle, 
   ShieldCheck, 
-  RefreshCw,
+  RefreshCw, 
   Eye
 } from 'lucide-react';
+import DocumentUpload from '../components/DocumentUpload';
 
 const Ods = () => {
   const auth = useAuth();
@@ -24,6 +25,7 @@ const Ods = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeStatusFilter, setActiveStatusFilter] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [uploadContractId, setUploadContractId] = useState(null);
 
   const loadOrders = async () => {
     setIsLoading(true);
@@ -328,6 +330,15 @@ const Ods = () => {
                                 >
                                   <Eye size={16} />
                                 </button>
+                                {auth.canUploadDocuments && auth.canUploadDocuments() && (
+                                  <button
+                                    onClick={() => setUploadContractId(o.id)}
+                                    className="px-2 py-1 bg-green-600 hover:bg-green-500 text-white rounded-xl text-xs font-bold"
+                                    title="Uploader un document"
+                                  >
+                                    📎
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -340,6 +351,9 @@ const Ods = () => {
             );
           })}
         </div>
+{uploadContractId && (
+  <DocumentUpload contractId={uploadContractId} userEmail={auth.currentUser?.email} onClose={() => setUploadContractId(null)} />
+)}
       )}
     </div>
   );
