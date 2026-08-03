@@ -74,7 +74,8 @@ const Ods = () => {
     const financial = filteredOrders.filter(o => o.status === 'Suivi financier').length;
     const ongoing = filteredOrders.filter(o => (o.status || 'En cours') === 'En cours').length;
     const waitingOds = filteredOrders.filter(o => o.status === "En attente d'ODS" || o.status === "En attente d'ods").length;
-    return { total, payment, financial, ongoing, waitingOds };
+    const newContracts = filteredOrders.filter(o => o.status === 'Nouveaux Contrats' || (o.createdAt && (new Date() - new Date(o.createdAt))/(1000*60*60*24) <= 30)).length;
+    return { total, payment, financial, ongoing, waitingOds, newContracts };
   }, [filteredOrders]);
 
   const groupedOrders = useMemo(() => {
@@ -83,6 +84,7 @@ const Ods = () => {
       { id: 'financial', label: "Suivi financier", color: 'bg-emerald-500', textCol: 'text-emerald-700', bgBadge: 'bg-emerald-50 border-emerald-200' },
       { id: 'ongoing', label: "En cours", color: 'bg-blue-500', textCol: 'text-blue-700', bgBadge: 'bg-blue-50 border-blue-200' },
       { id: 'waiting_ods', label: "En attente d'ODS", color: 'bg-purple-500', textCol: 'text-purple-700', bgBadge: 'bg-purple-50 border-purple-200' },
+      { id: 'new_contracts', label: "Nouveaux Contrats", color: 'bg-teal-500', textCol: 'text-teal-700', bgBadge: 'bg-teal-50 border-teal-200' },
       { id: 'attribution', label: "Attribution en cours", color: 'bg-slate-600', textCol: 'text-slate-700', bgBadge: 'bg-slate-50 border-slate-200' },
     ];
     const grouped = {
@@ -90,6 +92,7 @@ const Ods = () => {
       "Suivi financier": [],
       "En cours": [],
       "En attente d'ODS": [],
+      "Nouveaux Contrats": [],
       "Attribution en cours": [],
     };
     filteredOrders.forEach(o => {
@@ -98,6 +101,9 @@ const Ods = () => {
       if (groupStatus === "En attente d'ods") groupStatus = "En attente d'ODS";
       if (groupStatus === "Attribution en attente") groupStatus = "Attribution en cours";
       if (grouped[groupStatus]) grouped[groupStatus].push(o);
+      else if (o.createdAt && (new Date() - new Date(o.createdAt))/(1000*60*60*24) <= 30) {
+        grouped["Nouveaux Contrats"].push(o);
+      }
       else grouped['En cours'].push(o);
     });
     return sections.map(s => ({ ...s, orders: grouped[s.label] }));
@@ -143,7 +149,7 @@ const Ods = () => {
   };
 
   return (
-    <div className="max-w-[1600px] mx-auto pb-16 space-y-8 animate-fade-in">
+    <div className="max-w-[1600px] mx-auto pb-16 space-y-8 animate-fade-in font-sans">
       {/* Header Banner */}
       <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden">
         <div className="absolute -right-16 -top-16 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-ambient"></div>
@@ -182,10 +188,14 @@ const Ods = () => {
         </div>
 
         {/* Stats Summary Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-8 pt-6 border-t border-white/10">
+        <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 mt-8 pt-6 border-t border-white/10">
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Total ODS</span>
             <span className="text-2xl font-black text-white mt-1 block">{summaryStats.total}</span>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+            <span className="text-[10px] font-black text-teal-300 uppercase tracking-widest block">Nouveaux</span>
+            <span className="text-2xl font-black text-teal-400 mt-1 block">{summaryStats.newContracts}</span>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
             <span className="text-[10px] font-black text-blue-300 uppercase tracking-widest block">En Cours</span>
@@ -199,7 +209,7 @@ const Ods = () => {
             <span className="text-[10px] font-black text-emerald-300 uppercase tracking-widest block">Suivi Financier</span>
             <span className="text-2xl font-black text-emerald-400 mt-1 block">{summaryStats.financial}</span>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 col-span-2 sm:col-span-1">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
             <span className="text-[10px] font-black text-purple-300 uppercase tracking-widest block">Attente ODS</span>
             <span className="text-2xl font-black text-purple-400 mt-1 block">{summaryStats.waitingOds}</span>
           </div>
@@ -228,6 +238,7 @@ const Ods = () => {
               className="pl-10 pr-8 py-3 bg-slate-50 border-slate-200 rounded-2xl text-slate-800 font-extrabold text-xs uppercase tracking-wider"
             >
               <option value="">Tous les statuts ({summaryStats.total})</option>
+              <option value="Nouveaux Contrats">Nouveaux Contrats ({summaryStats.newContracts})</option>
               <option value="En attente de paiement">Attente Paiement ({summaryStats.payment})</option>
               <option value="Suivi financier">Suivi Financier ({summaryStats.financial})</option>
               <option value="En cours">En cours ({summaryStats.ongoing})</option>

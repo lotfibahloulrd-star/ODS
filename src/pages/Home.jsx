@@ -107,6 +107,14 @@ const Home = () => {
             description: 'Consultations en cours de validation finale'
         },
         { 
+            label: 'Nouveaux Contrats', 
+            status: 'Nouveaux Contrats',
+            icon: <FilePlus size={32} />, 
+            color: 'from-teal-500 to-emerald-600', 
+            shadow: 'shadow-emerald-200',
+            description: 'Contrats récents et affaires nouvellement enregistrées'
+        },
+        { 
             label: 'En attente d\'ODS', 
             status: 'En attente d\'ODS',
             icon: <Package size={32} />, 
@@ -142,16 +150,11 @@ const Home = () => {
 
     const quickFilters = [
         { label: 'Tous les ODS', type: 'all', icon: <LayoutDashboard size={20} />, count: stats.total, color: 'text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100' },
-        { label: 'Nouveaux Contrats', type: 'new_contract', icon: <FilePlus size={20} />, count: stats.newContracts, color: 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200' },
         { label: 'Attente Autorisation', type: 'auth', icon: <Zap size={20} />, count: stats.pendingAuth, color: 'text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-100' },
         { label: 'Engagements Hors Délai', type: 'overdue', icon: <AlertTriangle size={20} />, count: stats.overdue, color: 'text-red-600 bg-red-50 hover:bg-red-100 border border-red-100' }
     ];
 
-    const handleNavigation = (status = null, authFilter = false, overdueFilter = false, financialFilter = false, newContractFilter = false) => {
-        if (newContractFilter && auth.canCreateOds && auth.canCreateOds()) {
-            navigate('/ods/new');
-            return;
-        }
+    const handleNavigation = (status = null, authFilter = false, overdueFilter = false, financialFilter = false) => {
         let path = '/ods';
         const params = new URLSearchParams();
         
@@ -178,7 +181,7 @@ const Home = () => {
     };
 
     return (
-        <div className="max-w-[1300px] mx-auto py-10 px-6 font-sans">
+        <div className="max-w-[1400px] mx-auto py-10 px-6 font-sans">
             <header className="text-center mb-12 animate-in fade-in slide-in-from-top-8 duration-700">
                 <img src={logo} alt="ESCLAB Logo" className="h-24 object-contain mx-auto mb-6 transform hover:scale-105 transition-transform duration-500" />
                 <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-3">
@@ -219,7 +222,7 @@ const Home = () => {
                 {quickFilters.map((q, idx) => (
                     <button
                         key={idx}
-                        onClick={() => handleNavigation(null, q.type === 'auth', q.type === 'overdue', false, q.type === 'new_contract')}
+                        onClick={() => handleNavigation(null, q.type === 'auth', q.type === 'overdue')}
                         className={`flex items-center gap-3 px-5 py-3 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-95 ${q.color} font-black uppercase text-xs`}
                     >
                         {q.icon}
@@ -230,41 +233,41 @@ const Home = () => {
             </div>
 
             {/* Main Status Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5">
                 {filterButtons.map((btn, idx) => (
                     <button
                         key={btn.label}
                         onClick={() => handleNavigation(btn.status)}
-                        className={`group relative flex flex-col items-start p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 text-left overflow-hidden animate-in fade-in zoom-in-95 duration-700`}
+                        className={`group relative flex flex-col items-start p-6 bg-white border border-slate-100 rounded-[2.2rem] shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 text-left overflow-hidden animate-in fade-in zoom-in-95 duration-700`}
                         style={{ animationDelay: `${idx * 100 + 200}ms` }}
                     >
                         {/* Background Decoration */}
                         <div className={`absolute -right-8 -top-8 w-48 h-48 bg-gradient-to-br ${btn.color} opacity-5 group-hover:opacity-10 rounded-full transition-all duration-700 group-hover:scale-150`}></div>
                         
-                        <div className={`w-16 h-16 bg-gradient-to-br ${btn.color} ${btn.shadow} rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg group-hover:scale-110 transition-transform duration-500`}>
+                        <div className={`w-14 h-14 bg-gradient-to-br ${btn.color} ${btn.shadow} rounded-2xl flex items-center justify-center text-white mb-5 shadow-lg group-hover:scale-110 transition-transform duration-500`}>
                             {btn.icon}
                         </div>
                         
                         <div className="mb-2">
-                            <h2 className="text-2xl font-black text-slate-900 leading-tight uppercase tracking-tight group-hover:text-blue-600 transition-colors">
+                            <h2 className="text-xl font-black text-slate-900 leading-tight uppercase tracking-tight group-hover:text-blue-600 transition-colors">
                                 {btn.label}
                             </h2>
                         </div>
                         
-                        <p className="text-slate-400 font-bold text-sm mb-8 leading-relaxed max-w-[80%]">
+                        <p className="text-slate-400 font-bold text-xs mb-6 leading-relaxed">
                             {btn.description}
                         </p>
                         
-                        <div className="mt-auto flex items-center justify-between w-full">
+                        <div className="mt-auto flex items-center justify-between w-full pt-2">
                             <div className="flex items-center gap-2">
-                                <span className={`text-4xl font-black ${btn.color.split(' ')[0].replace('from-', 'text-')}`}>
-                                {isLoading ? '...' : (btn.status === 'financial' ? stats.financialTracking : (stats.byStatus[btn.status] || 0))}
+                                <span className={`text-3xl font-black ${btn.color.split(' ')[0].replace('from-', 'text-')}`}>
+                                {isLoading ? '...' : (btn.status === 'financial' ? stats.financialTracking : (btn.status === 'Nouveaux Contrats' ? stats.newContracts : (stats.byStatus[btn.status] || 0)))}
                                 </span>
-                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-2 px-3 py-1 border border-slate-100 rounded-full">Dossiers</span>
+                                <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1 px-2.5 py-0.5 border border-slate-100 rounded-full">Dossiers</span>
                             </div>
                             
-                            <div className={`w-12 h-12 rounded-full border border-slate-100 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white group-hover:border-slate-900 transition-all duration-500`}>
-                                <ArrowRight size={24} className="-rotate-45 group-hover:rotate-0 transition-transform duration-500" />
+                            <div className={`w-10 h-10 rounded-full border border-slate-100 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white group-hover:border-slate-900 transition-all duration-500`}>
+                                <ArrowRight size={20} className="-rotate-45 group-hover:rotate-0 transition-transform duration-500" />
                             </div>
                         </div>
                     </button>
