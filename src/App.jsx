@@ -128,7 +128,7 @@ function AppContent() {
                                 className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-extrabold text-xs tracking-wide transition-all ${activeTab === 'ods' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'}`}
                             >
                                 <FileText size={16} />
-                                <span className="hidden sm:inline">Tableau ODS</span>
+                                <span className="hidden sm:inline">Tableau des contrats</span>
                             </button>
 
                             {canCreateOds() && (
@@ -137,7 +137,7 @@ function AppContent() {
                                     className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-extrabold text-xs tracking-wide transition-all ${activeTab === 'new' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/25' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'}`}
                                 >
                                     <PlusCircle size={16} />
-                                    <span className="hidden sm:inline">Nouvel ODS</span>
+                                    <span className="hidden sm:inline">Nouveau Contrat</span>
                                 </button>
                             )}
 

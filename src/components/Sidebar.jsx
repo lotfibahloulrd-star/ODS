@@ -5,7 +5,7 @@ import { NavLink } from 'react-router-dom';
 const Sidebar = () => {
     const navItems = [
         { icon: LayoutDashboard, label: 'Tableau de Bord', path: '/' },
-        { icon: FileText, label: 'Nouvel ODS', path: '/ods/new' },
+        { icon: FileText, label: 'Nouveau Contrat', path: '/ods/new' },
         { icon: Users, label: 'Mon Équipe', path: '/users' },
     ];
 

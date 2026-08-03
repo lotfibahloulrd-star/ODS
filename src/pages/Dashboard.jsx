@@ -1124,7 +1124,7 @@ const Dashboard = () => {
                         onClick={() => navigate('/ods')}
                         className="px-4 py-2 bg-slate-900 hover:bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-2"
                     >
-                        Vue Tableau ODS Complexe <ArrowRight size={14} />
+                        Vue Tableau des contrats Complexe <ArrowRight size={14} />
                     </button>
                 </div>
 

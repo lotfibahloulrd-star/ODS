@@ -426,7 +426,7 @@ const NewOrder = ({ onSave }) => {
     return (
         <div className="max-w-[1600px] mx-auto pb-20">
             <div className="mb-12">
-                <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-3">Nouvel ODS <span className="text-blue-600">Digitalisé</span></h2>
+                <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-3">Nouveau Contrat <span className="text-blue-600">Digitalisé</span></h2>
                 <p className="text-slate-500 font-medium font-bold">L'intelligence artificielle analyse votre document pour une saisie fluide et automatisée. Veuillez vérifier les champs extraits.</p>
             </div>
 
