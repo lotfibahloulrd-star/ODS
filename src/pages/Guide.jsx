@@ -27,7 +27,6 @@ const Guide = () => {
 
     const sections = [
         { id: 'intro', title: 'Introduction', icon: <BookOpen size={18} /> },
-        { id: 'tenders', title: "Appels d'Offres", icon: <Briefcase size={18} /> },
         { id: 'ods', title: 'Gestion ODS', icon: <LayoutDashboard size={18} /> },
         { id: 'messaging', title: 'Messagerie', icon: <MessageSquare size={18} /> },
         { id: 'roles', title: 'Rôles & Accès', icon: <ShieldCheck size={18} /> },
@@ -41,24 +40,24 @@ const Guide = () => {
                         <div className="space-y-4">
                             <h2 className="text-4xl font-black text-slate-900 tracking-tight">Bienvenue sur ESCLAB Contract Hub</h2>
                             <p className="text-lg text-slate-500 leading-relaxed max-w-3xl">
-                                Cette plateforme centralise la gestion des contrats, de la phase de soumission (Appels d'Offres) jusqu'à l'exécution et le suivi des Ordres de Service (ODS).
+                                Cette plateforme centralise l'exécution et le suivi financier et opérationnel des Ordres de Service (ODS).
                             </p>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="p-8 bg-indigo-50 rounded-[2.5rem] border border-indigo-100">
-                                <div className="w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-indigo-200">
-                                    <Briefcase size={24} />
-                                </div>
-                                <h3 className="text-xl font-black text-slate-900 mb-2">Division Commerciale</h3>
-                                <p className="text-sm text-slate-600 font-medium">Gestion complète des Appels d'Offres (CDC), soumissions techniques et financières, et suivi des marchés.</p>
-                            </div>
                             <div className="p-8 bg-blue-50 rounded-[2.5rem] border border-blue-100">
                                 <div className="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-200">
                                     <LayoutDashboard size={24} />
                                 </div>
-                                <h3 className="text-xl font-black text-slate-900 mb-2">Gestion des ODS</h3>
-                                <p className="text-sm text-slate-600 font-medium">Suivi des ordres de service, facturation, paiements, et archivage des documents contractuels.</p>
+                                <h3 className="text-xl font-black text-slate-900 mb-2">Suivi Opérationnel ODS</h3>
+                                <p className="text-sm text-slate-600 font-medium">Contrôle des ordres de service, états d'avancement, autorisations et délais de livraison.</p>
+                            </div>
+                            <div className="p-8 bg-emerald-50 rounded-[2.5rem] border border-emerald-100">
+                                <div className="w-12 h-12 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-emerald-200">
+                                    <ShieldCheck size={24} />
+                                </div>
+                                <h3 className="text-xl font-black text-slate-900 mb-2">Suivi Financier & Cautions</h3>
+                                <p className="text-sm text-slate-600 font-medium">Gestion des factures, règlements, et suivi des cautions bancaires et garanties.</p>
                             </div>
                         </div>
                     </div>

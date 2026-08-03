@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Lock, Mail, AlertCircle, Eye, EyeOff, Shield } from 'lucide-react';
+import { Lock, Mail, AlertCircle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import logo from '../assets/logo.png';
 
 const Login = () => {
@@ -29,56 +29,70 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-            <div className="max-w-md w-full">
-                <div className="text-center mb-10">
-                    <img src={logo} alt="ESCLAB Logo" className="h-20 object-contain mx-auto mb-6 transform hover:scale-105 transition-transform duration-500" />
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">ESCLAB-Contract <span className="text-blue-600">Hub</span></h1>
-                    <p className="text-slate-500 font-medium">Connectez-vous à votre espace de suivi</p>
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center p-6 relative overflow-hidden font-sans">
+            {/* Ambient Background Glows */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl animate-ambient"></div>
+            <div className="absolute bottom-10 right-10 w-80 h-80 bg-indigo-500/15 rounded-full blur-3xl"></div>
+
+            <div className="max-w-md w-full relative z-10 animate-fade-in">
+                <div className="text-center mb-8">
+                    <div className="w-24 h-24 bg-white/95 rounded-[2rem] p-4 mx-auto mb-6 shadow-2xl border border-white/20 backdrop-blur-md flex items-center justify-center transform hover:scale-105 transition-transform">
+                        <img src={logo} alt="ESCLAB Logo" className="w-full h-full object-contain" />
+                    </div>
+                    <h1 className="text-3xl font-black text-white tracking-tight mb-2">
+                        ESCLAB <span className="text-blue-400">Hub</span>
+                    </h1>
+                    <p className="text-slate-400 font-semibold text-sm">
+                        Espace sécurisé de suivi et gestion des ODS
+                    </p>
                 </div>
 
-                <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 p-10 border border-slate-100">
+                <div className="bg-white/95 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl p-8 md:p-10 border border-white/20">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {error && (
-                            <div className="bg-red-50 border border-red-100 text-red-600 p-4 rounded-2xl text-sm font-bold flex items-center gap-3 animate-shake">
-                                <AlertCircle size={18} />
+                            <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-2xl text-xs font-extrabold flex items-center gap-3">
+                                <AlertCircle size={18} className="shrink-0" />
                                 {error}
                             </div>
                         )}
 
                         <div>
-                            <label className="block text-slate-700 font-black text-xs uppercase tracking-widest mb-3 ml-1">Adresse Email</label>
+                            <label className="block text-slate-700 font-black text-xs uppercase tracking-widest mb-2.5 ml-1">
+                                Adresse Email
+                            </label>
                             <div className="relative group">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
                                 <input
                                     type="email"
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="votre@email.com"
-                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-50 rounded-2xl focus:bg-white focus:border-blue-500 transition-all outline-none font-bold text-slate-900 placeholder:text-slate-300"
+                                    className="w-full pl-12 pr-4 py-3.5 bg-slate-50/90 border border-slate-200 rounded-2xl focus:bg-white focus:border-blue-500 transition-all outline-none font-bold text-slate-900 text-sm placeholder:text-slate-300"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-slate-700 font-black text-xs uppercase tracking-widest mb-3 ml-1">Mot de passe</label>
+                            <label className="block text-slate-700 font-black text-xs uppercase tracking-widest mb-2.5 ml-1">
+                                Mot de passe
+                            </label>
                             <div className="relative group">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
-                                    className="w-full pl-12 pr-12 py-4 bg-slate-50 border-2 border-slate-50 rounded-2xl focus:bg-white focus:border-blue-500 transition-all outline-none font-bold text-slate-900 placeholder:text-slate-300"
+                                    className="w-full pl-12 pr-12 py-3.5 bg-slate-50/90 border border-slate-200 rounded-2xl focus:bg-white focus:border-blue-500 transition-all outline-none font-bold text-slate-900 text-sm placeholder:text-slate-300"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
                                 >
-                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                             </div>
                         </div>
@@ -86,19 +100,22 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-200 hover:shadow-blue-300 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:translate-y-0"
+                            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 active:scale-95 transition-all disabled:opacity-50 text-sm uppercase tracking-wider"
                         >
-                            {isLoading ? "Connexion..." : "Se connecter"}
+                            {isLoading ? "Connexion en cours..." : "Se connecter"}
                         </button>
                     </form>
 
-                    <div className="mt-8 text-center">
-                        <p className="text-slate-400 text-xs font-bold uppercase tracking-tight">Mot de passe par défaut : <span className="text-blue-600">user123</span></p>
+                    <div className="mt-8 text-center pt-6 border-t border-slate-100">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100/80 rounded-full text-slate-500 text-[11px] font-bold">
+                            <ShieldCheck size={14} className="text-blue-600" />
+                            Mot de passe par défaut : <span className="text-blue-600 font-black">user123</span>
+                        </div>
                     </div>
                 </div>
 
-                <p className="text-center mt-8 text-slate-400 font-bold text-sm">
-                    &copy; {new Date().getFullYear()} - ESCLAB-Contract Hub
+                <p className="text-center mt-8 text-slate-400 font-semibold text-xs tracking-wide">
+                    &copy; {new Date().getFullYear()} ESCLAB-Contract Hub — Plateforme de Gestion ODS
                 </p>
             </div>
         </div>

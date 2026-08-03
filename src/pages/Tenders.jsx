@@ -34,7 +34,7 @@ import {
     Building2,
     ArrowLeftRight
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 
 const PERSONNEL = [
     { name: "MOUHOUB IMENE", email: "mouhoub.imene@esclab-algerie.com", role: "Coordinatrice" },
@@ -52,7 +52,7 @@ const PERSONNEL = [
 ];
 
 const Tenders = () => {
-    const { currentUser, isAdmin, isSuperAdmin } = useAuth();
+    const { currentUser, isAdmin, isSuperAdmin, canExportData } = useAuth();
     const navigate = useNavigate();
     
     const isSuper = isSuperAdmin();
@@ -269,6 +269,30 @@ const Tenders = () => {
         });
     };
 
+    // Export to Excel function
+    const exportToExcel = () => {
+        const data = filteredTenders.map(t => ({
+            Ref: t.refCdc,
+            Organisme: t.organism,
+            Objet: t.object,
+            Statut: t.status,
+            HT: calculateTotals(t.items).ht,
+            TTC: calculateTotals(t.items).ttc,
+            Cautions: t.cautions?.length || 0
+        }));
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Tenders');
+        const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'tenders_export.xlsx';
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     // Products DQE Management
     const handleAddItem = async () => {
         if (!newItem.designation) return;
@@ -444,13 +468,23 @@ const Tenders = () => {
                 </div>
 
                 {isCoordinator && (
-                    <button 
-                        onClick={() => handleOpenForm()}
-                        className="bg-indigo-600 text-white px-8 py-4.5 rounded-[2rem] font-black flex items-center gap-3 shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all active:translate-y-0 text-sm tracking-widest uppercase"
-                    >
-                        <Plus size={20} strokeWidth={3} />
-                        Initialiser un CDC
-                    </button>
+                    <div className="flex gap-4">
+                        <button 
+                            onClick={() => handleOpenForm()}
+                            className="bg-indigo-600 text-white px-8 py-4.5 rounded-[2rem] font-black flex items-center gap-3 shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all active:translate-y-0 text-sm tracking-widest uppercase"
+                        >
+                            <Plus size={20} strokeWidth={3} />
+                            Initialiser un CDC
+                        </button>
+                        {canExportData() && (
+                            <button 
+                                onClick={exportToExcel}
+                                className="bg-green-600 text-white px-6 py-2 rounded-[2rem] font-black flex items-center gap-2 hover:bg-green-700 transition-all"
+                            >
+                                Exporter Excel
+                            </button>
+                        )}
+                    </div>
                 )}
             </div>
 

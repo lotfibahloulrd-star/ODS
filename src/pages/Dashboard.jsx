@@ -1113,69 +1113,49 @@ const Dashboard = () => {
 
             {/* Operational Cycle Section */}
             <div className="mb-10 animate-in slide-in-from-top-10 duration-700">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="w-8 h-8 bg-slate-900 rounded-xl flex items-center justify-center text-white">
-                        <Activity size={16} />
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                            <Activity size={16} />
+                        </div>
+                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-[0.2em]">Pilotage des Engagements ODS</h3>
                     </div>
-                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-[0.2em]">Cycle Opérationnel</h3>
+                    <button 
+                        onClick={() => navigate('/ods')}
+                        className="px-4 py-2 bg-slate-900 hover:bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-2"
+                    >
+                        Vue Tableau ODS Complexe <ArrowRight size={14} />
+                    </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Entry 1: Tenders (The Origin) */}
+                <div className="grid grid-cols-1 gap-6">
+                    {/* Entry: ODS (The Execution) */}
                     <div 
-                        onClick={() => navigate('/tenders')}
-                        className="bg-indigo-900 p-8 rounded-[3rem] text-white flex items-center justify-between group cursor-pointer hover:scale-[1.02] transition-all shadow-2xl shadow-indigo-100 relative overflow-hidden"
+                        onClick={() => navigate('/ods')}
+                        className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 p-8 md:p-10 rounded-[2.5rem] text-white flex flex-col md:flex-row items-start md:items-center justify-between group cursor-pointer hover:scale-[1.01] transition-all shadow-2xl shadow-blue-900/20 relative overflow-hidden"
                     >
                         <div className="absolute -right-10 -bottom-10 opacity-10 group-hover:rotate-12 transition-transform duration-700">
-                            <Briefcase size={200} />
+                            <Package size={220} />
                         </div>
-                        <div className="space-y-4 relative z-10">
+                        <div className="space-y-4 relative z-10 max-w-2xl">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                                    <Briefcase size={20} className="text-indigo-300" />
+                                    <Package size={20} className="text-blue-300" />
                                 </div>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">Phase de Soumission</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-blue-300">Ordres de Service & Suivi Financier</span>
                             </div>
                             <div>
-                                <h4 className="text-3xl font-black tracking-tight mb-2">Appels d'Offres</h4>
-                                <p className="text-xs text-indigo-200/70 font-medium max-w-xs">Gestion des CDC, offres techniques et suivi du workflow collaboratif.</p>
+                                <h4 className="text-3xl md:text-4xl font-black tracking-tight mb-2">Gestion Centralisée des ODS</h4>
+                                <p className="text-sm text-blue-200/80 font-medium leading-relaxed">
+                                    Suivez l'avancement des livraisons, la facturation, les autorisations de dépense et les règlements en temps réel.
+                                </p>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <span className="px-4 py-2 bg-indigo-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/10">
-                                    {tendersCount} Dossiers en cours
+                            <div className="flex items-center gap-4 pt-2">
+                                <span className="px-4 py-2 bg-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/15">
+                                    {stats.total} Engagements Actifs
                                 </span>
-                                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest group-hover:gap-4 transition-all">
-                                    Gérer <ArrowRight size={16} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Entry 2: ODS (The Execution) */}
-                    <div 
-                        onClick={() => window.scrollTo({ top: 800, behavior: 'smooth' })}
-                        className="bg-white p-8 rounded-[3rem] border-4 border-slate-100 flex items-center justify-between group cursor-pointer hover:border-blue-400 transition-all shadow-xl shadow-slate-100 relative overflow-hidden"
-                    >
-                        <div className="absolute -right-10 -bottom-10 opacity-5 group-hover:rotate-12 transition-transform duration-700">
-                            <Package size={200} />
-                        </div>
-                        <div className="space-y-4 relative z-10">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center">
-                                    <Package size={20} className="text-blue-600" />
-                                </div>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Phase d'Exécution</span>
-                            </div>
-                            <div>
-                                <h4 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Ordres de Service</h4>
-                                <p className="text-xs text-slate-500 font-medium max-w-xs">Suivi des livraisons, paiements et exécution des contrats adjugés.</p>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <span className="px-4 py-2 bg-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 border border-slate-200">
-                                    {stats.total} Engagements suivis
-                                </span>
-                                <div className="flex items-center gap-2 text-xs font-black text-blue-600 uppercase tracking-widest group-hover:gap-4 transition-all">
-                                    Consulter <ArrowRight size={16} />
+                                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-blue-300 group-hover:gap-4 transition-all">
+                                    Accéder au tableau récapitulatif <ArrowRight size={16} />
                                 </div>
                             </div>
                         </div>

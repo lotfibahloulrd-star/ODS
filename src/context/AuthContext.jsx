@@ -167,7 +167,8 @@ export const AuthProvider = ({ children }) => {
     const canExportData = () => {
         const authorized = [
             'l.bahloul@esclab-algerie.com',
-            'brikh.hamza@esclab-algerie.com'
+            'brikh.hamza@esclab-algerie.com',
+            'katia.amkhoukh@esclab-algerie.com'
         ];
         return isSuperAdmin() || authorized.includes(currentUser?.email);
     };

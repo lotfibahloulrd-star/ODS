@@ -139,7 +139,7 @@ const Home = () => {
     ];
 
     const handleNavigation = (status = null, authFilter = false, overdueFilter = false, financialFilter = false) => {
-        let path = '/dashboard';
+        let path = '/ods';
         const params = new URLSearchParams();
         
         if (status === 'financial' || financialFilter) {
@@ -165,14 +165,14 @@ const Home = () => {
     };
 
     return (
-        <div className="max-w-[1200px] mx-auto py-12 px-6">
+        <div className="max-w-[1300px] mx-auto py-10 px-6 font-sans">
             <header className="text-center mb-12 animate-in fade-in slide-in-from-top-8 duration-700">
                 <img src={logo} alt="ESCLAB Logo" className="h-24 object-contain mx-auto mb-6 transform hover:scale-105 transition-transform duration-500" />
-                <h1 className="text-5xl font-black text-slate-900 tracking-tight mb-4 uppercase">
-                    ESCLAB-Contract <span className="text-blue-600">Hub</span>
+                <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-3">
+                    ESCLAB <span className="text-blue-600">Contract Hub</span>
                 </h1>
-                <p className="text-lg text-slate-500 font-bold max-w-2xl mx-auto leading-relaxed">
-                    Accédez instantanément à vos dossiers et pilotez vos projets en temps réel.
+                <p className="text-base md:text-lg text-slate-500 font-semibold max-w-2xl mx-auto leading-relaxed">
+                    Pilotage en temps réel, suivi opérationnel et financier des Ordres de Service (ODS).
                 </p>
             </header>
 
