@@ -17,7 +17,9 @@ import {
     ChevronRight,
     ShieldCheck,
     Landmark,
-    DollarSign
+    DollarSign,
+    FilePlus,
+    PlusCircle
 } from 'lucide-react';
 
 const Home = () => {
@@ -53,6 +55,12 @@ const Home = () => {
         
         const total = allowedOrders.length;
         const pendingAuth = allowedOrders.filter(o => o.authorization !== 'Oui').length;
+        const newContracts = allowedOrders.filter(o => {
+            if (!o.createdAt) return false;
+            const diff = (new Date() - new Date(o.createdAt)) / (1000 * 60 * 60 * 24);
+            return diff <= 30;
+        }).length;
+
         const overdue = allowedOrders.filter(order => {
             const start = order.startDate || order.dateOds;
             const delay = order.delay;
@@ -86,7 +94,7 @@ const Home = () => {
         
         const financialTracking = orders.filter(o => o.status === 'En attente de paiement' && o.financial?.paymentStatus !== 'Total').length;
         
-        return { byStatus, total, pendingAuth, overdue, financialTracking };
+        return { byStatus, total, pendingAuth, overdue, financialTracking, newContracts };
     }, [orders]);
 
     const filterButtons = [
@@ -133,12 +141,17 @@ const Home = () => {
     ];
 
     const quickFilters = [
-        { label: 'Tous les ODS', type: 'all', icon: <LayoutDashboard size={20} />, count: stats.total, color: 'text-blue-600 bg-blue-50' },
-        { label: 'Attente Autorisation', type: 'auth', icon: <Zap size={20} />, count: stats.pendingAuth, color: 'text-amber-600 bg-amber-50' },
-        { label: 'Engagements Hors Délai', type: 'overdue', icon: <AlertTriangle size={20} />, count: stats.overdue, color: 'text-red-600 bg-red-50' }
+        { label: 'Tous les ODS', type: 'all', icon: <LayoutDashboard size={20} />, count: stats.total, color: 'text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100' },
+        { label: 'Nouveaux Contrats', type: 'new_contract', icon: <FilePlus size={20} />, count: stats.newContracts, color: 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200' },
+        { label: 'Attente Autorisation', type: 'auth', icon: <Zap size={20} />, count: stats.pendingAuth, color: 'text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-100' },
+        { label: 'Engagements Hors Délai', type: 'overdue', icon: <AlertTriangle size={20} />, count: stats.overdue, color: 'text-red-600 bg-red-50 hover:bg-red-100 border border-red-100' }
     ];
 
-    const handleNavigation = (status = null, authFilter = false, overdueFilter = false, financialFilter = false) => {
+    const handleNavigation = (status = null, authFilter = false, overdueFilter = false, financialFilter = false, newContractFilter = false) => {
+        if (newContractFilter && auth.canCreateOds && auth.canCreateOds()) {
+            navigate('/ods/new');
+            return;
+        }
         let path = '/ods';
         const params = new URLSearchParams();
         
@@ -177,7 +190,7 @@ const Home = () => {
             </header>
 
             {/* Search Panel */}
-            <div className="max-w-3xl mx-auto mb-16 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
+            <div className="max-w-3xl mx-auto mb-12 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
                 <form onSubmit={handleQuickSearch} className="group relative">
                     <div className="absolute inset-0 bg-blue-600/5 rounded-[2.5rem] blur-2xl group-focus-within:bg-blue-600/10 transition-all duration-500"></div>
                     <div className="relative flex items-center bg-white/80 backdrop-blur-xl border-2 border-white shadow-2xl rounded-[2.5rem] p-2 focus-within:border-blue-100 transition-all duration-300">
@@ -202,16 +215,16 @@ const Home = () => {
             </div>
 
             {/* Quick Summary Row */}
-            <div className="flex justify-center gap-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 flex-wrap">
+            <div className="flex justify-center gap-3.5 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 flex-wrap">
                 {quickFilters.map((q, idx) => (
                     <button
                         key={idx}
-                        onClick={() => handleNavigation(null, q.type === 'auth', q.type === 'overdue')}
-                        className={`flex items-center gap-3 px-6 py-3 rounded-2xl border border-transparent shadow-sm hover:shadow-md transition-all active:scale-95 ${q.color} font-black uppercase text-xs`}
+                        onClick={() => handleNavigation(null, q.type === 'auth', q.type === 'overdue', false, q.type === 'new_contract')}
+                        className={`flex items-center gap-3 px-5 py-3 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-95 ${q.color} font-black uppercase text-xs`}
                     >
                         {q.icon}
                         <span>{q.label}</span>
-                        <span className="bg-white/50 px-2 py-0.5 rounded-lg text-[10px]">{q.count}</span>
+                        <span className="bg-white/70 px-2 py-0.5 rounded-lg text-[10px] shadow-xs">{q.count}</span>
                     </button>
                 ))}
             </div>
