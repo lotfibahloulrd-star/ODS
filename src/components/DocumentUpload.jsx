@@ -66,10 +66,13 @@ export default function DocumentUpload({ contractId, userEmail, onClose }) {
             onChange={(e) => setDocType(e.target.value)}
             className="w-full p-2 border rounded"
           >
-            <option>Bon de livraison</option>
+                        <option>Bon de livraison</option>
             <option>Factures</option>
             <option>PV</option>
             <option>Autres</option>
+            <option>Avenant</option>
+            <option>Offre Technique</option>
+            <option>Offre Financiere</option>
           </select>
           <input
             type="file"
