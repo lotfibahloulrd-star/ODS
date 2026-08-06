@@ -33,57 +33,18 @@ export const AuthProvider = ({ children }) => {
         return saved ? JSON.parse(saved) : null;
     });
 
-    // Sync default users to localStorage
+    // Initialise les utilisateurs par défaut si le stockage est vide
     useEffect(() => {
-        const usersStr = localStorage.getItem('ods_users_v7');
-        let currentUsers = usersStr ? JSON.parse(usersStr) : [];
-        const defaultUsers = [
-            { id: 1, firstName: 'Lotfi', lastName: 'Bahloul', email: 'l.bahloul@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'Admin123' },
-            { id: 2, firstName: 'Ali', lastName: 'Ouali', email: 'a.ouali@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
-            { id: 3, firstName: 'Wissem', lastName: 'Boukacem', email: 'w.boukacem@esclab-algerie.com', division: 'Juriste', role: 'Utilisateur', password: 'user123' },
-            { id: 4, firstName: 'Selma', lastName: 'Boukacem', email: 's.boukacem@esclab-algerie.com', division: 'Juriste', role: 'Utilisateur', password: 'user123' },
-            { id: 5, firstName: 'Hamza', lastName: 'Brikh', email: 'brikh.hamza@esclab-algerie.com', division: 'Responsable des marchés', role: 'Utilisateur', password: 'user123' },
-            { id: 6, firstName: 'Katia', lastName: 'Amkhoukh', email: 'katia.amkhoukh@esclab-algerie.com', division: 'Responsable importations', role: 'Utilisateur', password: 'user123' },
-            { id: 7, firstName: 'Leila', lastName: 'Mayout', email: 'l.mayout@esclab-algerie.com', division: 'Responsable importations', role: 'Utilisateur', password: 'user123' },
-            { id: 8, firstName: 'Bellal', lastName: 'Rekkad', email: 'b.rekkad@esclab-algerie.com', division: 'Responsable stock division laboratoire', role: 'Utilisateur', password: 'user123' },
-            { id: 9, firstName: 'El Yazid', lastName: 'Saci', email: 'e.saci@esclab-algerie.com', division: 'Responsable stock division analytique', role: 'Utilisateur', password: 'user123' },
-            { id: 10, firstName: 'Tarek', lastName: 'Ait El Hocine', email: 't.aitelhocine@esclab-algerie.com', division: 'Division Analytique', role: 'Administrateur', password: 'user123' },
-            { id: 11, firstName: 'Farid', lastName: 'Taazibt', email: 'f.taazibt@esclab-algerie.com', division: 'Division Laboratoire', role: 'Administrateur', password: 'user123' },
-            { id: 12, firstName: 'Sonia', lastName: 'Mazouz', email: 'mazouz.sonia@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
-            { id: 13, firstName: 'Taklit', lastName: 'Belateche', email: 'belateche.taklit@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
-            { id: 14, firstName: 'N.', lastName: 'Bouras', email: 'n.bouras@esclab-algerie.com', division: 'Administrateur', role: 'Administrateur', password: 'user123' },
-            { id: 15, firstName: 'Melissa', lastName: 'Aidli', email: 'm.aidli@esclab-algerie.com', division: 'Recouvrement', role: 'Utilisateur', password: 'user123' },
-            { id: 16, firstName: 'Lamine', lastName: 'Nait Sidous', email: 'l.naitsidous@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'Admin123' },
-            { id: 17, firstName: 'Mourad', lastName: 'Berri', email: 'm.berri@esclab-algerie.com', division: 'Direction', role: 'Utilisateur', password: 'user123' },
-            { id: 18, firstName: 'Imene', lastName: 'Mouhoub', email: 'mouhoub.imene@esclab-algerie.com', division: 'Division Commerciale', role: 'Utilisateur', password: 'user123' },
-            { id: 19, firstName: 'Hassiba', lastName: 'Foudil', email: 'h.foudil@esclab-algerie.com', division: 'Division Commerciale', role: 'Utilisateur', password: 'user123' },
-            { id: 20, firstName: 'Rania', lastName: 'Moulaoui', email: 'r.moulaoui@esclab-algerie.com', division: 'Division Commerciale', role: 'Utilisateur', password: 'user123' },
-            { id: 21, firstName: 'Abderrahmane', lastName: 'Cherbal', email: 'y.cherbal@esclab-algerie.com', division: 'Division Commerciale', role: 'Utilisateur', password: 'user123' },
-            { id: 22, firstName: 'Nour El Houda', lastName: 'Belhamel', email: 'n.belhamel@esclab-algerie.com', division: 'Division Commerciale', role: 'Utilisateur', password: 'user123' },
-            { id: 23, firstName: 'Youcef', lastName: 'Belkadi', email: 'belkadi.youcef@esclab-algerie.com', division: 'Division Commerciale', role: 'Utilisateur', password: 'user123' },
-            { id: 24, firstName: 'Kamelia', lastName: 'Idiri', email: 'k.idiri@esclab-algerie.com', division: 'Division Commerciale', role: 'Utilisateur', password: 'user123' },
-            { id: 25, firstName: 'Mounir', lastName: 'Khelfaoui', email: 'm.khelfaoui@esclab-algerie.com', division: 'Division Commerciale', role: 'Utilisateur', password: 'user123' },
-            { id: 26, firstName: 'Iliza', lastName: 'Abdelli', email: 'i.abdelli@esclab-algerie.com', division: 'Division Commerciale', role: 'Utilisateur', password: 'user123' },
-            { id: 27, firstName: 'Lydia', lastName: 'Belhocine', email: 'l.belhocine@esclab-algerie.com', division: 'Division Commerciale', role: 'Utilisateur', password: 'user123' },
-            { id: 28, firstName: 'Nazim', lastName: 'Mokhtari', email: 'n.mokhtari@esclab-algerie.com', division: 'Division Commerciale', role: 'Utilisateur', password: 'user123' },
-            { id: 29, firstName: 'Ali', lastName: 'Ait Azzouz', email: 'a.aitazouz@esclab-algerie.com', division: 'Division Commerciale', role: 'Utilisateur', password: 'user123' },
-            { id: 30, firstName: 'Amina', lastName: 'Boumedjmadjen', email: 'boumedjmadjen.amina@esclab-algerie.com', division: 'Logistique', role: 'Utilisateur', password: 'user123' },
-        ];
-        let hasChanges = false;
-        defaultUsers.forEach(defUser => {
-            const idx = currentUsers.findIndex(u => u.email.toLowerCase() === defUser.email.toLowerCase());
-            if (idx === -1) {
-                currentUsers.push(defUser);
-                hasChanges = true;
-            } else if (defUser.email === 'l.bahloul@esclab-algerie.com' && currentUsers[idx].password !== defUser.password) {
-                currentUsers[idx].password = defUser.password;
-                hasChanges = true;
-            }
-        });
-        if (hasChanges || !usersStr) {
-            localStorage.setItem('ods_users_v7', JSON.stringify(currentUsers));
+        const stored = localStorage.getItem('ods_users_v7');
+        if (!stored) {
+            const defaultUsers = [
+                { id: 1, firstName: 'Lotfi', lastName: 'Bahloul', email: 'l.bahloul@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'Admin123' },
+                // ... (autres utilisateurs peuvent être ajoutés ici)
+            ];
+            localStorage.setItem('ods_users_v7', JSON.stringify(defaultUsers));
         }
     }, []);
+
 
     const login = (email, password) => {
         let usersStr = localStorage.getItem('ods_users_v7');
