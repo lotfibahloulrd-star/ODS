@@ -187,31 +187,11 @@ export const AuthProvider = ({ children }) => {
         if (idx === -1) return false;
         users[idx].password = newPassword;
         localStorage.setItem('ods_users_v7', JSON.stringify(users));
-        const updated = { ...currentUser, password: newPassword };
-        setCurrentUser(updated);
-        localStorage.setItem('current_user', JSON.stringify(updated));
-        return true;
-    };
-
-    const resetUserPassword = (email, newPassword) => {
-    if (!isSuperAdmin()) return false;
-    const usersStr = localStorage.getItem('ods_users_v7');
-    if (!usersStr) return false;
-    const users = JSON.parse(usersStr);
-    const idx = users.findIndex(u => u.email === email);
-    if (idx === -1) return false;
-    users[idx].password = newPassword;
-    localStorage.setItem('ods_users_v7', JSON.stringify(users));
-    // Update currentUser if it matches the email being reset
-    if (currentUser?.email === email) {
-        const updated = { ...currentUser, password: newPassword };
-        setCurrentUser(updated);
-        localStorage.setItem('current_user', JSON.stringify(updated));
-    }
-    return true;
-};
-
+        const usersStr = localStorage.getItem('ods_users_v7');
+        let currentUsers = usersStr ? JSON.parse(usersStr) : [];
+        
         const defaultUsers = [
+            { id: 1, firstName: 'Lotfi', lastName: 'Bahloul', email: 'l.bahloul@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'Admin123' },
             { id: 15, firstName: 'Melissa', lastName: 'Aidli', email: 'm.aidli@esclab-algerie.com', division: 'Recouvrement', role: 'Utilisateur', password: 'user123' },
             { id: 16, firstName: 'Lamine', lastName: 'Nait Sidous', email: 'l.naitsidous@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'Admin123' },
             { id: 17, firstName: 'Mourad', lastName: 'Berri', email: 'm.berri@esclab-algerie.com', division: 'Direction', role: 'Utilisateur', password: 'user123' },
@@ -245,10 +225,6 @@ export const AuthProvider = ({ children }) => {
         }
     }, []);
 
-    const login = (email, password) => {
-        let usersStr = localStorage.getItem('ods_users_v7');
-        if (!usersStr) {
-            // Fallback init (should be rare)
             const defaultUsers = [];
             localStorage.setItem('ods_users_v7', JSON.stringify(defaultUsers));
             usersStr = JSON.stringify(defaultUsers);
@@ -267,9 +243,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('current_user');
     };
 
-    const isAdmin = () => currentUser?.role === 'Administrateur' || currentUser?.role === 'Super-Administrateur';
-    const isSuperAdmin = () => currentUser?.role === 'Super-Administrateur';
-    const hasFullAccess = () => FULL_ACCESS_EMAILS.includes(currentUser?.email);
+
 
     const isJuridique = () => {
         const emails = ['w.boukacem@esclab-algerie.com', 's.boukacem@esclab-algerie.com', 'brikh.hamza@esclab-algerie.com'];
