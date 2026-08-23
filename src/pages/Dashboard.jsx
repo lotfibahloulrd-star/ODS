@@ -1071,7 +1071,7 @@ const Dashboard = () => {
                             </div>
                         )}
 
-                        {auth?.canExportData() && (
+{isSuperAdmin && (
                             <button
                                 onClick={handleExportExcel}
                                 title="Extraire la liste (Excel)"

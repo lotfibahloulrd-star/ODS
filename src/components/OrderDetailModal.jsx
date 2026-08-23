@@ -193,20 +193,24 @@ const OrderDetailModal = ({ order, isOpen, onClose, openPdf, onUpdate }) => {
                                         <StopCircle size={12} /> Arrêt Demandé
                                     </span>
                                 )}
-                                <button
-                                    onClick={async () => {
-                                        if (isSuperAdmin) {
+                                {isSuperAdmin ? (
+                                    <button
+                                        onClick={async () => {
                                             await orderService.updateOrder(order.id, {
                                                 authorization: order.authorization === 'Oui' ? 'Non' : 'Oui'
                                             }, currentUser.firstName);
                                             if (onUpdate) onUpdate();
-                                        }
-                                    }}
-                                    className={`px-3 py-1 border text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${order.authorization === 'Oui' ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/30' : 'bg-amber-600/20 border-amber-500/30 text-amber-400 hover:bg-amber-600/30'}`}
-                                    title={isSuperAdmin ? "Cliquer pour changer le statut" : ""}
-                                >
-                                    {order.authorization === 'Oui' ? 'Autorisation confirmée' : 'Attente Autorisation'}
-                                </button>
+                                        }}
+                                        className={`px-3 py-1 border text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${order.authorization === 'Oui' ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/30' : 'bg-amber-600/20 border-amber-500/30 text-amber-400 hover:bg-amber-600/30'}`}
+                                        title="Cliquer pour changer le statut"
+                                    >
+                                        {order.authorization === 'Oui' ? 'Autorisation confirmée' : 'Attente Autorisation'}
+                                    </button>
+                                ) : (
+                                    <span className={`px-3 py-1 border text-[10px] font-black uppercase tracking-widest rounded-lg ${order.authorization === 'Oui' ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-400' : 'bg-amber-600/20 border-amber-500/30 text-amber-400'}`}>
+                                        {order.authorization === 'Oui' ? 'Autorisation confirmée' : 'Attente Autorisation'}
+                                    </span>
+                                )}
                             </div>
                             <h2 className="text-3xl font-black tracking-tight leading-tight">
                                 {order.refOds || order.ref || "Sans Référence"}
