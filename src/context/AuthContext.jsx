@@ -34,15 +34,28 @@ export const AuthProvider = ({ children }) => {
         return saved ? JSON.parse(saved) : null;
     });
 
-    // Initialise les utilisateurs par défaut si le stockage est vide
+    // Initialise les utilisateurs par défaut
     useEffect(() => {
         const stored = localStorage.getItem('ods_users_v7');
-        if (!stored) {
-            const defaultUsers = [
-                { id: 1, firstName: 'Lotfi', lastName: 'Bahloul', email: 'l.bahloul@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'Admin123' }
-                // ... other default users can be added here
-            ];
-            localStorage.setItem('ods_users_v7', JSON.stringify(defaultUsers));
+        let users = stored ? JSON.parse(stored) : [];
+        
+        const defaultUsers = [
+            { id: 1, firstName: 'Lotfi', lastName: 'Bahloul', email: 'l.bahloul@esclab-algerie.com', division: 'Super-Administrateur', role: 'Super-Administrateur', password: 'Admin123' },
+            { id: 2, firstName: 'Imene', lastName: 'Mouhoub', email: 'mouhoub.imene@esclab-algerie.com', division: 'Contrôle', role: 'Utilisateur', password: 'Esclab2024' },
+            { id: 3, firstName: 'R.', lastName: 'Moulaoui', email: 'r.moulaoui@esclab-algerie.com', division: 'Contrôle', role: 'Utilisateur', password: 'Esclab2024' },
+            { id: 4, firstName: 'H.', lastName: 'Foudil', email: 'h.foudil@esclab-algerie.com', division: 'Contrôle', role: 'Utilisateur', password: 'Esclab2024' }
+        ];
+
+        let updated = false;
+        defaultUsers.forEach(defUser => {
+            if (!users.find(u => u.email === defUser.email)) {
+                users.push(defUser);
+                updated = true;
+            }
+        });
+
+        if (updated || !stored) {
+            localStorage.setItem('ods_users_v7', JSON.stringify(users));
         }
     }, []);
 
