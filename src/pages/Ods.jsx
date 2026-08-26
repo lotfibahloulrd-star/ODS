@@ -349,11 +349,11 @@ const Ods = () => {
                 )}
               </section>
             );
-          })}
+          })
         </div>
-{uploadContractId && (
-  <DocumentUpload contractId={uploadContractId} userEmail={auth.currentUser?.email} onClose={() => setUploadContractId(null)} />
-)}
+      )}
+      {uploadContractId && (
+        <DocumentUpload contractId={uploadContractId} userEmail={auth.currentUser?.email} onClose={() => setUploadContractId(null)} />
       )}
     </div>
   );
