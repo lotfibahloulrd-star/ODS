@@ -46,10 +46,9 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = (email, password) => {
-        // Renommage pour éviter la redeclaration de la variable `usersStr`
+        // Utilisation d'un nom de variable unique pour éviter les redéclarations
         let storedUsersStr = localStorage.getItem('ods_users_v7');
         if (!storedUsersStr) {
-            // Fallback init (should be rare)
             const defaultUsers = [];
             localStorage.setItem('ods_users_v7', JSON.stringify(defaultUsers));
             storedUsersStr = JSON.stringify(defaultUsers);
@@ -68,8 +67,8 @@ export const AuthProvider = ({ children }) => {
     };
 
     const register = (newUser) => {
-        let storedUsersStr = localStorage.getItem('ods_users_v7');
-        let users = storedUsersStr ? JSON.parse(storedUsersStr) : [];
+        let stored = localStorage.getItem('ods_users_v7');
+        let users = stored ? JSON.parse(stored) : [];
         users.push(newUser);
         localStorage.setItem('ods_users_v7', JSON.stringify(users));
         return { success: true };
