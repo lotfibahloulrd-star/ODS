@@ -3,7 +3,7 @@ import { notificationService } from './notificationService';
 import { logService } from './logService';
 
 const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-const API_URL = 'http://localhost:8080/api.php';
+const API_URL = baseUrl + '/api.php';
 
 export const orderService = {
     _cleanupLegacyStorage: () => {
