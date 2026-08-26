@@ -349,7 +349,7 @@ const Ods = () => {
                 )}
               </section>
             );
-          })
+          })}
         </div>
       )}
       {uploadContractId && (
