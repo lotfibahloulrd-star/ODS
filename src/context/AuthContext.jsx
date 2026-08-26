@@ -185,6 +185,10 @@ export const AuthProvider = ({ children }) => {
         if (currentUser?.email === 'm.aidli@esclab-algerie.com') {
             return true;
         }
+        // Accès en lecture sur tous les contrats pour Imene Mouhoub
+        if (currentUser?.email === 'i.mouhoub@esclab-algerie.com' || currentUser?.email === 'imene.mouhoub@esclab-algerie.com') {
+            return true;
+        }
         if (hasFullAccess()) return true;
         return order.division === currentUser?.division;
     };
