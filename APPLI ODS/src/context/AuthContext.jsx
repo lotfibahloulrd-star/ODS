@@ -1,3 +1,4 @@
+// Updated by Antigravity on 2026-08-26
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
