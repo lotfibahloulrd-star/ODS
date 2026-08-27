@@ -44,7 +44,7 @@ const Home = () => {
     }, []);
 
     const stats = useMemo(() => {
-        const allowedOrders = orders.filter(o => auth.canViewOrder(o));
+        const allowedOrders = orders.filter(o => auth?.canViewOrder ? auth.canViewOrder(o) : true);
 
         const byStatus = {
             'En attente de paiement': allowedOrders.filter(o => o.status === 'En attente de paiement').length,

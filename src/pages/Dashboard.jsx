@@ -413,7 +413,7 @@ const Dashboard = () => {
     const filteredOrders = useMemo(() => {
         const result = orders.filter(o => {
             // First check access
-            if (!auth.canViewOrder(o)) return false;
+            if (auth?.canViewOrder && !auth.canViewOrder(o)) return false;
 
             const search = searchTerm.toLowerCase();
             const matchesSearch = (
