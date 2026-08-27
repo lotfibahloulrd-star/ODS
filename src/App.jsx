@@ -13,6 +13,7 @@ import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'r
 import OrderDetails from './pages/OrderDetails';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import Guide from './pages/Guide';
+import ContractStatusPage from './pages/ContractStatusPage';
 import logo from './assets/logo.png';
 import { orderService } from './services/orderService';
 
@@ -287,6 +288,12 @@ function AppContent() {
                         <Route path="/home" element={<Home />} />
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/ods" element={<Ods />} />
+                        <Route path="/attribution" element={<ContractStatusPage categoryKey="attribution" />} />
+                        <Route path="/nouveaux-contrats" element={<ContractStatusPage categoryKey="nouveaux-contrats" />} />
+                        <Route path="/en-attente-ods" element={<ContractStatusPage categoryKey="en-attente-ods" />} />
+                        <Route path="/en-cours" element={<ContractStatusPage categoryKey="en-cours" />} />
+                        <Route path="/en-attente-paiement" element={<ContractStatusPage categoryKey="en-attente-paiement" />} />
+                        <Route path="/suivi-financier" element={<ContractStatusPage categoryKey="suivi-financier" />} />
                         <Route path="/ods/new" element={canCreateOds() ? <NewOrder /> : <div className="text-center py-20 text-slate-400 font-bold">Accès restreint</div>} />
                         <Route path="/users" element={isSuperAdmin() ? <UsersPage /> : <div className="text-center py-20 text-slate-400 font-bold">Accès restreint</div>} />
                         <Route path="/order/:id" element={<OrderDetails />} />

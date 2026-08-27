@@ -101,6 +101,7 @@ const Home = () => {
         { 
             label: 'Attribution en attente', 
             status: 'Attribution en attente',
+            path: '/attribution',
             icon: <UserCheck size={32} />, 
             color: 'from-slate-600 to-slate-800', 
             shadow: 'shadow-slate-300',
@@ -109,6 +110,7 @@ const Home = () => {
         { 
             label: 'Nouveaux Contrats', 
             status: 'Nouveaux Contrats',
+            path: '/nouveaux-contrats',
             icon: <FilePlus size={32} />, 
             color: 'from-teal-500 to-emerald-600', 
             shadow: 'shadow-emerald-200',
@@ -117,6 +119,7 @@ const Home = () => {
         { 
             label: 'En attente d\'ODS', 
             status: 'En attente d\'ODS',
+            path: '/en-attente-ods',
             icon: <Package size={32} />, 
             color: 'from-purple-500 to-fuchsia-600', 
             shadow: 'shadow-fuchsia-200',
@@ -125,6 +128,7 @@ const Home = () => {
         { 
             label: 'En cours', 
             status: 'En cours',
+            path: '/en-cours',
             icon: <PlayCircle size={32} />, 
             color: 'from-blue-500 to-indigo-600', 
             shadow: 'shadow-blue-200',
@@ -133,6 +137,7 @@ const Home = () => {
         { 
             label: 'En attente de paiement', 
             status: 'En attente de paiement',
+            path: '/en-attente-paiement',
             icon: <CreditCard size={32} />, 
             color: 'from-amber-500 to-orange-600', 
             shadow: 'shadow-orange-200',
@@ -141,6 +146,7 @@ const Home = () => {
         {
             label: 'Suivi Financier',
             status: 'financial',
+            path: '/suivi-financier',
             icon: <ShieldCheck size={32} />,
             color: 'from-emerald-500 to-teal-600',
             shadow: 'shadow-emerald-200',
@@ -149,34 +155,24 @@ const Home = () => {
     ];
 
     const quickFilters = [
-        { label: 'Tous les ODS', type: 'all', icon: <LayoutDashboard size={20} />, count: stats.total, color: 'text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100' },
-        { label: 'Attente Autorisation', type: 'auth', icon: <Zap size={20} />, count: stats.pendingAuth, color: 'text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-100' },
-        { label: 'Engagements Hors Délai', type: 'overdue', icon: <AlertTriangle size={20} />, count: stats.overdue, color: 'text-red-600 bg-red-50 hover:bg-red-100 border border-red-100' }
+        { label: 'Tous les ODS', type: 'all', path: '/ods', icon: <LayoutDashboard size={20} />, count: stats.total, color: 'text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100' },
+        { label: 'Attente Autorisation', type: 'auth', path: '/ods?auth=true', icon: <Zap size={20} />, count: stats.pendingAuth, color: 'text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-100' },
+        { label: 'Engagements Hors Délai', type: 'overdue', path: '/ods?overdue=true', icon: <AlertTriangle size={20} />, count: stats.overdue, color: 'text-red-600 bg-red-50 hover:bg-red-100 border border-red-100' }
     ];
 
-    const handleNavigation = (status = null, authFilter = false, overdueFilter = false, financialFilter = false) => {
-        let path = '/ods';
-        const params = new URLSearchParams();
-        
-        if (status === 'financial' || financialFilter) {
-            params.append('status', 'En attente de paiement');
-            params.append('financial', 'true');
-        } else if (status) {
-            params.append('status', status);
+    const handleNavigation = (targetPath = '/ods') => {
+        if (searchQuery.trim()) {
+            const separator = targetPath.includes('?') ? '&' : '?';
+            navigate(`${targetPath}${separator}search=${encodeURIComponent(searchQuery.trim())}`);
+        } else {
+            navigate(targetPath);
         }
-        
-        if (authFilter) params.append('auth', 'true');
-        if (overdueFilter) params.append('overdue', 'true');
-        if (searchQuery) params.append('search', searchQuery);
-        
-        const queryString = params.toString();
-        navigate(queryString ? `${path}?${queryString}` : path);
     };
 
     const handleQuickSearch = (e) => {
         e.preventDefault();
         if (searchQuery.trim()) {
-            handleNavigation();
+            handleNavigation('/ods');
         }
     };
 
@@ -222,7 +218,7 @@ const Home = () => {
                 {quickFilters.map((q, idx) => (
                     <button
                         key={idx}
-                        onClick={() => handleNavigation(null, q.type === 'auth', q.type === 'overdue')}
+                        onClick={() => handleNavigation(q.path)}
                         className={`flex items-center gap-3 px-5 py-3 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-95 ${q.color} font-black uppercase text-xs`}
                     >
                         {q.icon}
@@ -237,7 +233,7 @@ const Home = () => {
                 {filterButtons.map((btn, idx) => (
                     <button
                         key={btn.label}
-                        onClick={() => handleNavigation(btn.status)}
+                        onClick={() => handleNavigation(btn.path)}
                         className={`group relative flex flex-col items-start p-6 bg-white border border-slate-100 rounded-[2.2rem] shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 text-left overflow-hidden animate-in fade-in zoom-in-95 duration-700`}
                         style={{ animationDelay: `${idx * 100 + 200}ms` }}
                     >
