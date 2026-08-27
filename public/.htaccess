@@ -18,6 +18,11 @@ DirectoryIndex index.html
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
+
+  # Rediriger www vers non-www (HTTP)
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^ http://%1%{REQUEST_URI} [R=301,L]
+
   RewriteBase /ods/
   
   # Si le fichier ou le dossier existe réellement, on le sert normalement
