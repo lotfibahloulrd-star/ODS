@@ -19,7 +19,8 @@ import {
     Landmark,
     DollarSign,
     FilePlus,
-    PlusCircle
+    PlusCircle,
+    TrendingUp
 } from 'lucide-react';
 
 const Home = () => {
