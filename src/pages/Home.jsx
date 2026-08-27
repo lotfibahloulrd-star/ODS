@@ -156,6 +156,7 @@ const Home = () => {
 
     const quickFilters = [
         { label: 'Tous les ODS', type: 'all', path: '/ods', icon: <LayoutDashboard size={20} />, count: stats.total, color: 'text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100' },
+        { label: 'Tableau de Bord KPIs', type: 'kpis', path: '/kpis', icon: <TrendingUp size={20} />, count: 'Analyses', color: 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100' },
         { label: 'Attente Autorisation', type: 'auth', path: '/ods?auth=true', icon: <Zap size={20} />, count: stats.pendingAuth, color: 'text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-100' },
         { label: 'Engagements Hors Délai', type: 'overdue', path: '/ods?overdue=true', icon: <AlertTriangle size={20} />, count: stats.overdue, color: 'text-red-600 bg-red-50 hover:bg-red-100 border border-red-100' }
     ];

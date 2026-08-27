@@ -6,7 +6,7 @@ import Home from './pages/Home';
 import NewOrder from './pages/NewOrder';
 import UsersPage from './pages/Users';
 import Login from './pages/Login';
-import { LayoutDashboard, PlusCircle, Users, LogOut, Key, User, HelpCircle, Search, X, FileText, Home as HomeIcon } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Users, LogOut, Key, User, HelpCircle, Search, X, FileText, Home as HomeIcon, TrendingUp } from 'lucide-react';
 import './index.css';
 
 import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
@@ -14,6 +14,7 @@ import OrderDetails from './pages/OrderDetails';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import Guide from './pages/Guide';
 import ContractStatusPage from './pages/ContractStatusPage';
+import Kpis from './pages/Kpis';
 import logo from './assets/logo.png';
 import { orderService } from './services/orderService';
 
@@ -70,6 +71,7 @@ function AppContent() {
     const getActiveTab = () => {
         if (location.pathname === '/' || location.pathname === '/home') return 'home';
         if (location.pathname === '/dashboard') return 'dashboard';
+        if (location.pathname === '/kpis') return 'kpis';
         if (location.pathname === '/ods') return 'ods';
         if (location.pathname === '/ods/new') return 'new';
         if (location.pathname === '/users') return 'users';
@@ -125,8 +127,16 @@ function AppContent() {
                             </button>
 
                             <button 
+                                onClick={() => navigate('/kpis')} 
+                                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-extrabold text-xs tracking-wide transition-all ${activeTab === 'kpis' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'}`}
+                            >
+                                <TrendingUp size={16} />
+                                <span className="hidden sm:inline">KPIs & Analyses</span>
+                            </button>
+
+                            <button 
                                 onClick={() => navigate('/ods')} 
-                                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-extrabold text-xs tracking-wide transition-all ${activeTab === 'ods' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'}`}
+                                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-extrabold text-xs tracking-wide transition-all ${activeTab === 'ods' ? 'bg-slate-900 text-white shadow-md shadow-slate-900/25' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'}`}
                             >
                                 <FileText size={16} />
                                 <span className="hidden sm:inline">Tableau des contrats</span>
@@ -287,6 +297,7 @@ function AppContent() {
                         <Route path="/" element={<Home />} />
                         <Route path="/home" element={<Home />} />
                         <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/kpis" element={<Kpis />} />
                         <Route path="/ods" element={<Ods />} />
                         <Route path="/attribution" element={<ContractStatusPage categoryKey="attribution" />} />
                         <Route path="/nouveaux-contrats" element={<ContractStatusPage categoryKey="nouveaux-contrats" />} />
