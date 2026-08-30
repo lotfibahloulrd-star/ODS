@@ -38,6 +38,12 @@ function AppContent() {
                 console.error("Global search error:", error);
             }
         };
+
+    useEffect(() => {
+        window.addEventListener('ods_data_updated', loadOrders);
+        return () => window.removeEventListener('ods_data_updated', loadOrders);
+    }, []);
+
         loadOrders();
     }, [currentUser, location.pathname]);
 
@@ -329,4 +335,6 @@ function App() {
 }
 
 export default App;
+
+
 

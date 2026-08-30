@@ -138,6 +138,12 @@ const Tenders = () => {
         setIsLoading(false);
     };
 
+    useEffect(() => {
+        window.addEventListener('tender_data_updated', loadTenders);
+        return () => window.removeEventListener('tender_data_updated', loadTenders);
+    }, []);
+
+
     const handleOpenForm = (tender = null) => {
         if (tender) {
             setFormData({

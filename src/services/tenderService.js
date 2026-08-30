@@ -103,3 +103,4 @@ export const tenderService = {
         return `${API_URL}?action=get_file&orderId=${tenderId}&storageKey=${storageKey}&type=tender`;
     }
 };
+

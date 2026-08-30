@@ -39,6 +39,12 @@ const Ods = () => {
     }
   };
 
+    useEffect(() => {
+        window.addEventListener('ods_data_updated', loadOrders);
+        return () => window.removeEventListener('ods_data_updated', loadOrders);
+    }, []);
+
+
   useEffect(() => {
     loadOrders();
   }, []);
@@ -360,3 +366,5 @@ const Ods = () => {
 };
 
 export default Ods;
+
+

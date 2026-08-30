@@ -57,6 +57,12 @@ const Kpis = () => {
   };
 
   useEffect(() => {
+    window.addEventListener('ods_data_updated', loadData);
+    return () => window.removeEventListener('ods_data_updated', loadData);
+  }, []);
+
+
+  useEffect(() => {
     loadData();
   }, []);
 

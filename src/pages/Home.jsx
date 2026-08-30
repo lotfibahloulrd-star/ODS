@@ -41,6 +41,12 @@ const Home = () => {
                 setIsLoading(false);
             }
         };
+
+    useEffect(() => {
+        window.addEventListener('ods_data_updated', loadCounts);
+        return () => window.removeEventListener('ods_data_updated', loadCounts);
+    }, []);
+
         loadCounts();
     }, []);
 

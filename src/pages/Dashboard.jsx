@@ -158,6 +158,12 @@ const Dashboard = () => {
         }
     };
 
+    useEffect(() => {
+        window.addEventListener('ods_data_updated', loadOrders);
+        return () => window.removeEventListener('ods_data_updated', loadOrders);
+    }, []);
+
+
     const handleStorageRepair = () => {
         if (window.confirm("Voulez-vous optimiser le stockage ? Cela supprimera les anciens fichiers temporaires pour libérer de l'espace. Vos données actuelles resteront intactes.")) {
             orderService._cleanupLegacyStorage();
@@ -1935,3 +1941,5 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+

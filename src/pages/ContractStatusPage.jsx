@@ -159,6 +159,11 @@ const ContractStatusPage = ({ categoryKey: propCategoryKey }) => {
     }
   };
 
+    useEffect(() => {
+        window.addEventListener('ods_data_updated', loadOrders);
+        return () => window.removeEventListener('ods_data_updated', loadOrders);
+    }, []);
+
   useEffect(() => {
     loadOrders();
   }, []);
@@ -586,3 +591,5 @@ const ContractStatusPage = ({ categoryKey: propCategoryKey }) => {
 };
 
 export default ContractStatusPage;
+
+

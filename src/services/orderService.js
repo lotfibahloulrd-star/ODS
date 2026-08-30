@@ -168,8 +168,10 @@ export const orderService = {
             }
             // Always persist locally to keep UI functional
             localStorage.setItem(DATA_VERSION, JSON.stringify(orders));
+            window.dispatchEvent(new Event('ods_data_updated'));
         } catch (e) {
             localStorage.setItem(DATA_VERSION, JSON.stringify(orders));
+            window.dispatchEvent(new Event('ods_data_updated'));
         }
     },
 
@@ -545,3 +547,4 @@ export const orderService = {
         return groups;
     }
 };
+
