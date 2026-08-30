@@ -28,24 +28,24 @@ function AppContent() {
     const [searchTerm, setSearchTerm] = useState("");
     const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false);
 
-    const loadOrders = async () => {
-        if (!currentUser) return;
-        try {
-            const data = await orderService.getAllOrders();
-            setAllOrders(Array.isArray(data) ? data : []);
-        } catch (error) {
-            console.error("Global search error:", error);
-        }
-    };
-
     useEffect(() => {
-        loadOrders();
-    }, [currentUser, location.pathname]);
+        if (!currentUser) return;
+        const loadOrders = async () => {
+            try {
+                const data = await orderService.getAllOrders();
+                setAllOrders(Array.isArray(data) ? data : []);
+            } catch (error) {
+                console.error("Global search error:", error);
+            }
+        };
 
     useEffect(() => {
         window.addEventListener('ods_data_updated', loadOrders);
         return () => window.removeEventListener('ods_data_updated', loadOrders);
-    }, [currentUser]);
+    }, []);
+
+        loadOrders();
+    }, [currentUser, location.pathname]);
 
     const searchResults = useMemo(() => {
         if (!searchTerm.trim()) return [];
@@ -335,4 +335,7 @@ function App() {
 }
 
 export default App;
+
+
+
 
