@@ -120,7 +120,7 @@ export const CATEGORIES_CONFIG = {
     filterFn: (o) => {
       if (o.status === 'Suivi financier') return true;
       if (o.status === 'En attente de paiement' && o.financial?.paymentStatus !== 'Total') return true;
-      return Boolean(o.financial && Object.keys(o.financial).length > 0 && o.financial.amountReceived !== undefined);
+      return Boolean(o.financial && Object.keys(o.financial).length > 0 && (o.financial.amountReceived !== undefined || o.financial.paymentAmount !== undefined));
     }
   }
 };

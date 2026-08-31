@@ -169,9 +169,12 @@ const Kpis = () => {
       const amt = parseNum(o.amount);
       totalPortfolioValue += amt;
 
-      // Financials
-      const received = parseNum(o.financial?.amountReceived);
-      const remaining = o.financial?.remainingAmount !== undefined ? parseNum(o.financial.remainingAmount) : (amt - received);
+      // Financials — paymentAmount est le champ utilisé par OrderDetails
+      // amountReceived est conservé pour la rétro-compatibilité
+      const received = parseNum(o.financial?.amountReceived || o.financial?.paymentAmount);
+      const remaining = o.financial?.remainingAmount !== undefined
+        ? parseNum(o.financial.remainingAmount)
+        : Math.max(0, amt - received);
       totalCollected += received;
       totalRemaining += (remaining > 0 ? remaining : 0);
 
@@ -771,8 +774,8 @@ const Kpis = () => {
                 <tbody className="divide-y divide-slate-100">
                   {filteredOrders.slice(0, 15).map(o => {
                     const amt = parseNum(o.amount);
-                    const rec = parseNum(o.financial?.amountReceived);
-                    const rem = o.financial?.remainingAmount !== undefined ? parseNum(o.financial.remainingAmount) : (amt - rec);
+                    const rec = parseNum(o.financial?.amountReceived || o.financial?.paymentAmount);
+                    const rem = o.financial?.remainingAmount !== undefined ? parseNum(o.financial.remainingAmount) : Math.max(0, amt - rec);
                     const payStatus = o.financial?.paymentStatus || (rec >= amt && amt > 0 ? 'Total' : rec > 0 ? 'Partiel' : 'Non payé');
 
                     return (
