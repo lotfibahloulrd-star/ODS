@@ -30,24 +30,21 @@ const Home = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
 
-    useEffect(() => {
-        const loadCounts = async () => {
-            try {
-                const data = await orderService.getAllOrders();
-                setOrders(Array.isArray(data) ? data : []);
-            } catch (error) {
-                console.error("Home: Error loading counts:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+    const loadCounts = async () => {
+        try {
+            const data = await orderService.getAllOrders();
+            setOrders(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Home: Error loading counts:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
+        loadCounts();
         window.addEventListener('ods_data_updated', loadCounts);
         return () => window.removeEventListener('ods_data_updated', loadCounts);
-    }, []);
-
-        loadCounts();
     }, []);
 
     const stats = useMemo(() => {
